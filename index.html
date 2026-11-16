@@ -123,8 +123,8 @@ main.out{opacity:0}
 .flt div{display:flex;gap:26px;flex-wrap:wrap}
 .flt a{color:var(--soft)}
 .flt a.on{color:var(--ink)}
-.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px 10px;padding:6px var(--g) 80px}
-.sec .grid{padding:0 0 40px;grid-template-columns:repeat(4,1fr)}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px 10px;padding:6px var(--g) 80px}
+.sec .grid{padding:0 0 40px;grid-template-columns:repeat(4,minmax(0,1fr))}
 .c{display:block;transition:opacity .35s,filter .35s}
 .ph{background:var(--box);aspect-ratio:4/5;position:relative;overflow:hidden}
 .ph img{width:100%;height:100%;object-fit:contain;padding:12%;mix-blend-mode:multiply;transition:opacity .5s,transform .8s var(--ease)}
@@ -171,7 +171,7 @@ main.out{opacity:0}
 .pdp.pre .pics>.ph:first-child{visibility:hidden}
 .more{padding:0 var(--g) 60px}
 .more h3{font:400 13px/1 var(--f);margin-bottom:20px}
-.more .grid{padding:0;grid-template-columns:repeat(4,1fr)}
+.more .grid{padding:0;grid-template-columns:repeat(4,minmax(0,1fr))}
 .fly{position:fixed;z-index:50;pointer-events:none;margin:0}
 
 /* carrito lateral */
@@ -194,7 +194,7 @@ main.out{opacity:0}
 
 /* pie de página */
 footer.ftr{background:#141414;color:#fff;padding:72px var(--g) 22px;position:relative;overflow:hidden}
-.ftr .fg{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:32px}
+.ftr .fg{display:grid;grid-template-columns:1.4fr repeat(4,minmax(0,1fr));gap:32px}
 .ftr .fg>div{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .ftr .k{font-weight:600!important;margin-bottom:6px;color:#fff}
 .ftr a,.ftr button{color:rgba(255,255,255,.6);transition:color .2s;background:none;border:0;padding:0;cursor:pointer;text-align:left}
@@ -205,10 +205,13 @@ footer.ftr{background:#141414;color:#fff;padding:72px var(--g) 22px;position:rel
 @media (max-width:900px){.ftr .fg{grid-template-columns:1fr 1fr}}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;padding:12px 20px;z-index:70}
 
-@media (max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}.sec .grid,.more .grid{grid-template-columns:repeat(3,1fr)}.hide-m{display:none!important}}
+@media (max-width:1100px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.sec .grid,.more .grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hide-m{display:none!important}}
 @media (max-width:720px){
   :root{--g:16px}
-  .grid,.sec .grid,.more .grid{grid-template-columns:repeat(2,1fr)}
+  .grid,.sec .grid,.more .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .c .n{flex-direction:column;gap:2px;font-size:11.5px;line-height:1.3}
+  .c .n span:last-child{white-space:nowrap}
+  html,body{overflow-x:hidden}
   .two{grid-template-columns:1fr}
   .full .t{flex-direction:column;align-items:flex-start}
   .std,.prj{grid-template-columns:1fr;padding-top:64px}
@@ -287,6 +290,21 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 .fs-cta{text-align:center;padding:0 var(--g) 20vh}
 .fs-cta p{font-size:clamp(22px,2.6vw,38px)!important;line-height:1.2!important;letter-spacing:.02em!important;margin-bottom:28px}
 @media (max-width:720px){.pj-split,.fs-sec{grid-template-columns:1fr}.fs-p{width:auto!important;margin-inline:var(--g)}.fs-hero .t{flex-direction:column;align-items:flex-start}}
+/* ajustes celular (v2) */
+@media (max-width:720px){
+  .flt{flex-direction:column;gap:10px;padding:10px var(--g);top:52px}
+  .flt div{flex-wrap:nowrap;overflow-x:auto;gap:20px;white-space:nowrap;scrollbar-width:none;margin-inline:calc(var(--g)*-1);padding-inline:var(--g)}
+  .flt div::-webkit-scrollbar{display:none}
+  .pdp{padding-top:8px;gap:22px}
+  .pdp .pics{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:calc(var(--g)*-1);padding-inline:var(--g);scrollbar-width:none}
+  .pdp .pics::-webkit-scrollbar{display:none}
+  .pdp .pics>.ph{flex:0 0 86%;scroll-snap-align:center}
+  .fs-big{padding:72px var(--g) 56px;font-size:52px!important}
+  .fs-p{margin-bottom:56px}
+  .fs-p .fim{aspect-ratio:4/5}
+  .fs-p figcaption{gap:12px;align-items:flex-start}
+  .fs-p figcaption>*:last-child{text-align:right;flex-shrink:0;color:var(--soft)}
+}
 </style>
 
 <header>
