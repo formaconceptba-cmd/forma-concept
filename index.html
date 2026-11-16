@@ -75,6 +75,11 @@ main.out{opacity:0}
 
 /* INICIO: secciones de foto a pantalla completa */
 .full{cursor:pointer}
+@media (hover:hover) and (pointer:fine){
+html.cur,html.cur *{cursor:none!important}
+#cur{position:fixed;left:0;top:0;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#fff;mix-blend-mode:difference;pointer-events:none;z-index:99999;transition:width .2s,height .2s,margin .2s,opacity .2s;opacity:0}
+#cur.on{opacity:1}#cur.big{width:34px;height:34px;margin:-17px 0 0 -17px}
+}
 .full{position:relative;height:100svh;min-height:520px;overflow:hidden;color:#fff;display:flex;align-items:flex-end}
 .full img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .full::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.38),rgba(0,0,0,0) 55%)}
@@ -689,4 +694,9 @@ addEventListener('scroll',onScroll,{passive:true});
 addEventListener('hashchange',()=>{if(!animating){render();scrollTo(0,0)}});
 addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
 save(); render(); loadDB();
+(()=>{if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+const c=document.createElement('div');c.id='cur';document.body.appendChild(c);document.documentElement.classList.add('cur');
+addEventListener('mousemove',e=>{c.style.transform=`translate(${e.clientX}px,${e.clientY}px)`;c.classList.add('on');
+c.classList.toggle('big',!!e.target.closest('a,button,input,select,textarea,label,[onclick],.full,.c'))},{passive:true});
+document.addEventListener('mouseleave',()=>c.classList.remove('on'));})();
 </script>
