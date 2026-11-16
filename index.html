@@ -346,7 +346,19 @@ const P=[
  {id:'MES-MAD-208-BAI',img:'102E1.0',t:'Mesa ratona',n:'REFLEJO',fam:'Laca',cat:'Mesas bajas',lead:'Base laqueada mate y tapa de vidrio templado teñido.',mat:'MDF y vidrio templado',fin:'Laqueado mate',d:[100,100,35],round:1,price:1770000,units:12,armado:false,colors:[['Bordó','#6B2630']],feat:1}
 ];
 // list = precio de lista · one = un pago (−15%) · price = preventa (−45% sobre lista, redondeado a $1.000)
-P.forEach(p=>{p.name=p.t+' '+p.n; p.list=p.price; if(p.price){p.one=p.list*(1-OFF_1P); p.price=Math.ceil(p.list*(1-PRE)/1000)*1000}});
+const norm=p=>{p.name=p.t+' '+p.n; p.list=p.price; if(p.price){p.one=p.list*(1-OFF_1P); p.price=Math.ceil(p.list*(1-PRE)/1000)*1000} return p};
+P.forEach(norm);
+/* Base de datos (Supabase): si responde, reemplaza la lista de arriba por la real. Si falla, queda la de arriba. */
+const SB_URL='https://znzbwtewxpcpqtmjbmdw.supabase.co', SB_KEY='sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
+async function loadDB(){
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/products?select=*&activo=eq.true&order=orden',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
+    if(!r.ok)return; const rows=await r.json(); if(!rows.length)return;
+    const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores||[],feat:x.destacado?1:0}));
+    P.splice(0,P.length,...list);
+    if(!animating)render();
+  }catch(e){console.warn('DB',e)}
+}
 const $=s=>document.querySelector(s);
 const ars=n=>'$'+Math.round(n).toLocaleString('es-AR');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -642,5 +654,5 @@ const onScroll=()=>{document.body.classList.toggle('scrolled',scrollY>20);fsScro
 addEventListener('scroll',onScroll,{passive:true});
 addEventListener('hashchange',()=>{if(!animating){render();scrollTo(0,0)}});
 addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
-save(); render();
+save(); render(); loadDB();
 </script>
