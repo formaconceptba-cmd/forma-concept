@@ -456,7 +456,7 @@ function viewHome(){
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
    <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="img/${s[0]}.jpg" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
 }
-const EMPRESA={razon:'DEL GRUPPO S.R.L.',cuit:'30-71294990-9',dom:'Domicilio fiscal: Av. Santa María de Tigre 6385, Rincón de Milberg (1624), Buenos Aires',mail:'formaconcept.ba@gmail.com',wa:'+54 11 3944 3055'};
+const EMPRESA={razon:'DEL GRUPPO S.R.L.',cuit:'30-71294990-9',dom:'Domicilio legal: Av. Belgrano 148, piso 7, Ciudad Autónoma de Buenos Aires',mail:'formaconcept.ba@gmail.com',wa:'+54 11 3944 3055'};
 function viewLegal(k){
   const tit=`<p>Titular del sitio: <b>${EMPRESA.razon}</b>${EMPRESA.cuit?` · CUIT ${EMPRESA.cuit}`:''} · ${EMPRESA.dom}. Contacto: ${EMPRESA.mail} · WhatsApp ${EMPRESA.wa}.</p>`;
   const L={
