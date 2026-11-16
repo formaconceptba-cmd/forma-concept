@@ -112,7 +112,8 @@ main.out{opacity:0}
 .cs .ar[disabled]{opacity:0;pointer-events:none}
 @media (max-width:720px){.cs a{flex-basis:86%}}
 /* nombre FRM Studio grande */
-.std .k{font-size:clamp(40px,5.2vw,76px)!important;line-height:1!important;letter-spacing:.01em!important;margin-bottom:26px!important}
+.std .k{font-size:clamp(22px,2vw,28px)!important;line-height:1!important;letter-spacing:.01em!important;margin-bottom:18px!important}
+.std .k,.std .k *{font-weight:400!important}.std .k b{font-weight:700!important}
 
 .sec{padding:72px var(--g) 24px}
 .sec h3{font:400 13px/1 var(--f);margin-bottom:20px;display:flex;justify-content:space-between}
@@ -431,7 +432,7 @@ function viewHome(){
   ${cats()}
   <section class="sec"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full('hv_acanalada60','Colección Acero','','Ver Acero','#tienda/Acero')}${full('ctx_reunir','New in','','Ver lo nuevo','#tienda')}</div>
-  <section class="std" id="estudio"><div><span class="k">FRM Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
+  <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
    <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="img/${s[0]}.jpg" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
 }
 function viewProjects(){
