@@ -196,6 +196,7 @@ html.cur,html.cur *{cursor:none!important}
 .dr .ft{border-top:1px solid var(--line);padding-top:14px;font-size:12px}
 .dr .ft div{display:flex;justify-content:space-between;margin-bottom:14px}
 .dr .buy{margin:0}
+.cko{display:grid;gap:8px}.cko b{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;margin-bottom:4px}.cko input{height:42px;border:1px solid var(--line);padding:0 12px;font:inherit;font-size:14px;background:#fff;color:var(--ink);border-radius:0}.cko input:focus{outline:none;border-color:var(--ink)}.cko small{color:var(--soft);font-size:12px;margin:2px 0 6px}.cko .lnk{font-size:12px;color:var(--soft);text-decoration:underline;padding:6px 0}
 .empty{color:var(--soft);font-size:12px;padding:20px 0}
 
 /* pie de página */
@@ -575,7 +576,7 @@ function drawCart(){
   $('#cartList').innerHTML=cart.length?cart.map((l,i)=>{const p=byId(l.id);return `<div class="ci"><div class="ph"><img src="${src(p.img)}" alt=""></div>
     <div>${esc(title(p))}<small>${esc(p.colors[l.c][0])}</small><div class="q"><button data-q="${i},-1" aria-label="Uno menos">−</button>${l.q}<button data-q="${i},1" aria-label="Uno más">+</button><button data-rm="${i}">Quitar</button></div></div>
     <div>${ars(p.price*l.q)}</div></div>`}).join(''):'<p class="empty">Tu carrito está vacío.</p>';
-  $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>3 cuotas sin interés</span><span>sobre precio de lista</span></div><button class="buy" id="pay">Pagar con Mercado Pago</button>`:'';
+  $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>3 cuotas sin interés</span><span>sobre precio de lista</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="pay">Pagar con Mercado Pago</button>`:'';
 }
 const openCart=()=>{drawCart();$('#dr').classList.add('on');$('#dr').setAttribute('aria-hidden','false')};
 const closeCart=()=>{$('#dr').classList.remove('on');$('#dr').setAttribute('aria-hidden','true')};
@@ -648,7 +649,14 @@ document.addEventListener('click',e=>{
   if(a.hasAttribute('data-close')){closeCart();return}
   if(a.dataset.q){const[i,d]=a.dataset.q.split(',').map(Number);cart[i].q+=d;if(cart[i].q<1)cart.splice(i,1);save();drawCart();return}
   if(a.dataset.rm){cart.splice(+a.dataset.rm,1);save();drawCart();return}
-  if(a.id==='pay'){toast('En la versión real esto abre el pago de Mercado Pago.');return}
+  if(a.id==='pay'){$('#cartFt').innerHTML=`<div class="cko"><b>Tus datos</b><input id="ck_n" placeholder="Nombre y apellido" autocomplete="name"><input id="ck_e" type="email" placeholder="Email" autocomplete="email"><input id="ck_t" type="tel" placeholder="Teléfono" autocomplete="tel"><input id="ck_d" placeholder="Dirección de entrega" autocomplete="street-address"><input id="ck_c" placeholder="Código postal" autocomplete="postal-code"><small>El envío se coordina por WhatsApp después de la compra.</small><button class="buy" id="payGo">Continuar a Mercado Pago</button><button class="lnk" data-back>Volver</button></div>`;$('#ck_n').focus();return}
+  if(a.hasAttribute('data-back')){drawCart();return}
+  if(a.id==='payGo'){const v=k=>$('#ck_'+k).value.trim();const buyer={nombre:v('n'),email:v('e'),telefono:v('t'),direccion:v('d'),cp:v('c')};
+    if(!buyer.nombre||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyer.email)||!buyer.telefono||!buyer.direccion){toast('Completá nombre, email, teléfono y dirección.');return}
+    a.disabled=true;a.textContent='Abriendo Mercado Pago…';
+    fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({buyer,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0]}))})})
+      .then(r=>r.json()).then(d=>{if(d.url){location.href=d.url}else{toast(d.error||'No pudimos iniciar el pago.');a.disabled=false;a.textContent='Continuar a Mercado Pago'}})
+      .catch(()=>{toast('No pudimos iniciar el pago. Probá de nuevo.');a.disabled=false;a.textContent='Continuar a Mercado Pago'});return}
   const href=a.getAttribute('href');
   if(href&&href.startsWith('#')&&!a.closest('.dr')){e.preventDefault();if(href==='#contacto'){$('#contacto').scrollIntoView({behavior:'smooth'});return}
     if(href==='#estudio'){if(!$('#estudio')){history.pushState(null,'','#inicio');render()}setTimeout(()=>$('#estudio').scrollIntoView({behavior:'smooth'}),50);return}fadeTo(href)}
@@ -698,6 +706,11 @@ function rvCount(){const n=document.querySelector(".rv-n:not([data-done])");if(!
 addEventListener("scroll",rvCount,{passive:true});
 addEventListener('hashchange',()=>{if(!animating){render();scrollTo(0,0)}});
 addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
+(()=>{const q=new URLSearchParams(location.search).get('pago');if(!q)return;
+  if(q==='ok'){cart=[];setTimeout(()=>toast('¡Gracias por tu compra! Te escribimos para coordinar la entrega.'),600)}
+  else if(q==='pendiente'){cart=[];setTimeout(()=>toast('Tu pago está pendiente. Te avisamos cuando se acredite.'),600)}
+  else setTimeout(()=>toast('El pago no se completó. Podés intentar de nuevo.'),600);
+  try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}})();
 save(); render(); loadDB();
 (()=>{if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
 const c=document.createElement('div');c.id='cur';document.body.appendChild(c);document.documentElement.classList.add('cur');
