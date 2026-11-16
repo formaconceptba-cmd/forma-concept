@@ -101,7 +101,7 @@ sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_IN'&&!user)start()});
 /* ---------- estructura ---------- */
 function shell(){
   app.innerHTML=`<header><div class="logo">forma<small>Admin</small></div>
-  <nav><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button></nav>
+  <nav><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button></nav>
   <span class="sp"></span><a class="who hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
   app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
   $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};
@@ -109,7 +109,7 @@ function shell(){
 }
 async function draw(){
   app.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
-  if(tab==='productos'){await loadProds();drawProds()}else{await loadOrders();drawOrders()}
+  if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else{await loadOrders();drawOrders()}
 }
 
 /* ---------- productos ---------- */
@@ -189,6 +189,23 @@ function editProd(p){
     if(error){toast(error.code==='23505'?'Ya existe un producto con ese código':'No se pudo guardar');return}
     d.close();d.remove();toast('Producto guardado');draw();
   };
+}
+
+/* ---------- arrepentimientos ---------- */
+async function drawArr(){
+  const {data,error}=await sb.from('arrepentimientos').select('*').order('created_at',{ascending:false});
+  if(error){toast('Error al leer arrepentimientos');return}
+  const EA=['nuevo','contactado','resuelto'];
+  $('#m').innerHTML=`<div class="stats"><div class="card"><b>${data.filter(a=>a.estado==='nuevo').length}</b><span>sin responder (tenés 24 h)</span></div></div>
+  ${data.length?`<div class="card wrap"><table><thead><tr><th>Código</th><th>Fecha</th><th>Cliente</th><th class="hide-m">Pedido / comentario</th><th>Estado</th></tr></thead><tbody>
+  ${data.map(a=>`<tr><td>${esc(a.codigo)}</td><td>${new Date(a.created_at).toLocaleString('es-AR')}</td><td><b>${esc(a.nombre)}</b><div class="hint">${esc(a.email)} · ${esc(a.telefono)}</div></td>
+   <td class="hide-m">${esc(a.pedido)}<div class="hint">${esc(a.motivo)}</div></td>
+   <td><select data-a="${a.id}">${EA.map(s=>`<option ${s===a.estado?'selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>`
+  :`<div class="card" style="padding:40px;text-align:center;color:var(--soft)">No hay solicitudes de arrepentimiento.</div>`}`;
+  $('#m').querySelectorAll('select[data-a]').forEach(s=>s.onchange=async()=>{
+    const {error}=await sb.from('arrepentimientos').update({estado:s.value}).eq('id',+s.dataset.a);
+    toast(error?'No se pudo cambiar':'Estado actualizado');
+  });
 }
 
 /* ---------- pedidos ---------- */

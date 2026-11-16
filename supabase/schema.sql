@@ -69,3 +69,18 @@ create policy "admins ven items" on public.order_items for all using (public.is_
 drop policy if exists "admins ven admins" on public.admins;
 create policy "admins ven admins" on public.admins for select using (public.is_admin());
 -- Los pedidos los crea el servidor (con Mercado Pago), no el navegador.
+
+-- Botón de arrepentimiento (Res. 424/2020): cualquiera puede enviar, sólo admins ven.
+create table if not exists public.arrepentimientos (
+  id bigint generated always as identity primary key,
+  created_at timestamptz default now(),
+  codigo text, nombre text not null, email text not null, telefono text, pedido text, motivo text,
+  estado text default 'nuevo',
+  constraint arr_len check (char_length(coalesce(nombre,''))<=120 and char_length(coalesce(email,''))<=160 and char_length(coalesce(telefono,''))<=40 and char_length(coalesce(pedido,''))<=40 and char_length(coalesce(motivo,''))<=600 and char_length(coalesce(codigo,''))<=20)
+);
+alter table public.arrepentimientos enable row level security;
+drop policy if exists "cualquiera envia arrepentimiento" on public.arrepentimientos;
+create policy "cualquiera envia arrepentimiento" on public.arrepentimientos for insert to anon, authenticated with check (estado = 'nuevo');
+drop policy if exists "admins ven arrepentimientos" on public.arrepentimientos;
+create policy "admins ven arrepentimientos" on public.arrepentimientos for all using (public.is_admin()) with check (public.is_admin());
+grant insert on public.arrepentimientos to anon, authenticated;

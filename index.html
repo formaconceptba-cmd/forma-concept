@@ -196,6 +196,7 @@ html.cur,html.cur *{cursor:none!important}
 .dr .ft{border-top:1px solid var(--line);padding-top:14px;font-size:12px}
 .dr .ft div{display:flex;justify-content:space-between;margin-bottom:14px}
 .dr .buy{margin:0}
+.lgl{max-width:760px;margin:0 auto;padding:140px var(--g) 96px}.lgl .k{display:block;font-size:12px;color:var(--soft);margin-bottom:16px;text-transform:uppercase;letter-spacing:.08em}.lgl h1{font:400 clamp(28px,3.2vw,44px)/1.08 var(--f);margin-bottom:28px}.lgl h3{font-size:14px;font-weight:600;margin:28px 0 8px}.lgl p{color:var(--ink);line-height:1.6;margin-bottom:12px}.lgl a{text-decoration:underline}.lgl .arr{max-width:420px;margin-top:24px}
 .cko{display:grid;gap:8px}.cko b{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;margin-bottom:4px}.cko input{height:42px;border:1px solid var(--line);padding:0 12px;font:inherit;font-size:14px;background:#fff;color:var(--ink);border-radius:0}.cko input:focus{outline:none;border-color:var(--ink)}.cko small{color:var(--soft);font-size:12px;margin:2px 0 6px}.cko .lnk{font-size:12px;color:var(--soft);text-decoration:underline;padding:6px 0}
 .empty{color:var(--soft);font-size:12px;padding:20px 0}
 
@@ -350,10 +351,10 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
     <div><span class="k">Tienda</span><a href="#tienda">Ver todo</a><a href="#tienda/Sillas">Sillas</a><a href="#tienda/Butacas">Sillones</a><a href="#tienda/Mesas">Mesas</a><a href="#tienda/Mesas bajas">Mesas bajas</a><a href="#tienda/Bancos">Bancos</a></div>
     <div><span class="k">Ayuda</span><button data-soon>Envíos</button><button data-soon>Medios de pago</button><button data-soon>Cómo funciona la preventa</button><button data-soon>Cambios y devoluciones</button><button data-soon>Preguntas frecuentes</button></div>
     <div><span class="k">FORMA</span><a href="#frm">FRM Studio</a><a href="#proyectos">FORMA Proyectos</a></div>
-    <div><span class="k">Legales</span><button data-soon>Términos y condiciones</button><button data-soon>Política de privacidad</button><button data-soon>Botón de arrepentimiento</button><button data-soon>Defensa del consumidor</button></div>
+    <div><span class="k">Legales</span><a href="#terminos">Términos y condiciones</a><a href="#privacidad">Política de privacidad</a><a href="#arrepentimiento">Botón de arrepentimiento</a><a href="https://www.argentina.gob.ar/produccion/defensadelconsumidor/formulario" target="_blank" rel="noopener">Defensa de las y los consumidores. Para reclamos ingrese aquí</a></div>
   </div>
   <div class="wm" aria-hidden="true">forma concept</div>
-  <div class="fb"><span>© 2026 FORMA Concept · Todos los derechos reservados</span><span>Hecho en Buenos Aires</span></div>
+  <div class="fb"><span>© 2026 FORMA Concept · Todos los derechos reservados</span><span><a href="#arrepentimiento" style="color:inherit">Botón de arrepentimiento</a> · <a href="/admin" style="color:inherit">Acceso</a> · Hecho en Buenos Aires</span></div>
 </footer>
 <div class="dr" id="dr" aria-hidden="true"><div class="sh" data-close></div><aside role="dialog" aria-label="Carrito">
   <div class="hd"><span>Carrito</span><button data-close>Cerrar</button></div>
@@ -454,6 +455,31 @@ function viewHome(){
   <div class="two">${full('hv_acanalada60','Colección Acero','','Ver Acero','#tienda/Acero')}${full('ctx_reunir','New in','','Ver lo nuevo','#tienda')}</div>
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
    <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="img/${s[0]}.jpg" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
+}
+const EMPRESA={razon:'DEL GRUPPO S.R.L.',cuit:'',dom:'Ciudad Autónoma de Buenos Aires',mail:'formaconcept.ba@gmail.com',wa:'+54 11 3944 3055'};
+function viewLegal(k){
+  const tit=`<p>Titular del sitio: <b>${EMPRESA.razon}</b>${EMPRESA.cuit?` · CUIT ${EMPRESA.cuit}`:''} · ${EMPRESA.dom}. Contacto: ${EMPRESA.mail} · WhatsApp ${EMPRESA.wa}.</p>`;
+  const L={
+  terminos:['Términos y condiciones',`${tit}
+   <h3>1. Aceptación</h3><p>Al comprar en formaconcept.vercel.app aceptás estos términos. Si no estás de acuerdo, no uses el sitio para comprar.</p>
+   <h3>2. Productos y preventa</h3><p>Los productos se venden en modalidad de preventa: se fabrican o importan a partir de tu compra, con stock limitado por producto. El plazo estimado de entrega se informa en cada producto y en la confirmación del pedido. Las imágenes son ilustrativas; puede haber leves diferencias de color y veta propias de los materiales.</p>
+   <h3>3. Precios</h3><p>Los precios están expresados en pesos argentinos, con IVA incluido, y pueden cambiar sin aviso. El precio que vale es el que figura al momento de confirmar el pago. El precio de preventa aplica sólo a compras dentro del período de preventa.</p>
+   <h3>4. Pagos</h3><p>Los pagos se procesan a través de Mercado Pago. FORMA Concept no almacena datos de tarjetas. El pedido se confirma cuando Mercado Pago acredita el pago.</p>
+   <h3>5. Envíos y entrega</h3><p>El envío y su costo se coordinan con vos después de la compra, antes de despachar. Te vamos a contactar por WhatsApp o email para acordar día y franja horaria.</p>
+   <h3>6. Derecho de arrepentimiento</h3><p>Tenés 10 días corridos desde que recibís el producto (o desde la compra, lo que ocurra último) para arrepentirte sin dar motivos, según el artículo 34 de la Ley 24.240 y el artículo 1110 del Código Civil y Comercial. Podés pedirlo desde el <a href="#arrepentimiento">Botón de arrepentimiento</a>. El producto debe devolverse sin uso y en su embalaje; los costos de devolución están a nuestro cargo.</p>
+   <h3>7. Garantía</h3><p>Los productos nuevos tienen la garantía legal de 6 meses por defectos de fabricación (Ley 24.240, art. 11). No cubre el desgaste normal, el mal uso, golpes ni el armado o modificaciones hechas por terceros.</p>
+   <h3>8. Cambios y cancelaciones</h3><p>Si un producto no puede entregarse por causas ajenas a vos, te ofrecemos otro plazo o el reintegro total del dinero por el mismo medio de pago.</p>
+   <h3>9. Ley aplicable</h3><p>Rigen las leyes de la República Argentina. Ante cualquier conflicto son competentes los tribunales del domicilio del consumidor.</p>`],
+  privacidad:['Política de privacidad',`${tit}
+   <h3>Qué datos pedimos</h3><p>Nombre, email, teléfono y dirección de entrega cuando comprás o nos escribís. No guardamos datos de tarjetas: el pago lo procesa Mercado Pago.</p>
+   <h3>Para qué los usamos</h3><p>Para procesar tu pedido, coordinar la entrega, emitir la factura y responder tus consultas. No vendemos ni cedemos tus datos a terceros, salvo a quienes participan en la entrega o el cobro.</p>
+   <h3>Dónde se guardan</h3><p>En servidores de proveedores con medidas de seguridad estándar. En tu navegador guardamos sólo el contenido de tu carrito.</p>
+   <h3>Tus derechos</h3><p>Podés pedir acceso, corrección o eliminación de tus datos escribiendo a ${EMPRESA.mail}. Respondemos dentro de los 10 días hábiles (Ley 25.326).</p>
+   <p style="color:var(--soft)">La Agencia de Acceso a la Información Pública, en su carácter de Órgano de Control de la Ley 25.326, tiene la atribución de atender las denuncias y reclamos que interpongan quienes resulten afectados en sus derechos por incumplimiento de las normas vigentes en materia de protección de datos personales.</p>`],
+  arrepentimiento:['Botón de arrepentimiento',`<p>Si compraste en los últimos 10 días corridos (o recibiste tu producto hace menos de 10 días), podés arrepentirte de la compra sin dar motivos. Completá el formulario y te damos un código de seguimiento. Te contactamos dentro de las 24 horas para coordinar el retiro y el reintegro.</p>
+   <div class="cko arr" id="arrF"><input id="ar_n" placeholder="Nombre y apellido" autocomplete="name"><input id="ar_e" type="email" placeholder="Email de la compra" autocomplete="email"><input id="ar_t" type="tel" placeholder="Teléfono" autocomplete="tel"><input id="ar_p" placeholder="Número de pedido (si lo tenés)"><input id="ar_m" placeholder="Comentario (opcional)"><button class="buy" id="arrGo">Enviar solicitud</button></div>`]};
+  const [h,b]=L[k];
+  return `<section class="lgl"><span class="k">Legales</span><h1>${h}</h1>${b}</section>`;
 }
 function viewProjects(){
   return `<section class="prj"><div><span class="k" style="font-size:12px;color:var(--soft);display:block;margin-bottom:16px">FORMA Proyectos</span><h1 style="font:400 clamp(28px,3.2vw,44px)/1.08 var(--f);margin-bottom:20px">Equipamos proyectos completos</h1>
@@ -593,6 +619,7 @@ function render(){
     html=viewShop(s)}
   else if(h==='proyectos'){html=viewProjects()}
   else if(h==='frm'){html=viewStudio()}
+  else if(['terminos','privacidad','arrepentimiento'].includes(h)){html=viewLegal(h)}
   else{html=viewHome();home=true}
   document.body.classList.toggle('home',home);
   app.innerHTML=html;
@@ -651,6 +678,12 @@ document.addEventListener('click',e=>{
   if(a.dataset.rm){cart.splice(+a.dataset.rm,1);save();drawCart();return}
   if(a.id==='pay'){$('#cartFt').innerHTML=`<div class="cko"><b>Tus datos</b><input id="ck_n" placeholder="Nombre y apellido" autocomplete="name"><input id="ck_e" type="email" placeholder="Email" autocomplete="email"><input id="ck_t" type="tel" placeholder="Teléfono" autocomplete="tel"><input id="ck_d" placeholder="Dirección de entrega" autocomplete="street-address"><input id="ck_c" placeholder="Código postal" autocomplete="postal-code"><small>El envío se coordina por WhatsApp después de la compra.</small><button class="buy" id="payGo">Continuar a Mercado Pago</button><button class="lnk" data-back>Volver</button></div>`;$('#ck_n').focus();return}
   if(a.hasAttribute('data-back')){drawCart();return}
+  if(a.id==='arrGo'){const v=k=>$('#ar_'+k).value.trim();const d={nombre:v('n'),email:v('e'),telefono:v('t'),pedido:v('p'),motivo:v('m')};
+    if(!d.nombre||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)){toast('Completá tu nombre y email.');return}
+    d.codigo='ARR-'+Date.now().toString(36).toUpperCase().slice(-6);a.disabled=true;
+    fetch(SB_URL+'/rest/v1/arrepentimientos',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(d)})
+      .then(r=>{if(!r.ok)throw 0;$('#arrF').innerHTML=`<p><b>Recibimos tu solicitud.</b> Tu código de seguimiento es <b>${d.codigo}</b>. Te contactamos dentro de las 24 horas.</p>`})
+      .catch(()=>{a.disabled=false;toast('No pudimos enviarla. Escribinos a '+EMPRESA.mail)});return}
   if(a.id==='payGo'){const v=k=>$('#ck_'+k).value.trim();const buyer={nombre:v('n'),email:v('e'),telefono:v('t'),direccion:v('d'),cp:v('c')};
     if(!buyer.nombre||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyer.email)||!buyer.telefono||!buyer.direccion){toast('Completá nombre, email, teléfono y dirección.');return}
     a.disabled=true;a.textContent='Abriendo Mercado Pago…';
