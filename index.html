@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FORMA Concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&family=Outfit:wght@500&family=Archivo:wght@400&display=swap">
+<style>
+:root{--bg:#F7F7F5;--box:#ECECEA;--ink:#141414;--soft:#77756F;--line:#DDDBD6;--f:"Helvetica Neue",Helvetica,"Inter Tight",Arial,sans-serif;--g:20px;--ease:cubic-bezier(.7,0,.2,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:auto}
+body{background:var(--bg);color:var(--ink);font:400 13px/1.5 var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+img{display:block;max-width:100%}
+.fcl{display:inline-grid;line-height:1;color:inherit}
+.fcl b{font:500 1em/.8 "Outfit","Inter Tight",sans-serif;letter-spacing:-.03em}
+
+
+/* encabezado: transparente sobre la foto de inicio, sólido al bajar */
+header{position:sticky;top:0;z-index:30;height:52px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 var(--g);background:var(--bg);border-bottom:1px solid var(--line);transition:background .35s,color .35s,border-color .35s}
+body.home:not(.scrolled) header{background:transparent;color:#fff;border-color:transparent}
+body.home header{position:fixed;left:0;right:0;top:0}
+.ico{display:inline-flex;align-items:center;position:relative}
+.ico svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.3}
+.ico i{position:absolute;top:-6px;right:-9px;font:500 9px/14px var(--f);font-style:normal;min-width:14px;height:14px;border-radius:7px;background:var(--ink);color:#fff;text-align:center}
+body.home:not(.scrolled) .ico i{background:#fff;color:var(--ink)}
+/* FRM Studio: texto 38% + fotos que pasan solas */
+.std{display:grid;grid-template-columns:38% 1fr;gap:calc(var(--g)*2);padding:110px var(--g) 90px;align-items:center}
+.std .k{font-size:12px;color:var(--soft);display:block;margin-bottom:16px}
+.std h2{font:400 clamp(28px,3.2vw,44px)/1.08 var(--f);letter-spacing:-.01em;margin-bottom:20px}
+.std p{max-width:400px;color:var(--soft);margin-bottom:12px}
+.car{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--box)}
+.car img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.03);transition:opacity 1.1s,transform 6s linear}
+.car img.on{opacity:1;transform:scale(1)}
+.dots{position:absolute;left:0;right:0;bottom:16px;display:flex;justify-content:center;gap:4px;z-index:2}
+.dots button{width:22px;height:22px;display:grid;place-items:center}
+.dots button::before{content:"";width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45);transition:background .3s,transform .3s}
+.dots button.on::before{background:#fff;transform:scale(1.25)}
+.prj{display:grid;grid-template-columns:38% 1fr;gap:calc(var(--g)*2);padding:48px var(--g) 90px;align-items:center}
+.prj img{width:100%;aspect-ratio:4/3;object-fit:cover}
+header nav{display:flex;gap:24px;align-items:center}
+header nav.r{justify-content:flex-end}
+header a.on::before{content:"•";margin-right:6px}
+/* menú desplegable */
+.mbtn{display:inline-flex;align-items:center;gap:8px}
+.mbtn i{display:inline-block;width:14px;height:8px;border-top:1px solid currentColor;border-bottom:1px solid currentColor;transition:transform .3s}
+body.menu-on .mbtn i{transform:scaleY(.01)}
+.mn{position:fixed;left:0;right:0;top:52px;z-index:29;background:var(--bg);border-bottom:1px solid var(--line);padding:30px var(--g) 40px;display:grid;grid-template-columns:repeat(4,minmax(0,220px));gap:24px;clip-path:inset(0 0 100% 0);transition:clip-path .45s var(--ease);visibility:hidden}
+body.menu-on .mn{clip-path:inset(0);visibility:visible}
+body.menu-on header{background:var(--bg)!important;color:var(--ink)!important;border-color:var(--line)!important}
+.mn b{display:block;font-weight:400;color:var(--soft);font-size:11px;margin-bottom:12px}
+.mn a{display:block;font-size:15px;padding:3px 0}
+.mn a:hover{color:var(--soft)}
+.mn span.s{display:block;font-size:15px;padding:3px 0;color:var(--soft)}
+.mn span.s small{font-size:10px;margin-left:6px}
+.msh{position:fixed;inset:52px 0 0;z-index:28;background:rgba(0,0,0,.12);opacity:0;visibility:hidden;transition:opacity .35s}
+body.menu-on .msh{opacity:1;visibility:visible}
+/* filtro de colecciones (se pueden elegir varias) */
+.flt .lb2{color:var(--soft)}
+.flt button{color:var(--soft);display:inline-flex;align-items:center;gap:7px}
+.flt button::before{content:"";width:9px;height:9px;border:1px solid currentColor;border-radius:50%;transition:background .2s}
+.flt button.on{color:var(--ink)}
+.flt button.on::before{background:var(--ink)}
+.flt .vw a.on::before{content:"•";margin-right:6px}
+.nac{padding:6px var(--g) 18px;color:var(--soft);font-size:12px}
+.mark{font-size:30px}
+.cart{display:inline-flex;gap:6px;align-items:center}
+
+main{min-height:70vh;transition:opacity .35s}
+main.out{opacity:0}
+
+/* INICIO: secciones de foto a pantalla completa */
+.full{cursor:pointer}
+.full{position:relative;height:100svh;min-height:520px;overflow:hidden;color:#fff;display:flex;align-items:flex-end}
+.full img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.04);transition:transform 1.6s var(--ease)}
+.full.in img{transform:scale(1)}
+.full::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.38),rgba(0,0,0,0) 55%)}
+.full .t{position:relative;z-index:1;width:100%;padding:0 var(--g) 48px;display:flex;justify-content:space-between;align-items:flex-end;gap:32px}
+.full h2,.full h1{font:300 clamp(32px,4.2vw,58px)/1.02 "Inter Tight",sans-serif;letter-spacing:-.025em}
+.full.hero h1{font-size:clamp(40px,6vw,88px)}
+.full p{max-width:340px;font-size:13px;margin-bottom:16px}
+.full.hero .t{justify-content:center;text-align:center;align-items:center;flex-direction:column;padding-bottom:42svh}
+.full.hero::after{background:rgba(0,0,0,.14)}
+/* pantalla de carga: mesa Acanalada en líneas, girando */
+.ld{position:fixed;inset:0;z-index:80;background:var(--bg);display:grid;place-items:center;align-content:center;gap:10px;transition:opacity .5s,visibility .5s}
+.ld.off{opacity:0;visibility:hidden}
+.ld canvas{width:130px;height:130px}
+.ld .fcl{font-size:18px}
+.ob{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 44px;border:1px solid currentColor;font-size:12px;transition:background .25s,color .25s}
+
+.two{display:grid;grid-template-columns:1fr 1fr}
+.two .full{height:90svh}
+/* Colección con foto de producto sobre fondo claro */
+.full.w{background:var(--box);color:var(--ink)}
+.full.w img{object-fit:contain;mix-blend-mode:multiply;padding:10% 8% 24%}
+.full.w::after{display:none}
+/* franja de categorías: dos fotos por pantalla, flecha al costado */
+.cs{position:relative;padding-top:14px}
+.cs .tr{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-behavior:smooth}
+.cs .tr::-webkit-scrollbar{display:none}
+.cs a{position:relative;flex:0 0 calc(50% - 7px);aspect-ratio:1.93;overflow:hidden;scroll-snap-align:start;background:var(--box);display:grid;place-items:center}
+.cs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
+.cs a:hover img{transform:scale(1.03)}
+.cs a.w img{object-fit:contain;padding:5% 0 15%;mix-blend-mode:multiply}
+.cs a:not(.w)::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.16)}
+.cs b{position:relative;z-index:1;color:#fff;font-size:26px!important;font-weight:400!important;letter-spacing:.04em!important}
+.cs a.w b{color:var(--ink);align-self:end;padding-bottom:16px;font-size:18px!important}
+.cs .ar{position:absolute;top:calc(50% + 7px);transform:translateY(-50%);z-index:2;width:36px;height:36px;background:#fff;color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:opacity .3s}
+.cs .nx{right:0}.cs .pv{left:0}
+.cs .ar[disabled]{opacity:0;pointer-events:none}
+@media (max-width:720px){.cs a{flex-basis:86%}}
+/* nombre FRM Studio grande */
+.std .k{font-size:clamp(40px,5.2vw,76px)!important;line-height:1!important;letter-spacing:.01em!important;margin-bottom:26px!important}
+
+.sec{padding:72px var(--g) 24px}
+.sec h3{font:400 13px/1 var(--f);margin-bottom:20px;display:flex;justify-content:space-between}
+.sec h3 a{color:var(--soft)}
+
+/* TIENDA estilo grilla limpia */
+.flt{position:sticky;top:52px;z-index:20;background:var(--bg);display:flex;justify-content:space-between;gap:16px;padding:14px var(--g);font-size:12px}
+.flt div{display:flex;gap:26px;flex-wrap:wrap}
+.flt a{color:var(--soft)}
+.flt a.on{color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px 10px;padding:6px var(--g) 80px}
+.sec .grid{padding:0 0 40px;grid-template-columns:repeat(4,1fr)}
+.c{display:block;transition:opacity .35s,filter .35s}
+.ph{background:var(--box);aspect-ratio:4/5;position:relative;overflow:hidden}
+.ph img{width:100%;height:100%;object-fit:contain;padding:12%;mix-blend-mode:multiply;transition:opacity .5s,transform .8s var(--ease)}
+.ph .alt{position:absolute;inset:0;object-fit:cover;padding:0;opacity:0;mix-blend-mode:normal}
+.c:hover .ph .alt{opacity:1}
+.c:hover .ph img:first-child{transform:scale(1.03)}
+.c .n{display:flex;justify-content:space-between;gap:8px;padding:8px 0 0;font-size:12px}
+.c .n span:last-child{color:var(--soft)}
+.leaving .c:not(.picked){opacity:0;filter:blur(4px)}
+.leaving .flt,.leaving .sec h3{opacity:.0;transition:opacity .3s}
+/* vista lista */
+.list{padding:6px var(--g) 80px}
+.row{display:grid;grid-template-columns:72px 2fr 1fr 1fr 1fr;gap:16px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:12px;transition:background .2s}
+.row:hover{background:var(--box)}
+.row .ph{aspect-ratio:1}
+.row .ph img{padding:8%}
+.row span:not(:first-of-type){color:var(--soft)}
+
+/* PRODUCTO: info a la izquierda, fotos a la derecha */
+.pdp{display:grid;grid-template-columns:minmax(300px,32%) 1fr;gap:calc(var(--g)*2);padding:24px var(--g) 80px}
+.pdp .info{position:sticky;top:76px;align-self:start;padding:0;max-width:440px}
+.pdp .pics .ph{aspect-ratio:auto;height:calc(100svh - 96px);min-height:480px}
+.back{font-size:12px;color:var(--soft);display:inline-block;margin-bottom:18px}
+.pdp h1{font:400 clamp(30px,3vw,40px)/1.1 var(--f);letter-spacing:-.01em;margin-bottom:14px}
+.price{font-size:15px;margin-bottom:4px}
+.price s{color:var(--soft);font-size:12px;margin-left:8px}
+.cuo{font-size:12px;color:var(--soft);margin-bottom:26px}
+.lb{font-size:12px;margin-bottom:10px}
+.sw{display:flex;gap:10px;margin-bottom:8px}
+.sw button{width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,0,0,.12);outline-offset:3px}
+.sw button.on{outline:1px solid var(--ink)}
+.swn{font-size:11px;color:var(--soft);margin-bottom:22px}
+.note{font-size:11px;color:var(--soft);padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:16px}
+.buy{width:100%;height:48px;background:var(--ink);color:#fff;font-size:12px;margin-bottom:34px;transition:opacity .2s}
+.buy:hover{opacity:.85}
+.tb{display:grid;grid-template-columns:1fr 1.4fr;gap:16px;padding:16px 0;border-top:1px solid var(--line);font-size:12px}
+.tb span:last-child{color:var(--soft)}
+.pics{display:flex;flex-direction:column;gap:10px}
+.pics .ph img.cov{object-fit:cover;padding:0;mix-blend-mode:normal}
+.pics .ph svg{position:absolute;inset:0;margin:auto;width:70%;height:70%}
+.pics .ph .soon{position:absolute;inset:0;display:grid;place-items:center;color:var(--soft);font-size:12px}
+.pdp .info>*,.pics>*:not(:first-child){transition:opacity .5s .25s,transform .6s .25s var(--ease)}
+.pdp.pre .info>*,.pdp.pre .pics>*:not(:first-child){opacity:0;transform:translateY(10px)}
+.pdp.pre .pics>.ph:first-child{visibility:hidden}
+.more{padding:0 var(--g) 60px}
+.more h3{font:400 13px/1 var(--f);margin-bottom:20px}
+.more .grid{padding:0;grid-template-columns:repeat(4,1fr)}
+.fly{position:fixed;z-index:50;pointer-events:none;margin:0}
+
+/* carrito lateral */
+.dr{position:fixed;inset:0;z-index:60;visibility:hidden}
+.dr.on{visibility:visible}
+.dr .sh{position:absolute;inset:0;background:rgba(0,0,0,.2);opacity:0;transition:opacity .35s}
+.dr.on .sh{opacity:1}
+.dr aside{position:absolute;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--bg);padding:20px var(--g);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .45s var(--ease)}
+.dr.on aside{transform:none}
+.dr .hd{display:flex;justify-content:space-between;font-size:12px;margin-bottom:20px}
+.dr .ls{flex:1;overflow:auto}
+.ci{display:grid;grid-template-columns:72px 1fr auto;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:12px}
+.ci .ph{aspect-ratio:1}
+.ci small{color:var(--soft);display:block}
+.ci .q{display:flex;gap:10px;margin-top:6px;color:var(--soft)}
+.dr .ft{border-top:1px solid var(--line);padding-top:14px;font-size:12px}
+.dr .ft div{display:flex;justify-content:space-between;margin-bottom:14px}
+.dr .buy{margin:0}
+.empty{color:var(--soft);font-size:12px;padding:20px 0}
+
+/* pie de página */
+footer.ftr{background:#141414;color:#fff;padding:72px var(--g) 22px;position:relative;overflow:hidden}
+.ftr .fg{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:32px}
+.ftr .fg>div{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.ftr .k{font-weight:600!important;margin-bottom:6px;color:#fff}
+.ftr a,.ftr button{color:rgba(255,255,255,.6);transition:color .2s;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.ftr a:hover,.ftr button:hover{color:#fff}
+.ftr .fg span{color:rgba(255,255,255,.6)}
+.ftr .wm{font:500 14vw/.8 "Outfit",sans-serif!important;letter-spacing:-.045em!important;text-transform:none!important;color:rgba(255,255,255,.07);white-space:nowrap;margin:64px 0 18px;user-select:none}
+.ftr .fb{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid rgba(255,255,255,.14);padding-top:16px;color:rgba(255,255,255,.5)}
+@media (max-width:900px){.ftr .fg{grid-template-columns:1fr 1fr}}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;padding:12px 20px;z-index:70}
+
+@media (max-width:1100px){.grid{grid-template-columns:repeat(3,1fr)}.sec .grid,.more .grid{grid-template-columns:repeat(3,1fr)}.hide-m{display:none!important}}
+@media (max-width:720px){
+  :root{--g:16px}
+  .grid,.sec .grid,.more .grid{grid-template-columns:repeat(2,1fr)}
+  .two{grid-template-columns:1fr}
+  .full .t{flex-direction:column;align-items:flex-start}
+  .std,.prj{grid-template-columns:1fr;padding-top:64px}
+  .pdp .pics .ph{height:auto;aspect-ratio:4/5;min-height:0}
+  .pdp{grid-template-columns:1fr}.pdp .info{position:static;padding:0;order:2}
+  .row{grid-template-columns:56px 1fr auto}.row span:nth-of-type(2),.row span:nth-of-type(3){display:none}
+  header nav{gap:14px}
+  .mark{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ===== TIPOGRAFÍA UNIFICADA: una letra, siempre mayúscula, dos tamaños (12 y 26), normal o negrita, un solo color ===== */
+:root{--soft:#141414}
+body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!important;font-weight:400!important;letter-spacing:.05em!important;text-transform:uppercase!important;font-style:normal!important}
+.full h1,.full h2,.pdp h1,.std h2,.prj h1{font-size:26px!important;line-height:1.15!important;letter-spacing:.04em!important}
+.c .n span:first-child,.sec h3 span,.mn b,.lb,.tb span:first-child,.pdp .price,.dr .hd span,.flt .lb2,header a.on,header button.on,.std .k,.prj .k,.buy,.ob{font-weight:600!important}
+.fcl,.fcl b{font-family:"Outfit","Inter Tight",sans-serif!important;text-transform:none!important;letter-spacing:-.03em!important;font-weight:500!important}
+.mark .fcl b{font-size:44px!important;line-height:.8!important}
+.ld .fcl b{font-size:22px!important}
+.ico i{font-size:9px!important;letter-spacing:0!important}
+/* precios */
+.circ{position:absolute;top:10px;left:10px;z-index:2;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.7);border:1px solid rgba(20,20,20,.22);color:var(--ink);display:grid;place-items:center;font-weight:600!important;letter-spacing:0!important}
+.pz{display:inline-flex;gap:8px;white-space:nowrap}
+.pz s{text-decoration:line-through}
+.pz b,.pay b{font-weight:600!important}
+.plist{margin-bottom:8px;display:flex;align-items:baseline;gap:10px}
+.plist s{font-size:18px!important}
+.pdp .price{font-size:26px!important;font-weight:600!important;line-height:1.1!important;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.pdp .price .tag{font-weight:600!important;border:1px solid var(--ink);padding:4px 10px;border-radius:20px}
+.pay{list-style:none;margin-bottom:26px;border-bottom:1px solid var(--line)}
+.pay li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+/* calcular envío en la ficha */
+.cpf{margin:4px 0 22px}
+.cpf .lb{display:block;margin-bottom:8px}
+.cpf>div:not(.cpr){display:flex;border:1px solid var(--line)}
+.cpf input{flex:1;border:0;background:transparent;padding:0 12px;height:40px;font:inherit;outline:0;min-width:0}
+.cpf button{padding:0 18px;border-left:1px solid var(--line);cursor:pointer}
+.cpr .o{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.cpr small{display:block;color:var(--soft)}
+.cpr .nt{padding-top:8px;color:var(--soft)}
+/* FORMA Proyectos: pasos (como versión B) */
+.pj-step{padding:clamp(48px,6vw,96px) var(--g);border-top:1px solid var(--line)}
+.pj-n{text-align:center;display:grid;justify-items:center;gap:10px}
+.pj-n span{font-size:34px!important;font-weight:300!important}
+.pj-n h3{font-size:26px!important;letter-spacing:.04em!important;display:flex;align-items:center;gap:24px;width:100%;justify-content:center}
+.pj-n h3 i{font-style:normal;color:var(--line)}
+.pj-step>.pj-n h3::before,.pj-step>.pj-n h3::after{content:"";flex:1;max-width:260px;height:1px;background:var(--line)}
+.pj-body{max-width:560px;margin:28px auto 0;text-align:center}
+.pj-body h4{font-weight:600!important;margin:24px 0 10px}
+.pj-body h4:first-child{margin-top:0}
+.pj-body p{line-height:1.7}
+.pj-body ul{list-style:none;display:grid;gap:6px}
+.pj-body li::before{content:"· "}
+.pj-body .ob{margin-top:28px}
+.pj-split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,5vw,80px);align-items:center;max-width:1300px;margin:0 auto}
+.pj-tint{background:#fff}
+.pj-tint img{width:100%;aspect-ratio:1;object-fit:contain;padding:10%;transition:filter 1.2s ease}
+.pj-tint figcaption{text-align:center;padding:6px 0 18px}
+.pj-photo img{width:100%;aspect-ratio:4/5;object-fit:cover}
+/* FRM Studio: página propia */
+.fs{background-image:repeating-linear-gradient(90deg,transparent 0 calc(12.5% - 1px),rgba(0,0,0,.05) calc(12.5% - 1px) 12.5%)}
+.fs-hero{position:relative;height:calc(100svh - 80px);min-height:520px;color:#fff;overflow:hidden}
+.fs-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.fs-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,0) 55%)}
+.fs-hero .t{position:absolute;z-index:1;left:var(--g);right:var(--g);bottom:40px;display:flex;justify-content:space-between;align-items:flex-end;gap:32px}
+.fs-hero p{max-width:640px;font-size:clamp(18px,1.9vw,28px)!important;line-height:1.3!important;letter-spacing:.02em!important}
+.fs-hero .ob{color:#fff}
+.fs-big{text-align:center;padding:24vh var(--g);font-size:clamp(48px,10vw,150px)!important;line-height:1!important;letter-spacing:0!important;font-weight:400!important}
+.fs-p{width:42%;margin:0 auto 24vh}
+.fs-p .fim{overflow:hidden;aspect-ratio:16/9;background:var(--box)}
+.fs-p .fim img{display:block;width:100%;height:100%;object-fit:cover;padding:0;mix-blend-mode:normal}
+.fs-p figcaption{display:flex;justify-content:space-between;padding-top:10px}
+.fs-sec{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--g);padding:0 var(--g) 22vh;align-items:start}
+.fs-sec .k{font-weight:600!important}
+.fs-sec p{font-size:18px!important;line-height:1.4!important;letter-spacing:.02em!important;margin-bottom:12px}
+.fs-sec .nm{font-size:clamp(28px,3.4vw,52px)!important;line-height:1.05!important;letter-spacing:.01em!important}
+.fs-cta{text-align:center;padding:0 var(--g) 20vh}
+.fs-cta p{font-size:clamp(22px,2.6vw,38px)!important;line-height:1.2!important;letter-spacing:.02em!important;margin-bottom:28px}
+@media (max-width:720px){.pj-split,.fs-sec{grid-template-columns:1fr}.fs-p{width:auto!important;margin-inline:var(--g)}.fs-hero .t{flex-direction:column;align-items:flex-start}}
+</style>
+
+<header>
+  <nav><button class="mbtn" id="menuBtn" aria-expanded="false" aria-controls="mn"><i></i>Menú</button><a class="hide-m" href="#tienda/Sillas" data-r="Sillas">Sillas</a><a class="hide-m" href="#tienda/Butacas" data-r="Butacas">Sillones</a><a class="hide-m" href="#tienda/Mesas" data-r="Mesas">Mesas</a><a class="hide-m" href="#tienda/Mesas bajas" data-r="Mesas bajas">Mesas bajas</a><a class="hide-m" href="#tienda/Bancos" data-r="Bancos">Bancos</a><a class="hide-m" href="#tienda" data-r="tienda">Ver todo</a></nav>
+  <a class="mark" href="#inicio" aria-label="FORMA Concept, inicio"><span class="fcl"><b>forma</b></span></a>
+  <nav class="r"><a class="hide-m" href="#frm" data-r="frm">FRM Studio</a><a class="hide-m" href="#proyectos" data-r="proyectos">Proyectos</a><button class="ico" id="adminBtn" aria-label="Ingreso administrador"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button><button class="ico" id="cartBtn" aria-label="Abrir carrito"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><i id="cartN">0</i></button></nav>
+</header>
+<div class="ld" id="ld" role="status" aria-label="Cargando"><canvas id="ldc" width="260" height="260"></canvas><span class="fcl"><b>forma</b></span></div>
+<div class="msh" id="msh"></div>
+<nav class="mn" id="mn" aria-label="Menú">
+  <div><b>Tienda</b><a href="#tienda">Ver todo</a><a href="#tienda/Sillas">Sillas</a><a href="#tienda/Butacas">Sillones</a><a href="#tienda/Mesas">Mesas</a><a href="#tienda/Mesas bajas">Mesas bajas</a><a href="#tienda/Bancos">Bancos</a></div>
+  <div><b>Colecciones</b><a href="#tienda/Fresno">Fresno</a><a href="#tienda/Acero">Acero</a><a href="#tienda/Laca">Laca</a><span class="s">Nacional<small>Próximamente</small></span></div>
+  <div><b>FORMA</b><a href="#frm">FRM Studio</a><a href="#proyectos">FORMA Proyectos</a><a href="#contacto">Contacto</a></div>
+  <div><b>Ayuda</b><a href="https://wa.me/541139443055" target="_blank" rel="noopener">WhatsApp</a><a href="mailto:formaconcept.ba@gmail.com">Mail</a><a href="https://instagram.com/forma.concept" target="_blank" rel="noopener">Instagram</a></div>
+</nav>
+<main id="app"></main>
+<footer id="contacto" class="ftr">
+  <div class="fg">
+    <div><span class="k">Contacto</span><a href="https://wa.me/541139443055" target="_blank" rel="noopener">WhatsApp +54 11 3944 3055</a><a href="mailto:formaconcept.ba@gmail.com">formaconcept.ba@gmail.com</a><a href="https://instagram.com/forma.concept" target="_blank" rel="noopener">Instagram @forma.concept</a><span>Buenos Aires, Argentina</span></div>
+    <div><span class="k">Tienda</span><a href="#tienda">Ver todo</a><a href="#tienda/Sillas">Sillas</a><a href="#tienda/Butacas">Sillones</a><a href="#tienda/Mesas">Mesas</a><a href="#tienda/Mesas bajas">Mesas bajas</a><a href="#tienda/Bancos">Bancos</a></div>
+    <div><span class="k">Ayuda</span><button data-soon>Envíos</button><button data-soon>Medios de pago</button><button data-soon>Cómo funciona la preventa</button><button data-soon>Cambios y devoluciones</button><button data-soon>Preguntas frecuentes</button></div>
+    <div><span class="k">FORMA</span><a href="#frm">FRM Studio</a><a href="#proyectos">FORMA Proyectos</a></div>
+    <div><span class="k">Legales</span><button data-soon>Términos y condiciones</button><button data-soon>Política de privacidad</button><button data-soon>Botón de arrepentimiento</button><button data-soon>Defensa del consumidor</button></div>
+  </div>
+  <div class="wm" aria-hidden="true">forma concept</div>
+  <div class="fb"><span>© 2026 FORMA Concept · Todos los derechos reservados</span><span>Hecho en Buenos Aires</span></div>
+</footer>
+<div class="dr" id="dr" aria-hidden="true"><div class="sh" data-close></div><aside role="dialog" aria-label="Carrito">
+  <div class="hd"><span>Carrito</span><button data-close>Cerrar</button></div>
+  <div class="ls" id="cartList"></div>
+  <div class="ft" id="cartFt"></div>
+</aside></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const WHATS='+54 11 3944 3055';
+const CUOTAS=3, OFF_1P=0.15, PRE=0.45, IVA=1.21;
+// Precio = Economía "Baicheng & Rudi final", PRICING col M (lista ARS c/IVA). Medidas, material y armado = Master Concept.
+// img2 = foto ambientada (CÓDIGO_02). Hoy solo existe para 6055 y 112B0.76.
+const P=[
+ {id:'SIL-MET-008-RUD',img:'MC-282',img2:'hv_varilla',t:'Silla',n:'VARILLA',fam:'Acero',cat:'Sillas',lead:'Brazos envolventes y varillas verticales. Dibujo en el aire.',mat:'Alambre de acero',fin:'Pintura epoxi en polvo',d:[57,57,76],price:250000,units:30,armado:true,colors:[['Terracota','#C07A68'],['Grafito','#3C3C3A']],feat:1},
+ {id:'SIL-MET-294-RUD',img:'MC-304',img2:'hv_voladiza',t:'Silla',n:'VOLADIZA',fam:'Acero',cat:'Sillas',lead:'Caño de acero en voladizo y asiento tapizado.',mat:'Caño de acero, pintura epoxi',fin:'Asiento y respaldo tapizados',d:[54,53,75],price:350000,units:40,armado:true,colors:[['Negro','#2B2B2B'],['Arena','#B8A88E']]},
+ {id:'SIL-MET-006-RUD',img:'MC-212',t:'Silla',n:'TRAZO',fam:'Acero',cat:'Sillas',lead:'Estructura de acero de líneas simples.',mat:'Acero',fin:'Pintura epoxi en polvo',d:[56.5,52.5,80],price:null,units:10,armado:false,colors:[['Grafito','#3C3C3A']]},
+ {id:'MES-MET-163-RUD',img:'GT-502',img2:'lnd_hero',t:'Mesa',n:'ACANALADA 100',fam:'Acero',cat:'Mesas',lead:'Mesa de comedor redonda con base de acero acanalada.',mat:'Acero',fin:'Pintura epoxi en polvo',d:[100,100,75],round:1,price:1100000,units:20,armado:false,colors:[['Negro','#2B2B2B'],['Arena','#B8A88E']],feat:1},
+ {id:'MES-MET-166-RUD',img:'GT-502B',img2:'hv_acanalada60',t:'Mesa',n:'ACANALADA 60',fam:'Acero',cat:'Mesas',lead:'Mesa de bistró para dos, misma base acanalada.',mat:'Acero',fin:'Pintura epoxi en polvo',d:[60,60,72.5],round:1,price:550000,units:20,armado:false,colors:[['Grafito','#3C3C3A'],['Terracota','#C07A68']]},
+ {id:'MES-MET-113-RUD',img:'GT-406A',t:'Mesa ratona',n:'DISCO',fam:'Acero',cat:'Mesas bajas',lead:'Mesa baja de acero, redonda y compacta.',mat:'Acero',fin:'Pintura epoxi en polvo',d:[75,75,35],round:1,price:605000,units:30,armado:false,colors:[['Negro','#2B2B2B'],['Oliva','#8C8A4E'],['Arena','#B8A88E']]},
+ {id:'MES-MET-112-RUD',img:'GT-406',t:'Mesa auxiliar',n:'DISCO',fam:'Acero',cat:'Mesas bajas',lead:'Para el costado del sillón o la mesa de luz.',mat:'Acero',fin:'Pintura epoxi en polvo',d:[50,50,46],round:1,price:410000,units:30,armado:true,colors:[['Grafito','#3C3C3A'],['Negro','#2B2B2B'],['Oliva','#8C8A4E']]},
+ {id:'SIL-MAD-187-BAI',img:'6055',img2:'hv_envolvente',t:'Butaca',n:'ENVOLVENTE',fam:'Fresno',cat:'Butacas',lead:'Asiento redondeado y un brazo continuo que te abraza.',mat:'Fresno macizo teñido',fin:'Tapizado en tela',d:[77.5,69,71],price:2120000,units:8,armado:true,colors:[['Salvia','#9AA48C']],feat:1},
+ {id:'SIL-MAD-233-BAI',img:'C537',img2:'hv_linea',t:'Butaca',n:'LÍNEA',fam:'Fresno',cat:'Butacas',lead:'Brazos delgados de fresno y un perfil abierto, liviano a la vista.',mat:'Fresno macizo teñido ahumado',fin:'Tapizado en tela bouclé',d:[80,87,77],price:1899000,units:8,armado:true,colors:[['Gris piedra','#A3A19B']],feat:1},
+ {id:'SIL-MAD-235-BAI',img:'C538',t:'Butaca',n:'PLANO',fam:'Fresno',cat:'Butacas',lead:'Tapizado volumétrico y laterales continuos en patín.',mat:'Fresno macizo teñido',fin:'Tapizado en tela',d:[71,80,75],price:1750000,units:8,armado:true,colors:[['Tabaco','#7A5A43']]},
+ {id:'SIL-MAD-213-BAI',img:'C853',t:'Silla',n:'TALLO',fam:'Fresno',cat:'Sillas',lead:'Silla de comedor de madera maciza con asiento tapizado.',mat:'Fresno macizo teñido',fin:'Asiento tapizado en tela',d:[49,46,76],price:712000,units:30,armado:true,colors:[['Natural ahumado','#8A6E55']]},
+ {id:'MES-MAD-193-BAI',img:'089E0.9',t:'Mesa ratona',n:'CÍRCULO',fam:'Fresno',cat:'Mesas bajas',lead:'Mesa baja redonda de fresno macizo.',mat:'Fresno macizo',fin:'Metalizado o enchapado (a definir)',d:[90,90,38],round:1,price:1150000,units:10,armado:true,colors:[['A definir','#CFC6B6']]},
+ {id:'SIL-MAD-085-RUD',img:'WS-035',t:'Banco',n:'LÁMINA',fam:'Fresno',cat:'Bancos',lead:'Multilaminado curvado. Asiento bajo o apoyo auxiliar.',mat:'Multilaminado de madera',fin:'Natural',d:[31,43,41.5],price:320000,units:10,armado:true,colors:[['Natural','#C9A77C']]},
+ {id:'MES-MAD-174-BAI',img:'1021T1.35',t:'Mesa',n:'FACETADA',fam:'Laca',cat:'Mesas',lead:'Mesa de comedor redonda para seis, con base facetada.',mat:'MDF',fin:'Laqueado brillante',d:[135,135,75],round:1,price:2630000,units:10,armado:false,colors:[['Marfil','#E9E4DA']],feat:1},
+ {id:'MES-MAD-249-BAI',img:'112B0.76',t:'Mesa baja',n:'TRIÁNGULO',fam:'Laca',cat:'Mesas bajas',lead:'Triángulo suavizado sobre planos verticales.',mat:'MDF',fin:'Laqueado brillante',d:[76,77,40],price:670000,units:20,armado:false,colors:[['Rojo ladrillo','#7E2F35'],['Piedra','#B9AFA3']],feat:1},
+ {id:'MES-MAD-247-BAI',img:'112A0.98',t:'Mesa baja',n:'ORGÁNICA',fam:'Laca',cat:'Mesas bajas',lead:'Contorno orgánico y brillo profundo.',mat:'MDF',fin:'Laqueado brillante',d:[98,74,30],price:780000,units:20,armado:false,colors:[['Café','#5B4334'],['Hueso','#D9D2C4']]},
+ {id:'MES-MAD-208-BAI',img:'102E1.0',t:'Mesa ratona',n:'REFLEJO',fam:'Laca',cat:'Mesas bajas',lead:'Base laqueada mate y tapa de vidrio templado teñido.',mat:'MDF y vidrio templado',fin:'Laqueado mate',d:[100,100,35],round:1,price:1770000,units:12,armado:false,colors:[['Bordó','#6B2630']],feat:1}
+];
+// list = precio de lista · one = un pago (−15%) · price = preventa (−45% sobre lista, redondeado a $1.000)
+P.forEach(p=>{p.name=p.t+' '+p.n; p.list=p.price; if(p.price){p.one=p.list*(1-OFF_1P); p.price=Math.ceil(p.list*(1-PRE)/1000)*1000}});
+const $=s=>document.querySelector(s);
+const ars=n=>'$'+Math.round(n).toLocaleString('es-AR');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cap=s=>s.charAt(0)+s.slice(1).toLowerCase();
+const title=p=>`${p.t} ${cap(p.n)}`;
+const slug=id=>'p-'+id.toLowerCase();
+const byId=id=>P.find(p=>p.id===id);
+const dims=p=>p.round?`Ø ${p.d[0]} × ${p.d[2]} cm`:`${p.d[0]} × ${p.d[1]} × ${p.d[2]} cm`;
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2600)}
+
+
+let cart=[];try{cart=JSON.parse(localStorage.getItem('fc_cart_c')||'[]')}catch(e){}
+cart=cart.filter(l=>byId(l.id));
+const save=()=>{try{localStorage.setItem('fc_cart_c',JSON.stringify(cart))}catch(e){}$('#cartN').textContent=cart.reduce((a,l)=>a+l.q,0)};
+
+/* ---------- piezas ---------- */
+function card(p){
+  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.price?'<span class="circ">−45%</span>':''}<img src="img/${p.img}.jpg" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="img/${p.img2}.jpg" alt="" loading="lazy">`:''}</div>
+  <div class="n"><span>${esc(title(p))}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></div></a>`;
+}
+/* toda la foto es un link, no solo el botón */
+function full(img,h,txt,btn,href,cls=''){
+  return `<a class="full ${cls}" href="${href}"><img src="img/${img}.jpg" alt="" loading="lazy"><div class="t"><h2>${h}</h2><div>${txt?`<p>${txt}</p>`:''}<span class="ob">${btn}</span></div></div></a>`;
+}
+const STD=[['std_06','Comedor con techo de bovedilla'],['std_02','Cocina en madera'],['std_11','Living con ventanal'],['std_05','Cocina con isla'],['prj_cocina-acero','Cocina con revestimiento de acero'],['std_hero','Cocina con isla y techo de bovedilla']];
+let carT=null,carI=0;
+function carGo(i){const c=$('#car');if(!c)return;carI=(i+STD.length)%STD.length;c.querySelectorAll('img').forEach((m,j)=>m.classList.toggle('on',j===carI));c.querySelectorAll('.dots button').forEach((b,j)=>b.classList.toggle('on',j===carI))}
+function carStart(){clearInterval(carT);const c=$('#car');if(!c||REDUCED)return;carT=setInterval(()=>{if(!c.matches(':hover'))carGo(carI+1)},4500)}
+const CATS=[['New in','hv_varilla','#tienda',0],['Sillas','MC-282','#tienda/Sillas',1],['Sillones','C537','#tienda/Butacas',1],['Mesas','1021T1.35','#tienda/Mesas',1],['Mesas bajas','102E1.0','#tienda/Mesas bajas',1],['Bancos','WS-035','#tienda/Bancos',1]];
+const chev=d=>`<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="${d?'M5 2l5 5-5 5':'M9 2L4 7l5 5'}"/></svg>`;
+function cats(){return `<section class="cs"><button class="ar pv" data-cs="-1" aria-label="Anterior" disabled>${chev(0)}</button><div class="tr" id="cst">${CATS.map(c=>`<a class="${c[3]?'w':''}" href="${c[2]}"><img src="img/${c[1]}.jpg" alt="" loading="lazy"><b>${c[0]}</b></a>`).join('')}</div><button class="ar nx" data-cs="1" aria-label="Siguiente">${chev(1)}</button></section>`}
+function csUpd(){const t=$('#cst');if(!t)return;$('.cs .pv').disabled=t.scrollLeft<4;$('.cs .nx').disabled=t.scrollLeft+t.clientWidth>=t.scrollWidth-4}
+document.addEventListener('scroll',e=>{if(e.target.id==='cst')csUpd()},true);
+/* calcular envío (valores de ejemplo hasta conectar el operador logístico) */
+function quote(cp){
+  const n=parseInt(cp,10); if(!(n>=1000&&n<=9999))return null;
+  const o=[{t:'Retiro en depósito',s:'Coordinás día y hora',c:0}];
+  if(n<1900)o.unshift({t:'Flete AMBA a domicilio',s:'48 a 72 h hábiles desde la llegada',c:38000});
+  else o.unshift({t:'Andreani a domicilio',s:'4 a 7 días hábiles desde la llegada',c:52000});
+  return o;
+}
+document.addEventListener('submit',e=>{if(e.target.id!=='cpForm')return;e.preventDefault();const o=quote($('#cp').value);
+  $('#cpRes').innerHTML=o?o.map(x=>`<div class="o"><span>${x.t}<small>${x.s}</small></span><span>${x.c?ars(x.c):'Gratis'}</span></div>`).join('')+'<div class="nt">Valores de ejemplo.</div>':'<div class="nt">Escribí un código postal de 4 números.</div>'});
+function viewHome(){
+  const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
+  return `${full('ctx_pause','Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver Fresno','#tienda/Fresno')}
+  ${cats()}
+  <section class="sec"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
+  <div class="two">${full('112B0.76','Colección Laca','','Ver Laca','#tienda/Laca','w')}${full('hv_acanalada60','Colección Acero','','Ver Acero','#tienda/Acero')}</div>
+  <section class="std" id="estudio"><div><span class="k">FRM Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
+   <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="img/${s[0]}.jpg" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
+}
+function viewProjects(){
+  return `<section class="prj"><div><span class="k" style="font-size:12px;color:var(--soft);display:block;margin-bottom:16px">FORMA Proyectos</span><h1 style="font:400 clamp(28px,3.2vw,44px)/1.08 var(--f);margin-bottom:20px">Equipamos proyectos completos</h1>
+   <p style="color:var(--soft);max-width:400px;margin-bottom:28px">Desarrollos, hoteles, oficinas y gastronomía. Armamos la selección de piezas para cada obra y la coordinamos de punta a punta.</p>
+   <a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 40px" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto')}" target="_blank" rel="noopener">Contanos tu proyecto</a></div>
+   <img src="img/prj_obra-fachada.jpg" alt="Obra de FORMA Proyectos"></section>
+
+  <section class="pj-step"><div class="pj-n"><span>01</span><h3>Estándar <i>|</i> Por pedido</h3></div>
+    <div class="pj-body">
+      <h4>Producción bajo pedido: las unidades que tu proyecto necesita</h4>
+      <p>Nuestras líneas reúnen una amplia variedad de productos pensados para distintos espacios, también disponibles por pedido. Producimos las cantidades que superan el stock para asegurar el suministro en proyectos de mayor escala. La producción arranca con la confirmación del pedido, con la misma calidad, medidas y terminaciones de cada línea.</p>
+      ${pjCond(['Plazo de entrega: 4–5 meses desde la confirmación del pedido.','Pedido mínimo: a consultar según producto.','Cotización: disponible bajo consulta previa.'])}
+    </div></section>
+
+  <section class="pj-step"><div class="pj-split">
+    <figure class="pj-tint"><img id="tintImg" src="img/MC-282.jpg" alt="Silla Varilla en distintas terminaciones"><figcaption>Terminación · <b id="tintName">${TINTS[0][0]}</b></figcaption></figure>
+    <div><div class="pj-n"><span>02</span><h3>Productos a medida</h3></div>
+      <div class="pj-body">
+        <h4>Personalización del producto según las necesidades de tu proyecto</h4>
+        <p>Partimos de modelos existentes y los adaptamos a cada proyecto: terminaciones, materiales, medidas y configuraciones, manteniendo la identidad, las proporciones y la calidad del diseño original. Pensado para proyectos residenciales, comerciales o corporativos que necesitan soluciones a medida.</p>
+        ${pjCond(['Plazo de entrega: 4–5 meses desde la validación de materiales y la confirmación del pedido.','Pedido mínimo: a consultar según el modelo y el nivel de personalización.','Cotización: disponible bajo consulta previa.'])}
+      </div></div>
+  </div></section>
+
+  <section class="pj-step"><div class="pj-split">
+    <div><div class="pj-n"><span>03</span><h3>Diseño propio</h3></div>
+      <div class="pj-body">
+        <h4>Diseños hechos a medida</h4>
+        <p>Piezas diseñadas y producidas desde cero para tu proyecto, en la cantidad que necesites. Cada diseño se desarrolla con un proceso creativo y técnico propio, con resultados únicos. Te acompañamos desde la idea y el diseño hasta la definición técnica, la elección de materiales y la producción final.</p>
+        ${pjCond(['Plazo de entrega: 4–5 meses desde la aprobación del diseño y la confirmación del pedido.','Pedido mínimo: a consultar según la complejidad del proyecto.','Cotización: bajo consulta previa.'])}
+      </div></div>
+    <figure class="pj-photo"><img src="img/std_14.jpg" alt="Bacha de acero y espejo diseñados a medida" loading="lazy"></figure>
+  </div></section>`;
+}
+const TINTS=[['Terracota','none'],['Oliva','hue-rotate(55deg) saturate(.75)'],['Azul petróleo','hue-rotate(165deg) saturate(.6)'],['Grafito','grayscale(1) contrast(1.35)']];
+function pjCond(a){return `<h4>Condiciones comerciales</h4><ul>${a.map(x=>`<li>${x}</li>`).join('')}</ul><a class="ob" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto')}" target="_blank" rel="noopener">Consultar</a>`}
+let tintI=0;
+setInterval(()=>{const im=document.getElementById('tintImg');if(!im)return;tintI=(tintI+1)%TINTS.length;im.style.filter=TINTS[tintI][1];const n=document.getElementById('tintName');if(n)n.textContent=TINTS[tintI][0]},2600);
+
+/* ---------- FRM Studio (página, tipo estudiolak) ---------- */
+const FSP=[['std_06','Comedor con techo de bovedilla','Interiorismo'],['std_02','Cocina en madera','Interiorismo'],['std_05','Cocina con isla','Interiorismo'],['prj_cocina-acero','Cocina con revestimiento de acero','Interiorismo'],['std_14','Baño con bacha de acero','Diseño a medida'],['std_15','Edificio de viviendas','Arquitectura']];
+function viewStudio(){
+  return `<div class="fs">
+  <section class="fs-hero"><img src="img/std_11.jpg" alt="Living con ventanal, proyecto de FRM Studio"><div class="t"><p>En FRM Studio proyectamos arquitectura e interiores pensando en quienes los van a habitar. Cada pieza de FORMA Concept sale de esa misma mirada.</p><button class="ob" data-to="fsp">Ver proyectos</button></div></section>
+  <h2 class="fs-big" id="fsp">(Proyectos)</h2>
+  ${FSP.map(s=>`<figure class="fs-p"><div class="fim"><img src="img/${s[0]}.jpg" alt="${s[1]}, proyecto de FRM Studio" loading="lazy"></div><figcaption><span>${s[1]}</span><span>${s[2]}</span></figcaption></figure>`).join('')}
+  <h2 class="fs-big">(Estudio)</h2>
+  <section class="fs-sec"><span class="k">(Qué hacemos)</span>
+    <div><p>Diseñamos espacios completos: la arquitectura, los interiores y el mobiliario, como un solo proyecto.</p></div>
+    <div><p>Diseño de interiores</p><p>Arquitectura</p><p>Mobiliario a medida</p><p>Proyecto y dirección</p></div></section>
+  <section class="fs-sec"><span class="k">(Cómo trabajamos)</span>
+    <div><p>Escuchamos primero. Cada proyecto parte de cómo vive quien lo va a usar.</p></div>
+    <div><p>Materiales nobles, líneas simples y detalles resueltos, para que los espacios duren y se disfruten.</p></div></section>
+  <section class="fs-sec"><span class="k">(Fundadores)</span>
+    <div><span class="nm">María Peruzzotti</span></div>
+    <div><span class="nm">Franco Scasso</span></div></section>
+  <section class="fs-cta"><p>¿Tenés un proyecto en mente?</p><a class="ob" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto con FRM Studio')}" target="_blank" rel="noopener">Contanos tu proyecto</a></section>
+  </div>`;
+}
+/* las fotos de proyectos crecen al acercarse al centro de la pantalla */
+function fsScroll(){if(innerWidth<=720)return;document.querySelectorAll('.fs-p').forEach(f=>{const r=f.getBoundingClientRect();const p=Math.max(0,Math.min(1,1-Math.abs(r.top+r.height/2-innerHeight/2)/innerHeight));f.style.width=(42+34*p)+'%'})}
+
+/* ---------- tienda ---------- */
+let view='grid';
+const FAMS=['Fresno','Acero','Laca','Nacional'];
+let selF=new Set();
+function viewShop(f){
+  const items=P.filter(p=>(f==='Todos'||p.cat===f)&&(!selF.size||selF.has(p.fam))).sort((a,b)=>(!a.price)-(!b.price));
+  const body=view==='grid'?`<div class="grid">${items.map(card).join('')}</div>`
+   :`<div class="list">${items.map(p=>`<a class="row c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph"><img src="img/${p.img}.jpg" alt="" loading="lazy"></div><span>${esc(title(p))}</span><span>Colección ${p.fam}</span><span>${dims(p)}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></a>`).join('')}</div>`;
+  return `<div class="flt"><div><span class="lb2">Colección</span>${FAMS.map(x=>`<button data-fam="${x}" class="${selF.has(x)?'on':''}" aria-pressed="${selF.has(x)}">${x}</button>`).join('')}${selF.size?'<button data-fam="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>
+   <div class="vw"><a href="#" data-view="grid" class="${view==='grid'?'on':''}">Grilla</a><a href="#" data-view="list" class="${view==='list'?'on':''}">Lista</a></div></div>${selF.has('Nacional')?'<p class="nac">Colección Nacional: próximamente. Piezas únicas, hechas en Argentina.</p>':''}${items.length||selF.has('Nacional')?body:'<p class="nac">No hay piezas con esa combinación.</p>'}`;
+}
+
+/* ---------- producto ---------- */
+function drawing(p){
+  const W=p.d[0],H=p.d[2],s=200/Math.max(W,H),w=W*s,h=H*s,x=(300-w)/2,y=20+(200-h);
+  return `<svg viewBox="0 0 300 270" role="img" aria-label="Medidas ${dims(p)}" style="font:10px var(--f);fill:#77756F">
+   <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#141414"/>
+   <line x1="${x}" y1="${y+h+16}" x2="${x+w}" y2="${y+h+16}" stroke="#9A988F"/><text x="${x+w/2}" y="${y+h+32}" text-anchor="middle">${p.round?'Ø ':''}${p.d[0]} cm</text>
+   <line x1="${x+w+16}" y1="${y}" x2="${x+w+16}" y2="${y+h}" stroke="#9A988F"/><text x="${x+w+24}" y="${y+h/2+4}">${p.d[2]} cm</text></svg>`;
+}
+let col=0;
+function viewProduct(p){
+  col=0;
+  const more=P.filter(x=>x.id!==p.id&&x.price&&(x.fam===p.fam||x.cat===p.cat)).slice(0,4);
+  return `<div class="pdp pre" id="pdp">
+   <div class="info">
+    <a class="back" href="#tienda" data-back>← Atrás</a>
+    <h1>${esc(title(p))}</h1>
+    ${p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>
+     <div class="price">${ars(p.price)} <span class="tag">Preventa −45%</span></div>
+     <ul class="pay"><li><b>Transferencia o un pago</b><span>${ars(p.price)}</span></li>
+      <li><b>3 cuotas sin interés</b><span>3 × ${ars(p.list/3)}</span></li>
+      <li><b>Tarjetas de crédito y débito</b><span>Mercado Pago</span></li></ul>`:'<div class="cuo">Precio a confirmar</div>'}
+    <div class="lb">Color</div>
+    <div class="sw">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i?'':'on'}" style="background:${c[1]}" aria-label="${esc(c[0])}"></button>`).join('')}</div>
+    <div class="swn" id="swn">${esc(p.colors[0][0])}</div>
+    <form class="cpf" id="cpForm"><span class="lb">Calculá tu envío</span><div><input id="cp" inputmode="numeric" maxlength="4" placeholder="Tu código postal" aria-label="Código postal"><button type="submit">Calcular</button></div><div class="cpr" id="cpRes"></div></form>
+    <button class="buy" data-add="${p.id}">${p.price?'Agregar al carrito':'Consultanos'}</button>
+    <div class="tb"><span>Descripción</span><span>${esc(p.lead)}</span></div>
+    <div class="tb"><span>Medidas</span><span>${dims(p)}</span></div>
+    <div class="tb"><span>Material</span><span>${esc(p.mat)}</span></div>
+    <div class="tb"><span>Terminación</span><span>${esc(p.fin)}</span></div>
+    <div class="tb"><span>Colección</span><span>${p.fam}</span></div>
+    <div class="tb"><span>Tiempo de entrega</span><span>Preventa: llega con el próximo contenedor (fecha a confirmar)${p.armado?'. Viene para armar, con manual.':''}</span></div>
+   </div>
+   <div class="pics">
+    <div class="ph" id="pmain"><img src="img/${p.img}.jpg" alt="${esc(title(p))}"></div>
+    ${p.img2?`<div class="ph"><img class="cov" src="img/${p.img2}.jpg" alt="${esc(title(p))} en un ambiente" loading="lazy"></div>`:''}
+    <div class="ph">${drawing(p)}</div>
+   </div>
+  </div>
+  ${more.length?`<section class="more"><h3>También te puede gustar</h3><div class="grid">${more.map(card).join('')}</div></section>`:''}`;
+}
+
+/* ---------- carrito ---------- */
+function drawCart(){
+  const t=cart.reduce((a,l)=>a+(byId(l.id).price||0)*l.q,0);
+  $('#cartList').innerHTML=cart.length?cart.map((l,i)=>{const p=byId(l.id);return `<div class="ci"><div class="ph"><img src="img/${p.img}.jpg" alt=""></div>
+    <div>${esc(title(p))}<small>${esc(p.colors[l.c][0])}</small><div class="q"><button data-q="${i},-1" aria-label="Uno menos">−</button>${l.q}<button data-q="${i},1" aria-label="Uno más">+</button><button data-rm="${i}">Quitar</button></div></div>
+    <div>${ars(p.price*l.q)}</div></div>`}).join(''):'<p class="empty">Tu carrito está vacío.</p>';
+  $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>3 cuotas sin interés</span><span>sobre precio de lista</span></div><button class="buy" id="pay">Pagar con Mercado Pago</button>`:'';
+}
+const openCart=()=>{drawCart();$('#dr').classList.add('on');$('#dr').setAttribute('aria-hidden','false')};
+const closeCart=()=>{$('#dr').classList.remove('on');$('#dr').setAttribute('aria-hidden','true')};
+
+/* ---------- navegación ---------- */
+const app=$('#app');
+let animating=false;
+function render(){
+  const h=decodeURIComponent((location.hash||'#inicio').slice(1));
+  let html,home=false;
+  if(h.startsWith('p-')){const p=P.find(x=>slug(x.id)===h);html=p?viewProduct(p):viewHome();}
+  else if(h.startsWith('tienda')){let s=h.split('/')[1]||'Todos';
+    if(FAMS.includes(s)){selF=new Set([s]);s='Todos';try{history.replaceState(null,'','#tienda')}catch(e){}}
+    html=viewShop(s)}
+  else if(h==='proyectos'){html=viewProjects()}
+  else if(h==='frm'){html=viewStudio()}
+  else{html=viewHome();home=true}
+  document.body.classList.toggle('home',home);
+  app.innerHTML=html;
+  document.querySelectorAll('header [data-r]').forEach(a=>a.classList.toggle('on',h==='tienda'&&a.dataset.r==='tienda'||h==='tienda/'+a.dataset.r||h===a.dataset.r));
+  carI=0; carStart();
+  const pdp=$('#pdp'); if(pdp&&!animating) requestAnimationFrame(()=>pdp.classList.remove('pre'));
+  if(home){const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add('in')),{threshold:.2});document.querySelectorAll('.full').forEach(s=>io.observe(s))}
+  if(h==='estudio'){$('#estudio').scrollIntoView()}
+  onScroll();
+}
+/* cambio de página con fundido */
+function fadeTo(hash){
+  if(REDUCED){location.hash=hash;return}
+  app.classList.add('out');
+  setTimeout(()=>{try{history.pushState(null,'',hash)}catch(e){location.hash=hash;app.classList.remove('out');return}
+    render();scrollTo(0,0);ldWatch()},300);
+}
+/* la transición tipo galería: el resto se desvanece y la foto elegida vuela a su lugar en la ficha */
+function openProduct(a){
+  const hash='#'+slug(a.dataset.p);
+  if(REDUCED){location.hash=hash;return}
+  const box=a.querySelector('.ph'), r=box.getBoundingClientRect();
+  a.classList.add('picked'); app.classList.add('leaving');
+  setTimeout(()=>{
+    const fly=box.cloneNode(true); fly.querySelectorAll('.alt,.circ').forEach(e=>e.remove());
+    fly.classList.add('fly'); Object.assign(fly.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});
+    document.body.appendChild(fly);
+    animating=true; app.classList.remove('leaving');
+    history.pushState(null,'',hash); render(); scrollTo(0,0);
+    const pm=$('#pmain'), t=pm.getBoundingClientRect();
+    const anim=fly.animate([{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'},{left:t.left+'px',top:t.top+'px',width:t.width+'px',height:t.height+'px'}],{duration:750,easing:'cubic-bezier(.7,0,.2,1)',fill:'forwards'});
+    setTimeout(()=>$('#pdp')&&$('#pdp').classList.remove('pre'),350);
+    anim.onfinish=()=>{animating=false;const pdp=$('#pdp');if(pdp){pdp.classList.remove('pre')}fly.remove()};
+  },380);
+}
+document.addEventListener('click',e=>{
+  const a=e.target.closest('a,button'); if(!a)return;
+  if(a.matches('a.c[data-p]')){e.preventDefault();openProduct(a);return}
+  if(a.dataset.view){e.preventDefault();view=a.dataset.view;render();return}
+  if(a.hasAttribute('data-back')){e.preventDefault();fadeTo('#tienda');return}
+  if(a.dataset.col){col=+a.dataset.col;document.querySelectorAll('.sw button').forEach((b,i)=>b.classList.toggle('on',i===col));const p=P.find(x=>slug(x.id)===location.hash.slice(1));$('#swn').textContent=p.colors[col][0];return}
+  if(a.dataset.add){const p=byId(a.dataset.add);
+    if(!p.price){window.open('https://wa.me/541139443055?text='+encodeURIComponent('Hola, quiero consultar por '+title(p)),'_blank','noopener');return}
+    const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q++:cart.push({id:p.id,c:col,q:1}); save(); openCart(); return}
+  if(a.id==='menuBtn'){document.body.classList.contains('menu-on')?closeMenu():openMenu();return}
+  if(a.closest('#mn'))closeMenu();
+  if(a.dataset.fam!==undefined&&a.closest('.flt')){const x=a.dataset.fam;if(!x)selF.clear();else selF.has(x)?selF.delete(x):selF.add(x);render();return}
+  if(a.id==='cartBtn'){closeMenu();openCart();return}
+  if(a.id==='adminBtn'){toast('Ingreso al panel de administración: se conecta en la versión real.');return}
+  if(a.dataset.car){carGo(+a.dataset.car);carStart();return}
+  if(a.hasAttribute('data-soon')){toast('Esta sección se completa en la versión real.');return}
+  if(a.dataset.to){$('#'+a.dataset.to).scrollIntoView({behavior:'smooth'});return}
+  if(a.dataset.cs){const t=$('#cst');t.scrollBy({left:+a.dataset.cs*(t.firstElementChild.offsetWidth+14)});return}
+  if(a.hasAttribute('data-close')){closeCart();return}
+  if(a.dataset.q){const[i,d]=a.dataset.q.split(',').map(Number);cart[i].q+=d;if(cart[i].q<1)cart.splice(i,1);save();drawCart();return}
+  if(a.dataset.rm){cart.splice(+a.dataset.rm,1);save();drawCart();return}
+  if(a.id==='pay'){toast('En la versión real esto abre el pago de Mercado Pago.');return}
+  const href=a.getAttribute('href');
+  if(href&&href.startsWith('#')&&!a.closest('.dr')){e.preventDefault();if(href==='#contacto'){$('#contacto').scrollIntoView({behavior:'smooth'});return}
+    if(href==='#estudio'){if(!$('#estudio')){history.pushState(null,'','#inicio');render()}setTimeout(()=>$('#estudio').scrollIntoView({behavior:'smooth'}),50);return}fadeTo(href)}
+});
+document.addEventListener('mouseover',e=>{const b=e.target.closest('[data-car]');if(b&&+b.dataset.car!==carI)carGo(+b.dataset.car)});
+/* ---------- pantalla de carga ---------- */
+const ld=$('#ld'), cx=$('#ldc').getContext('2d');
+const SEG=[];(()=>{
+  const ring=(r,y,n=56)=>{for(let i=0;i<n;i++){const a=i/n*2*Math.PI,b=(i+1)/n*2*Math.PI;SEG.push([[r*Math.cos(a),y,r*Math.sin(a)],[r*Math.cos(b),y,r*Math.sin(b)]])}};
+  ring(.5,.75);ring(.5,.72);ring(.13,.72,24);ring(.3,0,32);
+  for(let i=0;i<18;i++){const a=i/18*2*Math.PI;SEG.push([[.3*Math.cos(a),0,.3*Math.sin(a)],[.13*Math.cos(a),.72,.13*Math.sin(a)]])}
+})();
+let ldRun=false;
+function ldDraw(t){
+  const W=260,ry=t/1400,tx=-.38,c=Math.cos(ry),s=Math.sin(ry),ct=Math.cos(tx),st=Math.sin(tx);
+  cx.clearRect(0,0,W,W);cx.lineWidth=1.4;
+  const pr=([x,y,z])=>{let X=x*c-z*s,Z=x*s+z*c,Y=y-.38;const Y2=Y*ct-Z*st,Z2=Y*st+Z*ct,k=W*1.45/(2.6+Z2);return[W/2+X*k,W/2-Y2*k,Z2]};
+  for(const[a,b]of SEG){const p=pr(a),q=pr(b);cx.strokeStyle=`rgba(20,20,20,${.18+.72*Math.min(1,Math.max(0,.5-(p[2]+q[2])/2))})`;cx.beginPath();cx.moveTo(p[0],p[1]);cx.lineTo(q[0],q[1]);cx.stroke()}
+  if(!ld.classList.contains('off'))requestAnimationFrame(ldDraw);else ldRun=false;
+}
+function ldShow(){ld.classList.remove('off');if(!ldRun){ldRun=true;requestAnimationFrame(ldDraw)}}
+function ldHide(){ld.classList.add('off')}
+let ldT=null,ldFirst=true;
+/* la página nueva queda oculta hasta que cargan las fotos de la primera pantalla;
+   si eso tarda más de medio segundo se muestra la carga, y recién después aparece la página */
+let ldN=0;
+/* guarda en memoria las fotos grandes del inicio para que no se vuelvan a descargar al volver */
+const KEEP=['ctx_pause','hv_varilla','112B0.76','hv_acanalada60'].map(n=>{const i=new Image();i.src='img/'+n+'.jpg';return i});
+function ldWatch(){
+  const n=++ldN; clearTimeout(ldT);
+  const done=()=>{if(n!==ldN)return;clearTimeout(ldT);ldHide();app.classList.remove('out')};
+  const imgs=[...app.querySelectorAll('img')].filter(i=>!i.complete&&i.getBoundingClientRect().top<innerHeight).slice(0,6);
+  if(!imgs.length){done();return}
+  ldT=setTimeout(()=>{if(n===ldN)ldShow()},500);
+  Promise.race([Promise.all(imgs.map(i=>new Promise(r=>{i.addEventListener('load',r,{once:true});i.addEventListener('error',r,{once:true})}))),new Promise(r=>setTimeout(r,6000))]).then(done);
+}
+ldShow();
+addEventListener('load',()=>setTimeout(()=>{ldFirst=false;ldHide()},Math.max(0,1600-performance.now())));
+setTimeout(()=>{if(ldFirst){ldFirst=false;ldHide()}},7000);
+function openMenu(){document.body.classList.add('menu-on');$('#menuBtn').setAttribute('aria-expanded','true')}
+function closeMenu(){document.body.classList.remove('menu-on');$('#menuBtn').setAttribute('aria-expanded','false')}
+$('#msh').addEventListener('click',closeMenu);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCart();closeMenu()}});
+const onScroll=()=>{document.body.classList.toggle('scrolled',scrollY>20);fsScroll()};
+addEventListener('scroll',onScroll,{passive:true});
+addEventListener('hashchange',()=>{if(!animating){render();scrollTo(0,0)}});
+addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
+save(); render();
+</script>
