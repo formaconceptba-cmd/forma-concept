@@ -360,6 +360,7 @@ async function loadDB(){
   }catch(e){console.warn('DB',e)}
 }
 const $=s=>document.querySelector(s);
+const src=n=>/^https?:/.test(n)?n:"img/"+n+".jpg";
 const ars=n=>'$'+Math.round(n).toLocaleString('es-AR');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cap=s=>s.charAt(0)+s.slice(1).toLowerCase();
@@ -377,7 +378,7 @@ const save=()=>{try{localStorage.setItem('fc_cart_c',JSON.stringify(cart))}catch
 
 /* ---------- piezas ---------- */
 function card(p){
-  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.price?'<span class="circ">−45%</span>':''}<img src="img/${p.img}.jpg" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="img/${p.img2}.jpg" alt="" loading="lazy">`:''}</div>
+  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.price?'<span class="circ">−45%</span>':''}<img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="${src(p.img2)}" alt="" loading="lazy">`:''}</div>
   <div class="n"><span>${esc(title(p))}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></div></a>`;
 }
 /* toda la foto es un link, no solo el botón */
@@ -480,7 +481,7 @@ let selF=new Set();
 function viewShop(f){
   const items=P.filter(p=>(f==='Todos'||p.cat===f)&&(!selF.size||selF.has(p.fam))).sort((a,b)=>(!a.price)-(!b.price));
   const body=view==='grid'?`<div class="grid">${items.map(card).join('')}</div>`
-   :`<div class="list">${items.map(p=>`<a class="row c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph"><img src="img/${p.img}.jpg" alt="" loading="lazy"></div><span>${esc(title(p))}</span><span>Colección ${p.fam}</span><span>${dims(p)}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></a>`).join('')}</div>`;
+   :`<div class="list">${items.map(p=>`<a class="row c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph"><img src="${src(p.img)}" alt="" loading="lazy"></div><span>${esc(title(p))}</span><span>Colección ${p.fam}</span><span>${dims(p)}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></a>`).join('')}</div>`;
   return `<div class="flt"><div><span class="lb2">Colección</span>${FAMS.map(x=>`<button data-fam="${x}" class="${selF.has(x)?'on':''}" aria-pressed="${selF.has(x)}">${x}</button>`).join('')}${selF.size?'<button data-fam="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>
    <div class="vw"><a href="#" data-view="grid" class="${view==='grid'?'on':''}">Grilla</a><a href="#" data-view="list" class="${view==='list'?'on':''}">Lista</a></div></div>${selF.has('Nacional')?'<p class="nac">Colección Nacional: próximamente. Piezas únicas, hechas en Argentina.</p>':''}${items.length||selF.has('Nacional')?body:'<p class="nac">No hay piezas con esa combinación.</p>'}`;
 }
@@ -519,8 +520,8 @@ function viewProduct(p){
     <div class="tb"><span>Tiempo de entrega</span><span>Preventa: llega con el próximo contenedor (fecha a confirmar)${p.armado?'. Viene para armar, con manual.':''}</span></div>
    </div>
    <div class="pics">
-    <div class="ph" id="pmain"><img src="img/${p.img}.jpg" alt="${esc(title(p))}"></div>
-    ${p.img2?`<div class="ph"><img class="cov" src="img/${p.img2}.jpg" alt="${esc(title(p))} en un ambiente" loading="lazy"></div>`:''}
+    <div class="ph" id="pmain"><img src="${src(p.img)}" alt="${esc(title(p))}"></div>
+    ${p.img2?`<div class="ph"><img class="cov" src="${src(p.img2)}" alt="${esc(title(p))} en un ambiente" loading="lazy"></div>`:''}
     <div class="ph">${drawing(p)}</div>
    </div>
   </div>
@@ -530,7 +531,7 @@ function viewProduct(p){
 /* ---------- carrito ---------- */
 function drawCart(){
   const t=cart.reduce((a,l)=>a+(byId(l.id).price||0)*l.q,0);
-  $('#cartList').innerHTML=cart.length?cart.map((l,i)=>{const p=byId(l.id);return `<div class="ci"><div class="ph"><img src="img/${p.img}.jpg" alt=""></div>
+  $('#cartList').innerHTML=cart.length?cart.map((l,i)=>{const p=byId(l.id);return `<div class="ci"><div class="ph"><img src="${src(p.img)}" alt=""></div>
     <div>${esc(title(p))}<small>${esc(p.colors[l.c][0])}</small><div class="q"><button data-q="${i},-1" aria-label="Uno menos">−</button>${l.q}<button data-q="${i},1" aria-label="Uno más">+</button><button data-rm="${i}">Quitar</button></div></div>
     <div>${ars(p.price*l.q)}</div></div>`}).join(''):'<p class="empty">Tu carrito está vacío.</p>';
   $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>3 cuotas sin interés</span><span>sobre precio de lista</span></div><button class="buy" id="pay">Pagar con Mercado Pago</button>`:'';

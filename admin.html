@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>FORMA · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&family=Outfit:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#F7F7F5;--box:#ECECEA;--ink:#141414;--soft:#77756F;--line:#DDDBD6;--ok:#3F6B4A;--bad:#9A3B33;--f:"Helvetica Neue",Helvetica,"Inter Tight",Arial,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f)}
+button,input,select,textarea{font:inherit;color:inherit}
+header{display:flex;align-items:center;gap:24px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+.logo{font:500 22px "Outfit",sans-serif;letter-spacing:-.02em}
+.logo small{font:400 11px var(--f);letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin-left:8px}
+nav{display:flex;gap:4px}
+nav button,.btn{border:1px solid var(--line);background:#fff;padding:8px 14px;border-radius:999px;cursor:pointer}
+nav button.on,.btn.dk{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.sp{flex:1}
+.who{color:var(--soft);font-size:12px}
+main{padding:20px;max-width:1400px;margin:0 auto}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px}
+#login{max-width:380px;margin:12vh auto;padding:32px}
+#login h1{font:500 28px "Outfit",sans-serif;margin:0 0 6px}
+#login p{color:var(--soft);margin:0 0 20px}
+label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin:12px 0 4px}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:#fff}
+textarea{min-height:64px;resize:vertical}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.bar input{max-width:260px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);font-weight:400;background:var(--bg)}
+tr.off td{opacity:.45}
+td img{width:48px;height:48px;object-fit:contain;background:var(--box);border-radius:4px;mix-blend-mode:multiply}
+td input.num{width:110px;padding:6px 8px}
+.n{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:var(--box)}
+.pill.pagado{background:#DDE9DF;color:var(--ok)}.pill.cancelado{background:#F1DCD9;color:var(--bad)}.pill.en_camino{background:#E3E4F0}.pill.entregado{background:#E6E6E6}
+.lnk{background:none;border:0;text-decoration:underline;cursor:pointer;padding:0}
+.wrap{overflow-x:auto}
+dialog{border:0;border-radius:12px;padding:0;width:min(760px,96vw);max-height:92vh}
+dialog::backdrop{background:rgba(20,20,20,.4)}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
+.dh h2{margin:0;font:500 20px "Outfit",sans-serif}
+.db{padding:4px 20px 20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 14px}
+.chk{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap}.chk label{display:flex;gap:6px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);margin:0}.chk input{width:auto}
+.ph{display:flex;gap:14px;margin-top:6px}.ph div{flex:1}.ph img{width:100%;aspect-ratio:1;object-fit:contain;background:var(--box);border-radius:6px;display:block;margin-bottom:6px}
+.cl{display:flex;gap:8px;align-items:center;margin-top:6px}.cl input[type=color]{width:44px;height:36px;padding:2px}
+.df{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--line);position:sticky;bottom:0;background:#fff}
+.hint{color:var(--soft);font-size:12px;margin-top:4px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;z-index:20}
+.stats{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}.stats .card{padding:12px 16px;min-width:150px}.stats b{display:block;font:500 22px "Outfit",sans-serif}.stats span{font-size:12px;color:var(--soft)}
+@media(max-width:700px){header{flex-wrap:wrap;gap:10px}.g2,.g3{grid-template-columns:1fr}.hide-m{display:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast" hidden></div>
+<script>
+const SB_URL='https://znzbwtewxpcpqtmjbmdw.supabase.co', SB_KEY='sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const PRE=0.45, OFF_1P=0.15;
+const ESTADOS=['pendiente','pagado','en_camino','entregado','cancelado'];
+const EST_TXT={pendiente:'Pendiente de pago',pagado:'Pagado',en_camino:'En camino',entregado:'Entregado',cancelado:'Cancelado'};
+const $=s=>document.querySelector(s);
+const app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ars=n=>n==null?'—':'$'+Math.round(n).toLocaleString('es-AR');
+const pre=l=>l?Math.ceil(l*(1-PRE)/1000)*1000:null;
+const src=n=>!n?'':/^https?:/.test(n)?n:'img/'+n+'.jpg';
+function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2600)}
+let tab='productos', prods=[], orders=[], user=null, q='';
+
+/* ---------- ingreso ---------- */
+function viewLogin(msg=''){
+  app.innerHTML=`<div class="card" id="login"><h1>forma</h1><p>Panel de administración. Te mandamos un link a tu mail para entrar, sin contraseña.</p>
+  <form id="lf"><label>Mail</label><input type="email" id="em" required autocomplete="email">
+  <button class="btn dk" style="width:100%;margin-top:16px">Enviarme el link</button></form>
+  <p class="hint" id="lm" style="margin-top:14px">${esc(msg)}</p></div>`;
+  $('#lf').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;
+    const {error}=await sb.auth.signInWithOtp({email:$('#em').value.trim(),options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}});
+    b.disabled=false;$('#lm').textContent=error?'No pudimos mandar el link. ¿Ese mail es de un administrador?':'Listo. Revisá tu mail y tocá el link para entrar.'};
+}
+async function start(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){viewLogin();return}
+  user=session.user;
+  const {data:isAdm}=await sb.rpc('is_admin');
+  if(!isAdm){await sb.auth.signOut();viewLogin('Ese mail no tiene permiso de administrador.');return}
+  shell();
+}
+sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_IN'&&!user)start()});
+
+/* ---------- estructura ---------- */
+function shell(){
+  app.innerHTML=`<header><div class="logo">forma<small>Admin</small></div>
+  <nav><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button></nav>
+  <span class="sp"></span><a class="who hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
+  app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+  $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};
+  draw();
+}
+async function draw(){
+  app.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  if(tab==='productos'){await loadProds();drawProds()}else{await loadOrders();drawOrders()}
+}
+
+/* ---------- productos ---------- */
+async function loadProds(){const {data,error}=await sb.from('products').select('*').order('orden');if(error){toast('Error al leer productos');return}prods=data}
+function drawProds(){
+  const list=prods.filter(p=>!q||(p.tipo+' '+p.nombre+' '+p.id+' '+p.linea+' '+p.categoria).toLowerCase().includes(q.toLowerCase()));
+  const vend=prods.reduce((a,p)=>a+(p.vendidas||0),0), cupo=prods.filter(p=>p.activo).reduce((a,p)=>a+(p.unidades||0),0);
+  $('#m').innerHTML=`<div class="stats"><div class="card"><b>${prods.filter(p=>p.activo).length}</b><span>productos publicados</span></div><div class="card"><b>${vend} / ${cupo}</b><span>unidades vendidas en preventa</span></div></div>
+  <div class="bar"><input id="q" placeholder="Buscar…" value="${esc(q)}"><span class="sp"></span><button class="btn dk" id="nw">+ Nuevo producto</button></div>
+  <div class="card wrap"><table><thead><tr><th></th><th>Producto</th><th class="hide-m">Línea · Categoría</th><th class="n">Precio de lista</th><th class="n hide-m">Preventa</th><th class="n">Cupo</th><th class="n">Vendidas</th><th>Publicado</th><th></th></tr></thead><tbody>
+  ${list.map(p=>`<tr class="${p.activo?'':'off'}" data-id="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td>
+   <td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.linea)} · ${esc(p.categoria)}</td>
+   <td class="n"><input class="num n" data-f="precio_lista" value="${p.precio_lista??''}" inputmode="numeric" placeholder="sin precio"></td>
+   <td class="n hide-m">${ars(pre(p.precio_lista))}</td>
+   <td class="n"><input class="num n" style="width:70px" data-f="unidades" value="${p.unidades??0}" inputmode="numeric"></td>
+   <td class="n"><input class="num n" style="width:70px" data-f="vendidas" value="${p.vendidas??0}" inputmode="numeric"></td>
+   <td><input type="checkbox" data-f="activo" ${p.activo?'checked':''} style="width:auto"></td>
+   <td><button class="lnk" data-ed>Editar</button></td></tr>`).join('')}</tbody></table></div>
+  <p class="hint">Los cambios en la tabla se guardan solos al salir de cada casilla. La preventa se calcula sola (−45% sobre lista).</p>`;
+  $('#q').oninput=e=>{q=e.target.value;const pos=e.target.selectionStart;drawProds();const i=$('#q');i.focus();i.setSelectionRange(pos,pos)};
+  $('#nw').onclick=()=>editProd(null);
+  $('#m').querySelectorAll('tr[data-id]').forEach(tr=>{
+    const id=tr.dataset.id;
+    tr.querySelector('[data-ed]').onclick=()=>editProd(prods.find(p=>p.id===id));
+    tr.querySelectorAll('[data-f]').forEach(inp=>inp.onchange=async()=>{
+      const f=inp.dataset.f; let v=inp.type==='checkbox'?inp.checked:inp.value.replace(/\D/g,'');
+      if(f!=='activo')v=v===''?(f==='precio_lista'?null:0):+v;
+      const {error}=await sb.from('products').update({[f]:v,updated_at:new Date().toISOString()}).eq('id',id);
+      if(error){toast('No se pudo guardar');return}
+      Object.assign(prods.find(p=>p.id===id),{[f]:v});toast('Guardado');drawProds();
+    });
+  });
+}
+function colorRow(c=['','#cccccc']){return `<div class="cl"><input placeholder="Nombre del color" value="${esc(c[0])}"><input type="color" value="${esc(c[1])}"><button type="button" class="lnk" data-rm>Quitar</button></div>`}
+function editProd(p){
+  const isNew=!p; p=p||{id:'',img:'',img2:'',tipo:'',nombre:'',linea:'Acero',categoria:'Sillas',bajada:'',material:'',terminacion:'',ancho:'',prof:'',alto:'',redonda:false,precio_lista:'',unidades:10,vendidas:0,armado:false,colores:[],destacado:false,activo:false,orden:(prods.at(-1)?.orden||0)+1};
+  const lineas=[...new Set(['Acero','Fresno','Laca',...prods.map(x=>x.linea)])], cats=[...new Set(['Sillas','Butacas','Mesas','Mesas bajas','Bancos',...prods.map(x=>x.categoria)])];
+  const d=document.createElement('dialog');
+  d.innerHTML=`<form method="dialog" id="pf"><div class="dh"><h2>${isNew?'Nuevo producto':esc(p.tipo+' '+p.nombre)}</h2><button type="button" class="btn" data-x>Cerrar</button></div><div class="db">
+  <div class="g2"><div><label>Tipo (Silla, Mesa…)</label><input name="tipo" value="${esc(p.tipo)}" required></div><div><label>Nombre</label><input name="nombre" value="${esc(p.nombre)}" required></div></div>
+  <div class="g3"><div><label>Código</label><input name="id" value="${esc(p.id)}" ${isNew?'required':'readonly'} placeholder="SIL-MET-000-RUD"></div>
+   <div><label>Línea</label><input name="linea" list="dl1" value="${esc(p.linea)}" required></div><div><label>Categoría</label><input name="categoria" list="dl2" value="${esc(p.categoria)}" required></div></div>
+  <datalist id="dl1">${lineas.map(x=>`<option value="${esc(x)}">`).join('')}</datalist><datalist id="dl2">${cats.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
+  <label>Frase corta</label><textarea name="bajada">${esc(p.bajada)}</textarea>
+  <div class="g2"><div><label>Material</label><input name="material" value="${esc(p.material)}"></div><div><label>Terminación</label><input name="terminacion" value="${esc(p.terminacion)}"></div></div>
+  <div class="g3"><div><label>Ancho / Ø (cm)</label><input name="ancho" value="${p.ancho??''}" inputmode="decimal"></div><div><label>Profundidad (cm)</label><input name="prof" value="${p.prof??''}" inputmode="decimal"></div><div><label>Alto (cm)</label><input name="alto" value="${p.alto??''}" inputmode="decimal"></div></div>
+  <div class="g3"><div><label>Precio de lista (con IVA)</label><input name="precio_lista" value="${p.precio_lista??''}" inputmode="numeric"><div class="hint" id="pv"></div></div><div><label>Cupo de preventa</label><input name="unidades" value="${p.unidades??0}" inputmode="numeric"></div><div><label>Orden en la tienda</label><input name="orden" value="${p.orden??0}" inputmode="numeric"></div></div>
+  <div class="chk"><label><input type="checkbox" name="redonda" ${p.redonda?'checked':''}> Es redonda</label><label><input type="checkbox" name="armado" ${p.armado?'checked':''}> Requiere armado</label><label><input type="checkbox" name="destacado" ${p.destacado?'checked':''}> Destacado</label><label><input type="checkbox" name="activo" ${p.activo?'checked':''}> Publicado</label></div>
+  <label>Colores</label><div id="cls">${(p.colores||[]).map(colorRow).join('')}</div><button type="button" class="lnk" id="addc" style="margin-top:8px">+ Agregar color</button>
+  <label>Fotos</label><div class="ph">
+   <div><img id="i1" src="${esc(src(p.img))}" alt=""><input type="file" accept="image/*" data-ph="img"><div class="hint">Principal, fondo claro</div></div>
+   <div><img id="i2" src="${esc(src(p.img2))}" alt=""><input type="file" accept="image/*" data-ph="img2"><div class="hint">Ambientada (al pasar el mouse)</div></div></div>
+  </div><div class="df"><button type="button" class="btn" data-x>Cancelar</button><button class="btn dk" id="sv">Guardar</button></div></form>`;
+  document.body.appendChild(d); d.showModal();
+  const f=d.querySelector('#pf'); const ph={img:p.img,img2:p.img2};
+  const upv=()=>{const l=+f.precio_lista.value.replace(/\D/g,'');d.querySelector('#pv').textContent=l?`Preventa ${ars(pre(l))} · 1 pago ${ars(l*(1-OFF_1P))}`:''};upv();f.precio_lista.oninput=upv;
+  d.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{d.close();d.remove()});
+  const bindRm=()=>d.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>b.parentElement.remove());bindRm();
+  d.querySelector('#addc').onclick=()=>{d.querySelector('#cls').insertAdjacentHTML('beforeend',colorRow());bindRm()};
+  d.querySelectorAll('[data-ph]').forEach(inp=>inp.onchange=async()=>{
+    const file=inp.files[0]; if(!file)return; const code=(f.id.value||'nuevo').trim();
+    const path=`${code}/${inp.dataset.ph}-${Date.now()}.${(file.name.split('.').pop()||'jpg').toLowerCase()}`;
+    toast('Subiendo foto…');
+    const {error}=await sb.storage.from('fotos').upload(path,file,{upsert:true,contentType:file.type});
+    if(error){toast('No se pudo subir la foto');return}
+    const url=sb.storage.from('fotos').getPublicUrl(path).data.publicUrl; ph[inp.dataset.ph]=url;
+    d.querySelector(inp.dataset.ph==='img'?'#i1':'#i2').src=url; toast('Foto subida');
+  });
+  f.onsubmit=async e=>{
+    e.preventDefault(); if(!ph.img){toast('Falta la foto principal');return}
+    const num=v=>v===''?null:+String(v).replace(',','.');
+    const row={id:f.id.value.trim(),tipo:f.tipo.value.trim(),nombre:f.nombre.value.trim().toUpperCase(),linea:f.linea.value.trim(),categoria:f.categoria.value.trim(),bajada:f.bajada.value.trim(),material:f.material.value.trim(),terminacion:f.terminacion.value.trim(),
+      ancho:num(f.ancho.value),prof:num(f.prof.value),alto:num(f.alto.value),precio_lista:f.precio_lista.value?+f.precio_lista.value.replace(/\D/g,''):null,unidades:+f.unidades.value||0,orden:+f.orden.value||0,
+      redonda:f.redonda.checked,armado:f.armado.checked,destacado:f.destacado.checked,activo:f.activo.checked,img:ph.img,img2:ph.img2||null,
+      colores:[...d.querySelectorAll('#cls .cl')].map(r=>[r.children[0].value.trim(),r.children[1].value.toUpperCase()]).filter(c=>c[0]),updated_at:new Date().toISOString()};
+    const {error}=isNew?await sb.from('products').insert(row):await sb.from('products').update(row).eq('id',p.id);
+    if(error){toast(error.code==='23505'?'Ya existe un producto con ese código':'No se pudo guardar');return}
+    d.close();d.remove();toast('Producto guardado');draw();
+  };
+}
+
+/* ---------- pedidos ---------- */
+async function loadOrders(){const {data,error}=await sb.from('orders').select('*,order_items(*,products(tipo,nombre))').order('created_at',{ascending:false});if(error){toast('Error al leer pedidos');return}orders=data}
+function drawOrders(){
+  const pag=orders.filter(o=>o.estado!=='pendiente'&&o.estado!=='cancelado');
+  $('#m').innerHTML=`<div class="stats"><div class="card"><b>${pag.length}</b><span>pedidos pagados</span></div><div class="card"><b>${ars(pag.reduce((a,o)=>a+o.total,0))}</b><span>vendido</span></div><div class="card"><b>${orders.filter(o=>o.estado==='pagado').length}</b><span>por despachar</span></div></div>
+  <div class="bar"><span class="sp"></span><button class="btn" id="csv">Exportar a Excel (CSV)</button></div>
+  ${orders.length?`<div class="card wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Cliente</th><th class="hide-m">Productos</th><th class="hide-m">Envío</th><th class="n">Total</th><th>Estado</th></tr></thead><tbody>
+  ${orders.map(o=>`<tr><td>${o.id}</td><td>${new Date(o.created_at).toLocaleDateString('es-AR')}</td><td><b>${esc(o.nombre)}</b><div class="hint">${esc(o.email)} · ${esc(o.telefono)}</div></td>
+   <td class="hide-m">${(o.order_items||[]).map(i=>`${i.cantidad}× ${esc(i.products?i.products.tipo+' '+i.products.nombre:i.product_id)}${i.color?' · '+esc(i.color):''}`).join('<br>')}</td>
+   <td class="hide-m">${esc(o.envio)}<div class="hint">${esc(o.direccion)} ${esc(o.cp)}</div></td><td class="n">${ars(o.total)}</td>
+   <td><select data-o="${o.id}">${ESTADOS.map(s=>`<option value="${s}" ${s===o.estado?'selected':''}>${EST_TXT[s]}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>`
+  :`<div class="card" style="padding:40px;text-align:center;color:var(--soft)">Todavía no hay pedidos. Cuando conectemos Mercado Pago, cada compra aparece acá.</div>`}`;
+  $('#m').querySelectorAll('select[data-o]').forEach(s=>s.onchange=async()=>{
+    const {error}=await sb.from('orders').update({estado:s.value}).eq('id',+s.dataset.o);
+    toast(error?'No se pudo cambiar el estado':'Estado actualizado');if(!error)orders.find(o=>o.id===+s.dataset.o).estado=s.value;
+  });
+  $('#csv').onclick=()=>{
+    const rows=[['Pedido','Fecha','Estado','Cliente','Mail','Teléfono','Dirección','CP','Envío','Productos','Total']].concat(orders.map(o=>[o.id,new Date(o.created_at).toLocaleString('es-AR'),EST_TXT[o.estado],o.nombre,o.email,o.telefono,o.direccion,o.cp,o.envio,(o.order_items||[]).map(i=>`${i.cantidad}x ${i.products?i.products.tipo+' '+i.products.nombre:i.product_id}`).join(' | '),o.total]));
+    const csv='﻿'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='pedidos-forma.csv';a.click();
+  };
+}
+start();
+</script>
+</body>
+</html>
