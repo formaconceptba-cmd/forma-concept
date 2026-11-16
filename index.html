@@ -103,7 +103,7 @@ html.cur,html.cur *{cursor:none!important}
 .full.w img{object-fit:contain;mix-blend-mode:multiply;padding:10% 8% 24%}
 .full.w::after{display:none}
 /* franja de categorías: dos fotos por pantalla, flecha al costado */
-.cs{position:relative;padding-top:14px}
+.cs{position:relative;padding:14px 0;background:var(--bg)}
 .cs .tr{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-behavior:smooth}
 .cs .tr::-webkit-scrollbar{display:none}
 .cs a{position:relative;flex:0 0 calc(50% - 7px);aspect-ratio:1.93;overflow:hidden;scroll-snap-align:start;background:var(--box);display:grid;place-items:center}
@@ -113,7 +113,7 @@ html.cur,html.cur *{cursor:none!important}
 .cs a:not(.w)::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.16)}
 .cs b{position:relative;z-index:1;color:#fff;font-size:26px!important;font-weight:400!important;letter-spacing:.04em!important}
 .cs a.w b{color:var(--ink);align-self:end;padding-bottom:16px;font-size:18px!important}
-.cs .ar{position:absolute;top:calc(50% + 7px);transform:translateY(-50%);z-index:2;width:36px;height:36px;background:#fff;color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:opacity .3s}
+.cs .ar{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:36px;height:36px;background:#fff;color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:opacity .3s}
 .cs .nx{right:0}.cs .pv{left:0}
 .cs .ar[disabled]{opacity:0;pointer-events:none}
 @media (max-width:720px){.cs a{flex-basis:86%}}
@@ -320,11 +320,13 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 .rv-i{position:fixed;inset:0;pointer-events:none}
 .rv-i img{width:100%;height:100%;object-fit:cover;object-position:50% 80%;display:block}
 .rv-i::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.35),rgba(0,0,0,0) 50%)}
-.rv-t{position:absolute;left:var(--g);right:var(--g);bottom:48px;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
-.rv-t h2{font:300 clamp(32px,4.2vw,58px)/1.02 "Inter Tight",sans-serif!important;letter-spacing:-.025em!important;text-transform:none!important;color:#fff}
-.rv-n{font-variant-numeric:tabular-nums;display:inline-block;min-width:1.15em;text-align:right}
+.rv-t{position:absolute;left:var(--g);bottom:40px;width:min(560px,calc(100% - 2*var(--g)));background:var(--bg);color:var(--ink);padding:26px 30px 30px;text-transform:uppercase;font-family:"Inter Tight",sans-serif}
+.rv-t span{display:block;font-size:13px!important;letter-spacing:.14em!important;font-weight:500!important}
+.rv-t h2{margin:10px 0 18px;font:300 clamp(64px,7.5vw,112px)/.9 "Inter Tight",sans-serif!important;letter-spacing:-.03em!important;text-transform:uppercase!important;color:#6E1F2B!important;font-variant-numeric:tabular-nums}
+.rv-n{font-weight:inherit}
+.rv-b{height:6px;background:rgba(110,31,43,.14);overflow:hidden}.rv-b i{display:block;height:100%;width:0;background:#6E1F2B}
 .rv+.sec{position:relative;background:var(--bg)}
-@media (max-width:720px){.rv-t{flex-direction:column;align-items:flex-start;gap:8px}.rv-t h2{font-size:30px!important}}
+@media (max-width:720px){.rv-t{bottom:24px;padding:20px 22px 24px}.rv-t h2{font-size:64px!important}}
 </style>
 
 <header>
@@ -446,7 +448,7 @@ function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
   return `${full('ctx_pause','Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver Fresno','#tienda/Fresno')}
   ${cats()}
-  <section class="rv" aria-hidden="true"><div class="rv-i"><img src="img/hv_varilla.jpg" alt=""></div><div class="rv-t"><h2>Hasta <span class="rv-n" data-to="45">0</span>% off</h2><span>Preventa exclusiva</span></div></section>
+  <section class="rv" aria-hidden="true"><div class="rv-i"><img src="img/hv_varilla.jpg" alt=""></div><div class="rv-t"><span>Preventa exclusiva</span><h2><b class="rv-n" data-to="45">0</b>% OFF</h2><div class="rv-b"><i></i></div></div></section>
   <section class="sec"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full('hv_acanalada60','Colección Acero','','Ver Acero','#tienda/Acero')}${full('ctx_reunir','New in','','Ver lo nuevo','#tienda')}</div>
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
@@ -692,7 +694,7 @@ $('#msh').addEventListener('click',closeMenu);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCart();closeMenu()}});
 const onScroll=()=>{document.body.classList.toggle('scrolled',scrollY>20);fsScroll()};
 addEventListener('scroll',onScroll,{passive:true});
-function rvCount(){const n=document.querySelector(".rv-n:not([data-done])");if(!n)return;const r=n.getBoundingClientRect();if(r.top>innerHeight*.9||r.bottom<0)return;n.dataset.done=1;const to=+n.dataset.to,t0=performance.now(),d=1600;(function f(t){const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);n.textContent=Math.round(to*e);if(k<1)requestAnimationFrame(f)})(t0)}
+function rvCount(){const n=document.querySelector(".rv-n:not([data-done])");if(!n)return;const s=n.closest(".rv").getBoundingClientRect();if(s.top>innerHeight*.3||s.bottom<innerHeight*.5)return;n.dataset.done=1;const b=n.closest(".rv-t").querySelector(".rv-b i"),to=+n.dataset.to,t0=performance.now(),d=2200;(function f(t){const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);n.textContent=Math.round(to*e);b.style.width=e*100+"%";if(k<1)requestAnimationFrame(f)})(t0)}
 addEventListener("scroll",rvCount,{passive:true});
 addEventListener('hashchange',()=>{if(!animating){render();scrollTo(0,0)}});
 addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
