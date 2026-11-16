@@ -298,7 +298,9 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
   .pdp{padding-top:8px;gap:22px}
   .pdp .pics{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:calc(var(--g)*-1);padding-inline:var(--g);scrollbar-width:none}
   .pdp .pics::-webkit-scrollbar{display:none}
-  .pdp .pics>.ph{flex:0 0 86%;scroll-snap-align:center}
+  .pdp .pics{align-items:flex-start}
+  .pdp .pics>.ph{flex:0 0 86%;width:86%;min-width:0;height:auto!important;aspect-ratio:4/5;scroll-snap-align:center}
+  .pdp .pics>.ph>*{max-height:100%}
   .fs-big{padding:72px var(--g) 56px;font-size:52px!important}
   .fs-p{margin-bottom:56px}
   .fs-p .fim{aspect-ratio:4/5}
