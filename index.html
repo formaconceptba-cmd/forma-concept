@@ -316,9 +316,9 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 .rv-i img{width:100%;height:100%;object-fit:cover;display:block}
 .rv-i::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.35),rgba(0,0,0,0) 50%)}
 .rv-t{position:absolute;left:var(--g);right:var(--g);bottom:48px;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
-.rv-t b{font:300 clamp(32px,4.2vw,58px)/1.02 "Inter Tight",sans-serif;letter-spacing:-.025em;text-transform:none}
+.rv-t h2{font:300 clamp(32px,4.2vw,58px)/1.02 "Inter Tight",sans-serif!important;letter-spacing:-.025em!important;text-transform:none!important;color:#fff}
 .rv+.sec{position:relative;background:var(--bg)}
-@media (max-width:720px){.rv-t{flex-direction:column;align-items:flex-start;gap:8px}.rv-t b{font-size:30px}}
+@media (max-width:720px){.rv-t{flex-direction:column;align-items:flex-start;gap:8px}.rv-t h2{font-size:30px!important}}
 </style>
 
 <header>
@@ -440,7 +440,7 @@ function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
   return `${full('ctx_pause','Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver Fresno','#tienda/Fresno')}
   ${cats()}
-  <section class="rv" aria-hidden="true"><div class="rv-i"><img src="img/hv_varilla.jpg" alt=""></div><div class="rv-t"><span>Preventa</span><b>Hasta 45% off</b></div></section>
+  <section class="rv" aria-hidden="true"><div class="rv-i"><img src="img/hv_varilla.jpg" alt=""></div><div class="rv-t"><h2>Hasta 45% off</h2><span>Preventa exclusiva</span></div></section>
   <section class="sec"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full('hv_acanalada60','Colección Acero','','Ver Acero','#tienda/Acero')}${full('ctx_reunir','New in','','Ver lo nuevo','#tienda')}</div>
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
