@@ -311,9 +311,9 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 }
 .std .k,.std .k *{font-weight:400!important}.std .k b{font-weight:700!important;font-size:inherit!important;letter-spacing:inherit!important;font-family:inherit!important}
 /* banda que se descubre al bajar (la foto queda quieta y el contenido pasa por encima) */
-.rv{position:relative;height:100svh;clip-path:inset(0);color:#fff}
+.rv{position:relative;height:72svh;min-height:420px;clip-path:inset(0);color:#fff}
 .rv-i{position:fixed;inset:0;pointer-events:none}
-.rv-i img{width:100%;height:100%;object-fit:cover;display:block}
+.rv-i img{width:100%;height:100%;object-fit:cover;object-position:50% 80%;display:block}
 .rv-i::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.35),rgba(0,0,0,0) 50%)}
 .rv-t{position:absolute;left:var(--g);right:var(--g);bottom:48px;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 .rv-t h2{font:300 clamp(32px,4.2vw,58px)/1.02 "Inter Tight",sans-serif!important;letter-spacing:-.025em!important;text-transform:none!important;color:#fff}
