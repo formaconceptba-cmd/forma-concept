@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     const b = body.buyer || {};
     const buyer = {
       nombre: clean(b.nombre, 120), email: clean(b.email, 160), telefono: clean(b.telefono, 40),
-      direccion: clean(b.direccion, 240), cp: clean(b.cp, 12)
+      direccion: clean(b.direccion, 240), cp: clean(b.cp || body.cp, 12)
     };
 
     const lines = (body.items || []).slice(0, 30).map(l => ({ id: clean(l.id, 40), color: clean(l.color, 60), q: Math.max(1, Math.min(20, parseInt(l.q) || 1)) }));
@@ -44,8 +44,11 @@ export default async function handler(req, res) {
       if (l.q > libre) return res.status(409).json({ error: `No queda stock suficiente de ${p.tipo} ${p.nombre}.` });
       items.push({ p, q: l.q, color: l.color, precio: p.precio_preventa || Math.ceil(p.precio_lista * (1 - PRE) / 1000) * 1000 });
     }
-    const ENVIOS = { gratis: 'Envío gratis (martes, jueves o sábado, a coordinar)', express: 'Envío express 24 h', retiro: 'Retiro en Buenos Aires' };
-    const envio = ENVIOS[body.envio] ? body.envio : 'gratis';
+    const ENVIOS = { gratis: 'Envío gratis (día a coordinar)', express: 'Envío express 24 h', retiro: 'Retiro en Buenos Aires', interior: 'Envío al interior (a cotizar)' };
+    const cpN = parseInt(body.cp, 10), zona = cpN >= 1000 && cpN <= 9999 ? (cpN < 1500 ? 'caba' : cpN < 1900 ? 'gba' : 'int') : null;
+    let envio = ENVIOS[body.envio] ? body.envio : 'gratis';
+    if (zona === 'int' && (envio === 'gratis' || envio === 'express')) envio = 'interior';
+    if (zona && zona !== 'int' && envio === 'interior') envio = 'gratis';
     let costoEnvio = 0;
     if (envio === 'express') { const [s] = await (await sb('settings?select=value&key=eq.envio_express')).json(); costoEnvio = Math.round(+((s && s.value) || 35000)); }
     const total = items.reduce((a, i) => a + i.precio * i.q, 0) + costoEnvio;
