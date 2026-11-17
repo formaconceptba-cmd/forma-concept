@@ -80,31 +80,49 @@ let tab='productos', prods=[], orders=[], user=null, q='';
 
 /* ---------- ingreso ---------- */
 function viewLogin(msg=''){
-  app.innerHTML=`<div class="card" id="login"><h1>forma</h1><p>Panel de administración. Te mandamos un link a tu mail para entrar, sin contraseña.</p>
-  <form id="lf"><label>Mail</label><input type="email" id="em" required autocomplete="email">
-  <button class="btn dk" style="width:100%;margin-top:16px">Enviarme el link</button></form>
-  <p class="hint" id="lm" style="margin-top:14px">${esc(msg)}</p></div>`;
+  app.innerHTML=`<div class="card" id="login"><h1>forma</h1><p>Panel de administración.</p>
+  <form id="lf"><label>Mail</label><input type="email" id="em" required autocomplete="username" value="formaconcept.ba@gmail.com">
+  <label style="margin-top:10px">Contraseña</label><input type="password" id="pw" required autocomplete="current-password">
+  <button class="btn dk" style="width:100%;margin-top:16px">Entrar</button></form>
+  <p class="hint" style="margin-top:14px"><button class="lnk" id="fp">¿Primera vez o te olvidaste la contraseña?</button></p>
+  <p class="hint" id="lm" style="margin-top:8px">${esc(msg)}</p></div>`;
   $('#lf').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;
-    const {error}=await sb.auth.signInWithOtp({email:$('#em').value.trim(),options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}});
-    b.disabled=false;$('#lm').textContent=error?'No pudimos mandar el link. ¿Ese mail es de un administrador?':'Listo. Revisá tu mail y tocá el link para entrar.'};
+    const {error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});
+    b.disabled=false;if(error)$('#lm').textContent='Mail o contraseña incorrectos. Si nunca creaste una contraseña, tocá el link de arriba.'};
+  $('#fp').onclick=async()=>{const em=$('#em').value.trim();if(!em){$('#lm').textContent='Escribí tu mail primero.';return}
+    const {error}=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+'/admin'});
+    $('#lm').textContent=error?'No pudimos mandar el mail. Probá en unos minutos.':'Te mandamos un mail para crear tu contraseña. Abrilo y seguí el link.'};
+}
+function viewNewPass(){
+  app.innerHTML=`<div class="card" id="login"><h1>forma</h1><p>Elegí tu contraseña para entrar al panel. Mínimo 8 caracteres.</p>
+  <form id="nf"><label>Nueva contraseña</label><input type="password" id="np" required minlength="8" autocomplete="new-password">
+  <label style="margin-top:10px">Repetila</label><input type="password" id="np2" required minlength="8" autocomplete="new-password">
+  <button class="btn dk" style="width:100%;margin-top:16px">Guardar y entrar</button></form><p class="hint" id="nm" style="margin-top:14px"></p></div>`;
+  $('#nf').onsubmit=async e=>{e.preventDefault();if($('#np').value!==$('#np2').value){$('#nm').textContent='Las contraseñas no coinciden.';return}
+    const {error}=await sb.auth.updateUser({password:$('#np').value});
+    if(error){$('#nm').textContent='No se pudo guardar: '+error.message;return}
+    try{history.replaceState(null,'',location.pathname)}catch(_){} user=null;start()};
 }
 async function start(){
   const {data:{session}}=await sb.auth.getSession();
+  if(recovering&&session){viewNewPass();return}
   if(!session){viewLogin();return}
   user=session.user;
   const {data:isAdm}=await sb.rpc('is_admin');
   if(!isAdm){await sb.auth.signOut();viewLogin('Ese mail no tiene permiso de administrador.');return}
   shell();
 }
-sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_IN'&&!user)start()});
+let recovering=/type=recovery/.test(location.hash);
+sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){recovering=true;viewNewPass();return}if(ev==='SIGNED_IN'&&!user&&!recovering)start()});
 
 /* ---------- estructura ---------- */
 function shell(){
   app.innerHTML=`<header><div class="logo">forma<small>Admin</small></div>
   <nav><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button><button data-t="pro">Profesionales</button></nav>
-  <span class="sp"></span><a class="who hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
+  <span class="sp"></span><a class="who hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn hide-m" id="chp">Cambiar contraseña</button><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
   app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
   $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};
+  $('#chp').onclick=()=>viewNewPass();
   draw();
 }
 async function draw(){
