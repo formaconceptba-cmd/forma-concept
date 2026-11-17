@@ -616,7 +616,7 @@ function viewProCat(){
   }
   const cats=[...new Set(PROCAT.map(p=>p.categoria))],L=PROCAT.filter(p=>!PCATF||p.categoria===PCATF);
   return `<section class="pcat"><div class="pcat-h"><div><span class="k">FORMA PRO · Catálogo</span><h1>${esc(PCATF||'Todos los productos')}</h1>${proNav('cat')}</div>${contBar(cbm)}</div>
-  <div class="flt pchips"><a href="#pro-catalogo" class="${PCATF?'':'on'}">Todos</a>${cats.map(c=>`<a href="#tienda/${encodeURIComponent(c)}" class="${PCATF===c?'on':''}">${esc(c)}</a>`).join('')}</div>
+  <div class="pchips"><a href="#pro-catalogo" class="${PCATF?'':'on'}">Todos</a>${cats.map(c=>`<a href="#tienda/${encodeURIComponent(c)}" class="${PCATF===c?'on':''}">${esc(c)}</a>`).join('')}</div>
   <div class="pcat-g"><div class="pcgrid">${L.map(card).join('')||'<p class="mut">No hay productos en esta categoría.</p>'}</div>
   <aside class="pcat-o"><h3>Pedido en armado</h3>${order}</aside></div></section>`;
 }
