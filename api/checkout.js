@@ -1,7 +1,7 @@
 // Crea el pedido en Supabase y la preferencia de pago en Mercado Pago.
 // Variables de entorno (Vercel): MP_ACCESS_TOKEN, SUPABASE_SECRET_KEY
 const SB = 'https://znzbwtewxpcpqtmjbmdw.supabase.co';
-const SITE = 'https://formaconcept.vercel.app';
+const SITE = 'https://www.formaconceptba.com';
 const PRE = 0.45;
 
 const sb = (path, opts = {}) => fetch(SB + '/rest/v1/' + path, {

@@ -2,7 +2,7 @@
 // Variables de entorno (Vercel): SUPABASE_SECRET_KEY
 const SB = 'https://znzbwtewxpcpqtmjbmdw.supabase.co';
 const PUB = 'sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
-const SITE = 'https://formaconcept.vercel.app';
+const SITE = 'https://www.formaconceptba.com';
 const ESTADOS = ['pendiente', 'aprobado', 'rechazado'];
 
 export default async function handler(req, res) {
