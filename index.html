@@ -206,6 +206,26 @@ body.pro .mark::after{content:"PRO";font:600 9px/1 "Inter Tight",sans-serif;lett
 .cbar{position:relative;height:8px;background:rgba(110,31,43,.14)}.cbar i{position:absolute;left:0;top:0;bottom:0;background:#6E1F2B}.cbar b{position:absolute;top:0;bottom:0;background:#C08A92}
 .cwarn{color:#6E1F2B;font-size:12px;margin:0}#proReserve[disabled]{opacity:.4;cursor:not-allowed}
 #cartFt .lnk{font-size:12px;color:var(--soft);text-decoration:underline;padding:8px 0;width:100%}
+.pcat{padding:120px var(--g) 80px}.pcat .k{display:block;font-size:12px;color:var(--soft);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.pcat h1{font-size:clamp(26px,3vw,40px)!important;font-weight:400!important;text-transform:none!important;letter-spacing:-.01em!important;margin:0}
+.pcat-h{display:grid;grid-template-columns:1fr minmax(0,460px);gap:32px;align-items:end;margin-bottom:28px}
+.pcb{display:grid;gap:6px}.pcb-t{display:flex;justify-content:space-between;font-size:12px;text-transform:uppercase;letter-spacing:.06em}.pcb small{color:var(--soft);font-size:11.5px;line-height:1.4}.pcb .cbar{height:12px}
+.pcat-g{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;align-items:start}
+.pcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px 16px}
+.pc{display:grid;gap:6px;align-content:start}.pc-i{position:relative;aspect-ratio:1;background:var(--box);overflow:hidden}.pc-i img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
+.pc-i .circ{position:absolute;top:8px;left:8px}.pc b{font-weight:500;font-size:14px;text-transform:none;letter-spacing:0}.pc small{color:var(--soft);font-size:12px;text-transform:none;letter-spacing:0}
+.pc-p{display:flex;gap:10px;align-items:baseline}.pc-p s{color:var(--soft);font-size:13px}.pc-p span{font-size:17px;color:#6E1F2B}
+.pc select{height:38px;border:1px solid var(--line);background:#fff;padding:0 8px;font:inherit;font-size:13px}.pc .buy{height:40px;margin:0}
+.pcat-o{position:sticky;top:90px;border:1px solid var(--line);background:#fff;padding:18px;display:grid;gap:10px;max-height:calc(100vh - 110px);overflow:auto}
+.pcat-o h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin:0}
+.pl{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}.pl small{display:block;color:var(--soft);font-size:11.5px}
+.pl-q{display:flex;align-items:center;gap:6px}.pl-q button{width:24px;height:24px;border:1px solid var(--line);background:none;cursor:pointer}
+.pl-t{display:flex;justify-content:space-between;font-size:14px;padding-top:4px}.mut{color:var(--soft);font-size:13px}
+.pcat-o .buy{margin:6px 0 0}.pcat-o .lnk{font-size:12px;color:var(--soft);text-decoration:underline;background:none;border:0;cursor:pointer}
+.mr{border:1px solid var(--line);padding:10px;display:grid;gap:4px;font-size:12.5px}.mr-h{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}.mr-h span{color:var(--soft)}
+.st{font-size:11px;padding:2px 6px;background:var(--box)}.st-confirmado{background:#DDE9DF;color:#2F6B4F}.st-cancelado{background:#F1DCD9;color:#9A3B33}
+.mr-i{display:flex;justify-content:space-between;gap:10px}.mr-t{border-top:1px solid var(--line);padding-top:4px;margin-top:2px}
+@media (max-width:900px){.pcat-h,.pcat-g{grid-template-columns:1fr}.pcat-o{position:static;max-height:none}}
 .cko{display:grid;gap:8px}.cko b{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;margin-bottom:4px}.cko input{height:42px;border:1px solid var(--line);padding:0 12px;font:inherit;font-size:14px;background:#fff;color:var(--ink);border-radius:0}.cko input:focus{outline:none;border-color:var(--ink)}.cko small{color:var(--soft);font-size:12px;margin:2px 0 6px}.cko .lnk{font-size:12px;color:var(--soft);text-decoration:underline;padding:6px 0}
 .empty{color:var(--soft);font-size:12px;padding:20px 0}
 
@@ -403,6 +423,14 @@ const off=p=>Math.round((1-p.price/p.list)*100);
 P.forEach(norm);
 /* Base de datos (Supabase): si responde, reemplaza la lista de arriba por la real. Si falla, queda la de arriba. */
 const SB_URL='https://znzbwtewxpcpqtmjbmdw.supabase.co', SB_KEY='sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
+/* Seguimiento propio de visitas (sin cookies de terceros): visita, producto visto, carrito, checkout, compra. */
+const VID=(()=>{try{let v=localStorage.getItem('fc_vid');if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('fc_vid',v)}return v}catch(e){return 'x'}})();
+const SID=(()=>{try{let v=sessionStorage.getItem('fc_sid');if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);sessionStorage.setItem('fc_sid',v)}return v}catch(e){return 'x'}})();
+const UTM=(()=>{const q=new URLSearchParams(location.search);const u=['utm_source','utm_medium','utm_campaign'].map(k=>q.get(k)).filter(Boolean).join(' / ');try{if(u)sessionStorage.setItem('fc_utm',u);return u||sessionStorage.getItem('fc_utm')||''}catch(e){return u}})();
+const REF=(()=>{try{const r=document.referrer?new URL(document.referrer).hostname:'';return r&&r!==location.hostname?r:''}catch(e){return ''}})();
+function track(tipo,x={}){try{if(/[?&]notrack/.test(location.search)||localStorage.getItem('fc_notrack'))return;
+  fetch(SB_URL+'/rest/v1/eventos',{method:'POST',keepalive:true,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
+  body:JSON.stringify({tipo,visitante:VID,sesion:SID,path:(location.hash||'#inicio').slice(0,200),ref:REF.slice(0,200),utm:UTM.slice(0,200),dispositivo:/Mobi|Android/i.test(navigator.userAgent)?'celular':'computadora',producto:x.producto||null,email:x.email||null,valor:x.valor||null})}).catch(()=>{})}catch(e){}}
 async function loadDB(){
   try{
     const r=await fetch(SB_URL+'/rest/v1/products?select=*&activo=eq.true&order=orden',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
@@ -431,7 +459,7 @@ const save=()=>{try{localStorage.setItem('fc_cart_c',JSON.stringify(cart))}catch
 
 /* ---------- piezas ---------- */
 function card(p){
-  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.price?`<span class="circ">${isPro()?'PRO':'−'+off(p)+'%'}</span>`:''}<img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="${src(p.img2)}" alt="" loading="lazy">`:''}</div>
+  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.price?`<span class="circ">${false?'PRO':'−'+off(p)+'%'}</span>`:''}<img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="${src(p.img2)}" alt="" loading="lazy">`:''}</div>
   <div class="n"><span>${esc(title(p))}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></div></a>`;
 }
 /* toda la foto es un link, no solo el botón */
@@ -503,12 +531,39 @@ async function proLoad(){
   const {data:{session}}=await c.auth.getSession(); ME=session?session.user:null; PRO=null; ISADM=false;
   if(ME){
     const r=await c.from('profesionales').select('*').maybeSingle(); PRO=r.data||null;
-    ISADM=(await c.rpc('is_admin')).data===true;
-    if(isPro()){const {data}=await c.rpc('pro_catalog');const m=Object.fromEntries((data||[]).map(x=>[x.product_id,x]));P.forEach(p=>{const x=m[p.id];p.price=x&&x.precio||null;p.moq=x&&x.moq||1;p.cbm=x&&+x.cbm||0});await contLoad()}
+    ISADM=(await c.rpc('is_admin')).data===true;if(ISADM){try{localStorage.setItem('fc_notrack','1')}catch(e){}}
+    if(isPro()){const {data}=await c.rpc('pro_catalogo');PROCAT=data||[];await contLoad();await misLoad()}
   }
   document.body.classList.toggle('pro',isPro());
   if(new URLSearchParams(location.search).get('pro')){try{history.replaceState(null,'',location.pathname+'#pro')}catch(e){}}
   if(!animating)render();
+}
+let PROCAT=[], MIS=[], PCART=[];try{PCART=JSON.parse(localStorage.getItem('fc_pcart')||'[]')}catch(e){}
+const savePC=()=>{try{localStorage.setItem('fc_pcart',JSON.stringify(PCART))}catch(e){}};
+async function misLoad(){try{const {data}=await sbInit().from('pedidos_pro').select('*').order('created_at',{ascending:false});MIS=data||[]}catch(e){}}
+const pcBy=c=>PROCAT.find(x=>x.codigo===c);
+const m3=n=>(+n||0).toFixed(2).replace('.',',')+' m³';
+const EST_PRO={reservado:'Reservado · esperando que se complete el contenedor',confirmado:'Confirmado',cancelado:'Cancelado'};
+function viewProCat(){
+  const lines=PCART.map((l,i)=>{const p=pcBy(l.codigo);if(!p)return null;const q=l.packs*p.moq;return {...l,i,p,q,sub:(p.precio||0)*q,cbm:(+p.cbm||0)*q}}).filter(Boolean);
+  const tot=lines.reduce((a,l)=>a+l.sub,0),cbm=lines.reduce((a,l)=>a+l.cbm,0),units=lines.reduce((a,l)=>a+l.q,0);
+  const p0=Math.min(100,CONT.usado/CONT.cap*100),p1=Math.min(100-p0,cbm/CONT.cap*100);
+  const bar=`<div class="pcb"><div class="pcb-t"><span>Contenedor compartido · ${CONT.cap} m³</span><b>${Math.round(p0+p1)}% lleno</b></div><div class="cbar"><i style="width:${p0}%"></i><b style="left:${p0}%;width:${p1}%"></b></div><small>Bordó oscuro: reservas confirmadas de todos. Claro: tu pedido actual (${m3(cbm)}). Quedan ${m3(Math.max(0,CONT.cap-CONT.usado-cbm))} libres.</small></div>`;
+  const card=p=>{const cols=(p.colores||'').split(',').map(s=>s.trim()).filter(Boolean);return `<div class="pc"><div class="pc-i"><img src="${src(p.foto)}" alt="" loading="lazy">${p.precio&&p.lista?`<span class="circ">−${Math.round(p.descuento*100)}%</span>`:''}</div>
+    <b>${esc(p.descripcion)}</b><small>${esc([p.medidas&&p.medidas+' mm',p.material].filter(Boolean).join(' · '))}</small>
+    <div class="pc-p">${p.precio?`<s>${ars(p.lista)}</s><span>${ars(p.precio)}</span>`:'<span>Consultar</span>'}</div>
+    <small>Lote mínimo: <b>${p.moq} u.</b> · ${m3(p.cbm*p.moq)} por lote</small>
+    ${p.precio?`<select id="pcol-${esc(p.codigo)}" aria-label="Color">${cols.length?cols.map(c=>`<option>${esc(c)}</option>`).join(''):'<option>A definir</option>'}</select><button class="buy" data-pa="${esc(p.codigo)}">Agregar lote · ${p.moq} u.</button>`:''}</div>`};
+  const order=lines.length?`${lines.map(l=>`<div class="pl"><div><b>${esc(l.p.descripcion)}</b><small>${esc(l.color)} · ${l.packs} lote${l.packs>1?'s':''} × ${l.p.moq} = <b>${l.q} u.</b> · ${m3(l.cbm)}</small></div><div class="pl-q"><button data-pp="${l.i},-1" aria-label="Un lote menos">−</button>${l.packs}<button data-pp="${l.i},1" aria-label="Un lote más">+</button></div><span>${ars(l.sub)}</span></div>`).join('')}
+    <div class="pl-t"><span>${units} unidades · ${m3(cbm)}</span><b>${ars(tot)}</b></div><small class="mut">IVA incluido · IVA contenido ${ars(Math.round(tot-tot/1.21))}</small>
+    <button class="buy" id="pcReserve">Reservar en el contenedor</button><button class="lnk" id="pcQuote">Consultar por WhatsApp</button>`
+    :'<p class="mut">Elegí el color y tocá "Agregar lote" en los productos que quieras. Cada lote es el mínimo de compra del proveedor.</p>';
+  const mis=MIS.length?MIS.map(o=>`<div class="mr"><div class="mr-h"><b>Reserva #${o.id}</b><span>${new Date(o.created_at).toLocaleDateString('es-AR')}</span><span class="st st-${o.estado}">${EST_PRO[o.estado]||o.estado}</span></div>
+    ${(o.items||[]).map(i=>`<div class="mr-i"><span>${i.q} × ${esc(i.producto)} · ${esc(i.color)}</span><span>${ars(i.precio*i.q)}</span></div>`).join('')}
+    <div class="mr-i mr-t"><span>${m3(o.cbm)}</span><b>${ars(o.total)}</b></div></div>`).join(''):'<p class="mut">Todavía no reservaste nada.</p>';
+  return `<section class="pcat"><div class="pcat-h"><div><span class="k">Catálogo profesional</span><h1>${esc(PRO.estudio||PRO.nombre)}</h1></div>${bar}</div>
+  <div class="pcat-g"><div class="pcgrid">${PROCAT.map(card).join('')||'<p class="mut">El catálogo se está armando.</p>'}</div>
+  <aside class="pcat-o"><h3>Tu pedido</h3>${order}<h3 style="margin-top:28px">Mis reservas</h3>${mis}</aside></div></section>`;
 }
 const RUBROS=['Arquitectura','Interiorismo','Desarrollo inmobiliario','Hotelería / gastronomía','Oficinas / corporativo','Otro'];
 function viewPro(){
@@ -517,7 +572,7 @@ function viewPro(){
   let b;
   if(!ME) b=`<p>Precios especiales para estudios de arquitectura, interiorismo, desarrolladores y empresas. Mismo catálogo, condiciones para profesionales.</p>
     <div class="pro2"><div class="cko"><b>Ya tengo acceso</b><input id="pl_e" type="email" placeholder="Tu email" autocomplete="email"><button class="buy" id="proLogin">Enviarme el link para entrar</button><small>Sin contraseña: te llega un link al mail.</small></div>${reg()}</div>`;
-  else if(isPro()) b=`<p>Hola <b>${esc(PRO.nombre)}</b>${PRO.estudio?` · ${esc(PRO.estudio)}`:''}. Estás viendo la tienda con <b>precios profesionales</b>.</p><p><a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 32px" href="#tienda">Ver catálogo profesional</a></p>${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
+  else if(isPro()) b=`<p>Hola <b>${esc(PRO.nombre)}</b>${PRO.estudio?` · ${esc(PRO.estudio)}`:''}. Tenés acceso al catálogo profesional.</p><p><a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 32px" href="#pro-catalogo">Entrar al catálogo profesional</a></p>${MIS.length?`<p>Tenés <b>${MIS.length}</b> reserva${MIS.length>1?'s':''} en el contenedor. <a href="#pro-catalogo">Verlas</a></p>`:''}${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
   else if(PRO&&PRO.estado==='pendiente') b=`<p>Recibimos tu solicitud, <b>${esc(PRO.nombre)}</b>. La estamos revisando y te avisamos por mail.</p>${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
   else if(PRO) b=`<p>Tu solicitud no fue aprobada. Si creés que es un error, escribinos a ${EMPRESA.mail}.</p><p><button class="lnk" id="proOut">Salir</button></p>`;
   else b=`<p>Entraste como <b>${esc(ME.email)}</b>.</p>${adm}${ISADM?'':reg(ME.email)}<p><button class="lnk" id="proOut">Salir</button></p>`;
@@ -614,9 +669,9 @@ function viewProduct(p){
     <a class="back" href="#tienda" data-back>← Atrás</a>
     <h1>${esc(title(p))}</h1>
     ${p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>
-     <div class="price">${ars(p.price)} <span class="tag">${isPro()?'Precio profesional':'Preventa −'+off(p)+'%'}</span></div>
+     <div class="price">${ars(p.price)} <span class="tag">${false?'Precio profesional':'Preventa −'+off(p)+'%'}</span></div>
      <ul class="pay"><li><b>Transferencia o un pago</b><span>${ars(p.price)}</span></li>
-      ${isPro()?`<li><b>Mínimo por pedido</b><span>${p.moq||1} unidades</span></li>`:`<li><b>3 cuotas sin interés</b><span>3 × ${ars(p.list/3)}</span></li>`}
+      ${false?`<li><b>Mínimo por pedido</b><span>${p.moq||1} unidades</span></li>`:`<li><b>3 cuotas sin interés</b><span>3 × ${ars(p.list/3)}</span></li>`}
       <li><b>Tarjetas de crédito y débito</b><span>Mercado Pago</span></li></ul>`:'<div class="cuo">Precio a confirmar</div>'}
     <div class="lb">Color</div>
     <div class="sw">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i?'':'on'}" style="background:${c[1]}" aria-label="${esc(c[0])}"></button>`).join('')}</div>
@@ -645,7 +700,7 @@ function drawCart(){
   $('#cartList').innerHTML=cart.length?cart.map((l,i)=>{const p=byId(l.id);return `<div class="ci"><div class="ph"><img src="${src(p.img)}" alt=""></div>
     <div>${esc(title(p))}<small>${esc(p.colors[l.c][0])}</small><div class="q"><button data-q="${i},-1" aria-label="Uno menos">−</button>${l.q}<button data-q="${i},1" aria-label="Uno más">+</button><button data-rm="${i}">Quitar</button></div></div>
     <div>${ars(p.price*l.q)}</div></div>`}).join(''):'<p class="empty">Tu carrito está vacío.</p>';
-  if(isPro()){const cbm=cart.reduce((s,l)=>s+(byId(l.id).cbm||0)*l.q,0),tot=CONT.usado+cbm,pc=Math.min(100,Math.round(tot/CONT.cap*100)),pc0=Math.min(100,Math.round(CONT.usado/CONT.cap*100)),bad=cart.filter(l=>l.q<(byId(l.id).moq||1));
+  if(false){const cbm=cart.reduce((s,l)=>s+(byId(l.id).cbm||0)*l.q,0),tot=CONT.usado+cbm,pc=Math.min(100,Math.round(tot/CONT.cap*100)),pc0=Math.min(100,Math.round(CONT.usado/CONT.cap*100)),bad=cart.filter(l=>l.q<(byId(l.id).moq||1));
     $('#cartFt').innerHTML=cart.length?`<div><span>Total profesional</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>IVA incluido</span><span>${ars(Math.round(t-t/1.21))}</span></div>
     <div class="cnt"><div><span>Contenedor compartido</span><span>${pc}% lleno</span></div><div class="cbar"><i style="width:${pc0}%"></i><b style="left:${pc0}%;width:${Math.max(0,pc-pc0)}%"></b></div><small>Tu pedido ocupa ${cbm.toFixed(2).replace('.',',')} m³. Lo confirmamos cuando el contenedor se completa con otros pedidos y la preventa.</small></div>
     ${bad.length?`<p class="cwarn">Revisá los mínimos: ${bad.map(l=>esc(title(byId(l.id)))+' ('+(byId(l.id).moq||1)+' u.)').join(', ')}</p>`:''}
@@ -661,7 +716,7 @@ let animating=false;
 function render(){
   const h=decodeURIComponent((location.hash||'#inicio').slice(1));
   let html,home=false;
-  if(h.startsWith('p-')){const p=P.find(x=>slug(x.id)===h);html=p?viewProduct(p):viewHome();}
+  if(h.startsWith('p-')){const p=P.find(x=>slug(x.id)===h);html=p?viewProduct(p):viewHome();if(p)track('vista_producto',{producto:p.id});}
   else if(h.startsWith('tienda')){let s=h.split('/')[1]||'Todos';
     if(FAMS.includes(s)){selF=new Set([s]);s='Todos';try{history.replaceState(null,'','#tienda')}catch(e){}}
     html=viewShop(s)}
@@ -669,6 +724,7 @@ function render(){
   else if(h==='frm'){html=viewStudio()}
   else if(['terminos','privacidad','arrepentimiento'].includes(h)){html=viewLegal(h)}
   else if(h==='pro'){html=viewPro()}
+  else if(h==='pro-catalogo'){html=isPro()?viewProCat():viewPro()}
   else{html=viewHome();home=true}
   document.body.classList.toggle('home',home);
   app.innerHTML=html;
@@ -712,7 +768,7 @@ document.addEventListener('click',e=>{
   if(a.dataset.col){col=+a.dataset.col;document.querySelectorAll('.sw button').forEach((b,i)=>b.classList.toggle('on',i===col));const p=P.find(x=>slug(x.id)===location.hash.slice(1));$('#swn').textContent=p.colors[col][0];return}
   if(a.dataset.add){const p=byId(a.dataset.add);
     if(!p.price){window.open('https://wa.me/541139443055?text='+encodeURIComponent('Hola, quiero consultar por '+title(p)),'_blank','noopener');return}
-    const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q++:cart.push({id:p.id,c:col,q:isPro()?(p.moq||1):1}); save(); openCart(); return}
+    track('agregar_carrito',{producto:p.id,valor:p.price});const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q++:cart.push({id:p.id,c:col,q:false?(p.moq||1):1}); save(); openCart(); return}
   if(a.id==='menuBtn'){document.body.classList.contains('menu-on')?closeMenu():openMenu();return}
   if(a.closest('#mn'))closeMenu();
   if(a.dataset.fam!==undefined&&a.closest('.flt')){const x=a.dataset.fam;if(!x)selF.clear();else selF.has(x)?selF.delete(x):selF.add(x);render();return}
@@ -729,13 +785,20 @@ document.addEventListener('click',e=>{
     a.disabled=true;fetch(SB_URL+'/rest/v1/profesionales',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(d)})
       .then(r=>{if(r.status===409){a.disabled=false;toast('Ese mail ya está registrado.');return}if(!r.ok)throw 0;$('#prF').innerHTML=`<p><b>¡Listo!</b> Recibimos tu solicitud. Te avisamos a ${esc(d.email)} cuando tengas acceso.</p>`})
       .catch(()=>{a.disabled=false;toast('No pudimos enviarla. Escribinos a '+EMPRESA.mail)});return}
+  if(a.dataset.pa){const p=pcBy(a.dataset.pa),color=$('#pcol-'+CSS.escape(p.codigo)).value;const l=PCART.find(x=>x.codigo===p.codigo&&x.color===color);l?l.packs++:PCART.push({codigo:p.codigo,color,packs:1});savePC();track('agregar_carrito',{producto:p.codigo,valor:p.precio*p.moq});render();toast('Agregado: '+p.moq+' u. · '+color);return}
+  if(a.dataset.pp){const[i,d]=a.dataset.pp.split(',').map(Number);PCART[i].packs+=d;if(PCART[i].packs<1)PCART.splice(i,1);savePC();render();return}
+  if(a.id==='pcQuote'){const L=PCART.map(l=>{const p=pcBy(l.codigo);return p?`• ${l.packs*p.moq} × ${p.descripcion} · ${l.color}`:''}).join('\n');window.open('https://wa.me/541139443055?text='+encodeURIComponent(`Hola, soy ${PRO.nombre}${PRO.estudio?' ('+PRO.estudio+')':''}. Quiero consultar por:\n${L}`),'_blank','noopener');return}
+  if(a.id==='pcReserve'){const items=PCART.map(l=>{const p=pcBy(l.codigo);if(!p)return null;const q=l.packs*p.moq;return {id:p.codigo,producto:p.descripcion,color:l.color,packs:l.packs,q,precio:p.precio||0,cbm:+((+p.cbm||0)*q).toFixed(3)}}).filter(Boolean);
+    const d={email:ME.email.toLowerCase(),nombre:PRO.nombre,estudio:PRO.estudio,items,cbm:+items.reduce((s,x)=>s+x.cbm,0).toFixed(3),total:items.reduce((s,x)=>s+x.precio*x.q,0)};
+    a.disabled=true;sbInit().from('pedidos_pro').insert(d).then(async({error})=>{if(error){a.disabled=false;toast('No pudimos reservar. Probá de nuevo o escribinos.');return}
+      PCART=[];savePC();await Promise.all([contLoad(),misLoad()]);render();toast('¡Reservado! Lo ves abajo en "Mis reservas".')});return}
   if(a.id==='proOut'){sbInit().auth.signOut().finally(()=>location.reload());return}
   if(a.dataset.car){carGo(+a.dataset.car);carStart();return}
   if(a.hasAttribute('data-soon')){toast('Esta sección se completa en la versión real.');return}
   if(a.dataset.to){$('#'+a.dataset.to).scrollIntoView({behavior:'smooth'});return}
   if(a.dataset.cs){const t=$('#cst');t.scrollBy({left:+a.dataset.cs*(t.firstElementChild.offsetWidth+14)});return}
   if(a.hasAttribute('data-close')){closeCart();return}
-  if(a.dataset.q){const[i,d]=a.dataset.q.split(',').map(Number);cart[i].q+=d;if(cart[i].q<(isPro()?(byId(cart[i].id).moq||1):1))cart.splice(i,1);save();drawCart();return}
+  if(a.dataset.q){const[i,d]=a.dataset.q.split(',').map(Number);cart[i].q+=d;if(cart[i].q<(false?(byId(cart[i].id).moq||1):1))cart.splice(i,1);save();drawCart();return}
   if(a.id==='proReserve'){const items=cart.map(l=>{const p=byId(l.id);return{id:p.id,producto:title(p),color:p.colors[l.c][0],q:l.q,precio:p.price||0,cbm:+((p.cbm||0)*l.q).toFixed(3)}});
     const d={email:ME.email.toLowerCase(),nombre:PRO.nombre,estudio:PRO.estudio,items,cbm:+items.reduce((s,x)=>s+x.cbm,0).toFixed(3),total:items.reduce((s,x)=>s+x.precio*x.q,0)};
     a.disabled=true;sbInit().from('pedidos_pro').insert(d).then(async({error})=>{if(error){a.disabled=false;toast('No pudimos reservar. Probá de nuevo o escribinos.');return}
@@ -751,7 +814,7 @@ document.addEventListener('click',e=>{
       .catch(()=>{a.disabled=false;toast('No pudimos enviarla. Escribinos a '+EMPRESA.mail)});return}
   if(a.id==='payGo'){const v=k=>$('#ck_'+k).value.trim();const buyer={nombre:v('n'),email:v('e'),telefono:v('t'),direccion:v('d'),cp:v('c')};
     if(!buyer.nombre||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyer.email)||!buyer.telefono||!buyer.direccion){toast('Completá nombre, email, teléfono y dirección.');return}
-    a.disabled=true;a.textContent='Abriendo Mercado Pago…';
+    track('inicio_checkout',{email:buyer.email,valor:cart.reduce((s,l)=>s+(byId(l.id).price||0)*l.q,0)});a.disabled=true;a.textContent='Abriendo Mercado Pago…';
     fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({buyer,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0]}))})})
       .then(r=>r.json()).then(d=>{if(d.url){location.href=d.url}else{toast(d.error||'No pudimos iniciar el pago.');a.disabled=false;a.textContent='Continuar a Mercado Pago'}})
       .catch(()=>{toast('No pudimos iniciar el pago. Probá de nuevo.');a.disabled=false;a.textContent='Continuar a Mercado Pago'});return}
@@ -805,11 +868,11 @@ addEventListener("scroll",rvCount,{passive:true});
 addEventListener('hashchange',()=>{if(!animating){render();scrollTo(0,0)}});
 addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
 (()=>{const q=new URLSearchParams(location.search).get('pago');if(!q)return;
-  if(q==='ok'){cart=[];setTimeout(()=>toast('¡Gracias por tu compra! Te escribimos para coordinar la entrega.'),600)}
+  if(q==='ok'){track('compra',{valor:cart.reduce((s,l)=>s+(byId(l.id).price||0)*l.q,0)});cart=[];setTimeout(()=>toast('¡Gracias por tu compra! Te escribimos para coordinar la entrega.'),600)}
   else if(q==='pendiente'){cart=[];setTimeout(()=>toast('Tu pago está pendiente. Te avisamos cuando se acredite.'),600)}
   else setTimeout(()=>toast('El pago no se completó. Podés intentar de nuevo.'),600);
   try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}})();
-save(); render(); loadDB().then(proLoad);
+save(); render(); loadDB().then(proLoad); track('visita');
 (()=>{if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
 const c=document.createElement('div');c.id='cur';document.body.appendChild(c);document.documentElement.classList.add('cur');
 addEventListener('mousemove',e=>{c.style.transform=`translate(${e.clientX}px,${e.clientY}px)`;c.classList.add('on');
