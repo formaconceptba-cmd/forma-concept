@@ -112,6 +112,8 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .full.w{background:var(--box);color:var(--ink)}
 .full.w img{object-fit:contain;mix-blend-mode:multiply;padding:10% 8% 24%}
 .full.w::after{display:none}
+.pslide .psl{position:absolute;inset:0}.pslide .psl img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;padding:8% 14% 26%;opacity:0;transition:opacity .9s ease}.pslide .psl img.on{opacity:1}
+.pslide .t{color:var(--ink)}.pslide .ob{color:var(--ink);border-color:var(--ink)}.pslide:hover .ob{background:var(--ink);color:#fff}
 /* franja de categorías: dos fotos por pantalla, flecha al costado */
 .cs{position:relative;padding:14px 0;background:var(--bg)}
 .cs .tr{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-behavior:smooth}
@@ -550,6 +552,9 @@ function card(p){
   <div class="n"><span>${esc(title(p))}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></div></a>`;
 }
 /* toda la foto es un link, no solo el botón */
+function proTile(){const S=P.filter(p=>p.cat==='Butacas'&&p.img);const L=S.length?S:P.filter(p=>p.img).slice(0,4);
+  return `<a class="full w pslide" href="#proyectos"><div class="psl">${L.map((p,i)=>`<img class="${i?'':'on'}" src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">`).join('')}</div><div class="t"><h2>¿Sos profesional o querés comercializar nuestros productos?</h2><div><span class="ob">Panel para profesionales</span></div></div></a>`}
+setInterval(()=>{const w=document.querySelector('.psl');if(!w||document.hidden)return;const im=[...w.querySelectorAll('img')];if(im.length<2)return;const i=im.findIndex(x=>x.classList.contains('on'));im[i].classList.remove('on');im[(i+1)%im.length].classList.add('on')},2800);
 function full(img,h,txt,btn,href,cls=''){
   return `<a class="full ${cls}" href="${href}"><img src="${src(img)}" alt="" loading="lazy"><div class="t"><h2>${h}</h2><div>${txt?`<p>${txt}</p>`:''}<span class="ob">${btn}</span></div></div></a>`;
 }
@@ -573,7 +578,7 @@ function viewHome(){
   <section class="rv"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo<br>en tu casa</h2><b class="rv-go">Abrir la cámara →</b></a></section>
   <section class="pvs" aria-label="Preventa exclusiva con descuentos de hasta 45%"><div class="pvs-t"><span>Preventa exclusiva con descuentos de hasta</span><b><b class="rv-n" data-to="45">0</b>%</b></div><div class="pvs-b"><i></i></div></section>
   <section class="sec"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
-  <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${full(FX('inicio_profesionales','ctx_reunir'),'¿Sos profesional o querés comercializar nuestros productos?','','Panel para profesionales','#proyectos')}</div>
+  <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${proTile()}</div>
   <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
    <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="${src(FX('estudio_'+(i+1),s[0]))}" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
