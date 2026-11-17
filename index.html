@@ -202,6 +202,7 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .pro2{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:28px;align-items:start}@media (max-width:720px){.pro2{grid-template-columns:1fr}}
 .cko select{height:42px;border:1px solid var(--line);padding:0 10px;font:inherit;font-size:14px;background:#fff;color:var(--ink);border-radius:0}
 .lgl .lnk{text-decoration:underline;font-size:13px;color:var(--soft)}
+body.frm:not(.pro) .mark::after{content:"studio";font:400 13px/1 "Inter Tight",sans-serif;letter-spacing:.02em;margin-left:6px;text-transform:lowercase}
 body.pro .mark::after{content:"PRO";font:600 9px/1 "Inter Tight",sans-serif;letter-spacing:.1em;background:#6E1F2B;color:#fff;padding:3px 5px;margin-left:6px;vertical-align:super}
 .cnt{display:grid!important;gap:6px;margin:6px 0 4px}.cnt>div:first-child{display:flex;justify-content:space-between}.cnt small{color:var(--soft);font-size:11.5px;line-height:1.4}
 .cbar{position:relative;height:8px;background:rgba(110,31,43,.14)}.cbar i{position:absolute;left:0;top:0;bottom:0;background:#6E1F2B}.cbar b{position:absolute;top:0;bottom:0;background:#C08A92}
@@ -255,6 +256,11 @@ a.fs-p{display:block;color:inherit}a.fs-p .fim img{transition:transform 1.2s var
 .ar-r{display:grid;gap:6px;font-size:12px}.ar-r input{width:100%;accent-color:var(--ink)}.ar-bt{display:flex;gap:16px}.ar-bt .lnk{background:none;border:0;text-decoration:underline;cursor:pointer;font:inherit;font-size:12px}
 .ar-pr{display:flex;justify-content:space-between;gap:10px;font-size:13px;border-top:1px solid var(--line);padding-top:10px}.ar-c .buy{display:flex;align-items:center;justify-content:center;margin:0}
 @media (max-width:900px){.ar-g{grid-template-columns:1fr}.ar-c{position:static}.ar-st{min-height:50svh}}
+.pvs{padding:30px 0 6px;background:var(--bg)}.pvs-t{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:0 var(--g) 12px;font-size:12px;letter-spacing:.1em}
+.pvs-t b{font:300 clamp(28px,3vw,42px)/1 "Inter Tight",sans-serif!important;letter-spacing:-.02em!important;color:#6E1F2B;font-variant-numeric:tabular-nums}.pvs-t b .rv-n{font:inherit!important;color:inherit!important;letter-spacing:inherit!important}
+.pvs-b{height:4px;background:rgba(110,31,43,.12);overflow:hidden}.pvs-b i{display:block;height:100%;width:0;background:#6E1F2B}
+.rv-ar{width:min(250px,calc(100% - 2*var(--g)))!important;padding:14px 16px 16px!important}.rv-ar h2{font-size:clamp(26px,2.4vw,34px)!important;line-height:1!important}
+.ar-st video{display:block;width:100%;max-height:78svh;object-fit:cover}.ar-cam{display:flex;gap:10px;flex-wrap:wrap;position:absolute;left:12px;bottom:12px;z-index:3}.ar-cam button,.ar-cam label{background:rgba(20,20,20,.8);color:#fff;border:0;padding:10px 14px;font:inherit;font-size:11px;letter-spacing:.08em;cursor:pointer}
 .pcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:32px 20px}
 .qty{display:flex;align-items:center;gap:10px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin:8px 0}.qty span{flex:1;color:var(--soft)}.qty button{width:34px;height:34px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:16px}.qty b{min-width:22px;text-align:center;font-weight:500}
 .ptabs{display:flex;gap:6px;margin-top:16px}.ptabs button{border:1px solid var(--line);background:none;padding:9px 16px;font:inherit;font-size:12px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.ptabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -542,7 +548,8 @@ function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
   return `${full('ctx_pause','Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda')}
   ${cats()}
-  <section class="rv"><div class="rv-i"><img src="img/hv_varilla.jpg" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo en tu casa</h2><p>Sacá o subí una foto de tu espacio y ubicá el mueble para ver cómo queda.</p><b class="rv-go">Probar ahora →</b></a></section>
+  <section class="rv"><div class="rv-i"><img src="img/hv_varilla.jpg" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo<br>en tu casa</h2><b class="rv-go">Abrir la cámara →</b></a></section>
+  <section class="pvs" aria-label="Preventa exclusiva con descuentos de hasta 45%"><div class="pvs-t"><span>Preventa exclusiva con descuentos de hasta</span><b><b class="rv-n" data-to="45">0</b>%</b></div><div class="pvs-b"><i></i></div></section>
   <section class="sec"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full('hv_acanalada60','Colección Acero','','Ver Acero','#tienda/Acero')}${full('ctx_reunir','¿Sos profesional o querés comercializar nuestros productos?','','Panel para profesionales','#proyectos')}</div>
   <section class="rv rv2"><div class="rv-i"><img src="img/nac_1.jpg" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
@@ -720,24 +727,34 @@ function viewFrmProject(slug){
   ${nx&&nx!==p?`<a class="fsx-next" href="#frm/${esc(nx.slug)}"><span class="k">(Siguiente proyecto)</span><b>${esc(nx.titulo)}</b><img src="${src(nx.portada)}" alt="" loading="lazy"></a>`:''}
   <section class="fs-cta"><p>¿Tenés un proyecto en mente?</p><a class="ob" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto con FRM Studio')}" target="_blank" rel="noopener">Contanos tu proyecto</a></section></div>`;
 }
-/* Probalo en tu casa: foto del espacio + producto encima (arrastrar, tamaño, girar). */
-let AR={id:null,room:null,x:50,y:66,s:24,flip:false};
+/* Probalo en tu casa: cámara en vivo (o foto) + producto encima (arrastrar, tamaño, girar). */
+let AR={id:null,room:null,cam:false,x:50,y:66,s:24,flip:false},arStream=null;
+function arStop(){if(arStream){arStream.getTracks().forEach(t=>t.stop());arStream=null}AR.cam=false}
 function viewAR(){
-  const L=P.filter(p=>p.img);if(!AR.id&&L[0])AR.id=L[0].id;
-  return `<section class="ar"><div class="ar-h"><span class="k">Nuevo</span><h1>Probalo en tu casa</h1><p>Elegí un producto, sacá o subí una foto del lugar donde lo querés poner y movelo con el dedo o el mouse hasta que quede donde va.</p></div>
-  <div class="ar-g"><div class="ar-st" id="arSt">${AR.room?`<img class="ar-room" src="${AR.room}" alt="Tu espacio">`:`<div class="ar-empty"><b>1 · Tu espacio</b><span>Sacá una foto desde el celular o subí una que ya tengas.</span><label class="buy">Sacar o subir foto<input type="file" accept="image/*" capture="environment" id="arIn" hidden></label><button class="lnk" id="arDemo">Probar con una foto de ejemplo</button></div>`}
-    ${AR.room?`<img class="ar-p" id="arP" src="${src((byId(AR.id)||{}).img)}" alt="" draggable="false" style="left:${AR.x}%;top:${AR.y}%;width:${AR.s}%;transform:translate(-50%,-50%) scaleX(${AR.flip?-1:1})">`:''}</div>
+  const L=P.filter(p=>p.img);if(!AR.id&&L[0])AR.id=L[0].id;const on=AR.cam||AR.room,pr=byId(AR.id);
+  return `<section class="ar"><div class="ar-h"><span class="k">Nuevo</span><h1>Probalo en tu casa</h1><p>Abrí la cámara, apuntá al lugar donde lo querés poner, elegí el producto y movelo con el dedo hasta que quede donde va.</p></div>
+  <div class="ar-g"><div class="ar-st" id="arSt">
+    ${AR.cam?`<video id="arV" autoplay playsinline muted></video>`:AR.room?`<img class="ar-room" src="${AR.room}" alt="Tu espacio">`:`<div class="ar-empty"><b>1 · Abrí la cámara</b><span>Te va a pedir permiso para usar la cámara. La imagen no se guarda ni se envía a ningún lado.</span><button class="buy" id="arCam">Abrir la cámara</button><label class="lnk">o subí una foto<input type="file" accept="image/*" id="arIn" hidden></label><button class="lnk" id="arDemo">o probá con una foto de ejemplo</button></div>`}
+    ${on?`<img class="ar-p" id="arP" src="${src((pr||{}).img)}" alt="" draggable="false" style="left:${AR.x}%;top:${AR.y}%;width:${AR.s}%;transform:translate(-50%,-50%) scaleX(${AR.flip?-1:1})">
+     <div class="ar-cam">${AR.cam?`<button id="arSnap">Congelar imagen</button>`:`<button id="arCam">Volver a la cámara</button>`}<label>Subir foto<input type="file" accept="image/*" id="arIn" hidden></label></div>`:''}</div>
    <aside class="ar-c"><b>2 · Elegí el producto</b><div class="ar-l">${L.map(p=>`<button class="ar-i ${p.id===AR.id?'on':''}" data-arp="${p.id}" title="${esc(title(p))}"><img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy"></button>`).join('')}</div>
-    ${AR.room?`<b>3 · Ajustalo</b><label class="ar-r">Tamaño<input type="range" id="arS" min="8" max="90" value="${AR.s}"></label>
-    <div class="ar-bt"><button class="lnk" id="arF">Girar</button><label class="lnk">Cambiar foto<input type="file" accept="image/*" capture="environment" id="arIn" hidden></label></div>`:''}
-    ${byId(AR.id)?`<div class="ar-pr"><span>${esc(title(byId(AR.id)))}</span><b>${byId(AR.id).price?ars(byId(AR.id).price):''}</b></div><a class="buy ghost" href="#${slug(AR.id)}">Ver el producto</a>`:''}
-    <p class="mut">La foto queda solo en tu teléfono o computadora: no se sube a ningún lado.</p></aside></div></section>`;
+    ${on?`<b>3 · Ajustalo</b><label class="ar-r">Tamaño<input type="range" id="arS" min="8" max="90" value="${AR.s}"></label><div class="ar-bt"><button class="lnk" id="arF">Girar</button></div>`:''}
+    ${pr?`<div class="ar-pr"><span>${esc(title(pr))}</span><b>${pr.price?ars(pr.price):''}</b></div><a class="buy ghost" href="#${slug(AR.id)}">Ver el producto</a>`:''}
+    <p class="mut">Mové el producto arrastrándolo. En la computadora también podés cambiar el tamaño con la ruedita del mouse.</p></aside></div></section>`;
+}
+async function arOpenCam(){
+  if(!navigator.mediaDevices?.getUserMedia){toast('Tu navegador no permite usar la cámara. Subí una foto.');return}
+  try{arStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});AR.cam=true;AR.room=null;render()}
+  catch(e){toast('No pudimos abrir la cámara. Revisá el permiso o subí una foto.')}
 }
 function arInit(){
-  const inp=$('#arIn');if(inp)inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{AR.room=r.result;render()};r.readAsDataURL(f)};
-  const demo=$('#arDemo');if(demo)demo.onclick=()=>{AR.room='img/ctx_reunir.jpg';render()};
+  const v=$('#arV');if(v&&arStream){v.srcObject=arStream;v.play().catch(()=>{})}
+  const cam=$('#arCam');if(cam)cam.onclick=e=>{e.stopPropagation();arOpenCam()};
+  const snap=$('#arSnap');if(snap)snap.onclick=e=>{e.stopPropagation();const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);AR.room=c.toDataURL('image/jpeg',.9);arStop();render()};
+  const inp=$('#arIn');if(inp)inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{arStop();AR.room=r.result;render()};r.readAsDataURL(f)};
+  const demo=$('#arDemo');if(demo)demo.onclick=e=>{e.stopPropagation();AR.room='img/ctx_reunir.jpg';render()};
   const s=$('#arS');if(s)s.oninput=e=>{AR.s=+e.target.value;const p=$('#arP');if(p)p.style.width=AR.s+'%'};
-  const fl=$('#arF');if(fl)fl.onclick=()=>{AR.flip=!AR.flip;const p=$('#arP');if(p)p.style.transform=`translate(-50%,-50%) scaleX(${AR.flip?-1:1})`};
+  const fl=$('#arF');if(fl)fl.onclick=e=>{e.stopPropagation();AR.flip=!AR.flip;const p=$('#arP');if(p)p.style.transform=`translate(-50%,-50%) scaleX(${AR.flip?-1:1})`};
   const p=$('#arP'),st=$('#arSt');if(!p||!st)return;let drag=null;
   p.onpointerdown=e=>{e.preventDefault();p.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,ox:AR.x,oy:AR.y}};
   p.onpointermove=e=>{if(!drag)return;const r=st.getBoundingClientRect();AR.x=Math.max(0,Math.min(100,drag.ox+(e.clientX-drag.x)/r.width*100));AR.y=Math.max(0,Math.min(100,drag.oy+(e.clientY-drag.y)/r.height*100));p.style.left=AR.x+'%';p.style.top=AR.y+'%'};
@@ -885,9 +902,10 @@ function render(){
   else if(h==='pro'){html=viewPro()}
   else if(h==='pro-catalogo'){html=isPro()?viewProCat():viewPro()}
   else{html=viewHome();home=true}
+  document.body.classList.toggle('frm',h==='frm'||h.startsWith('frm/'));
   document.body.classList.toggle('home',home);
   app.innerHTML=html;
-  if(h==='en-tu-casa')arInit();
+  if(h==='en-tu-casa')arInit();else if(arStream)arStop();
   document.querySelectorAll('header [data-r]').forEach(a=>a.classList.toggle('on',h==='tienda'&&a.dataset.r==='tienda'||h==='tienda/'+a.dataset.r||h===a.dataset.r));
   carI=0; carStart();
   const pdp=$('#pdp'); if(pdp&&!animating) requestAnimationFrame(()=>pdp.classList.remove('pre'));
@@ -1026,7 +1044,7 @@ $('#msh').addEventListener('click',closeMenu);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCart();closeMenu()}});
 const onScroll=()=>{document.body.classList.toggle('scrolled',scrollY>20);fsScroll()};
 addEventListener('scroll',onScroll,{passive:true});
-function rvCount(){const n=document.querySelector(".rv-n:not([data-done])");if(!n)return;const s=n.closest(".rv").getBoundingClientRect();if(s.top>innerHeight*.3||s.bottom<innerHeight*.5)return;n.dataset.done=1;const b=n.closest(".rv-t").querySelector(".rv-b i"),to=+n.dataset.to,t0=performance.now(),d=4500;(function f(t){const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);n.textContent=Math.round(to*e);b.style.width=e*100+"%";if(k<1)requestAnimationFrame(f)})(t0)}
+function rvCount(){const n=document.querySelector(".rv-n:not([data-done])");if(!n)return;const sec=n.closest(".pvs,.rv"),s=sec.getBoundingClientRect();if(s.top>innerHeight*.85||s.bottom<0)return;n.dataset.done=1;const b=sec.querySelector(".pvs-b i,.rv-b i"),to=+n.dataset.to,t0=performance.now(),d=4500;(function f(t){const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);n.textContent=Math.round(to*e);b.style.width=e*100+"%";if(k<1)requestAnimationFrame(f)})(t0)}
 addEventListener("scroll",rvCount,{passive:true});
 addEventListener('hashchange',()=>{if(!animating){render();scrollTo(0,0)}});
 addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
