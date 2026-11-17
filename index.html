@@ -843,9 +843,9 @@ function drawCart(){
     <button class="buy" id="proReserve" ${bad.length?'disabled':''}>Reservar en el contenedor</button><button class="lnk" id="proQuote">Consultar por WhatsApp</button>`:'';return}
   $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>3 cuotas sin interés</span><span>sobre precio de lista</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="pay">Ir a pagar</button><small class="safe">🔒 Pago seguro con Mercado Pago · tarjeta, débito, transferencia o efectivo</small>`:'';
 }
-document.querySelector('#dr .sh')?.addEventListener('click',closeCart);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#dr').classList.contains('on'))closeCart()});
 const openCart=()=>{drawCart();$('#dr').classList.add('on');$('#dr').setAttribute('aria-hidden','false')};
 const closeCart=()=>{$('#dr').classList.remove('on');$('#dr').setAttribute('aria-hidden','true')};
+document.querySelector('#dr .sh')?.addEventListener('click',closeCart);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#dr').classList.contains('on'))closeCart()});
 /* Paso previo al pago: envío y resumen. El costo real lo vuelve a calcular el servidor. */
 let ENV='gratis', ENV_EXP=35000;
 fetch(SB_URL+'/rest/v1/rpc/envio_precios',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).then(d=>{if(d&&d[0]&&d[0].express!=null)ENV_EXP=+d[0].express}).catch(()=>{});
