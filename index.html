@@ -574,9 +574,9 @@ document.addEventListener('submit',e=>{if(e.target.id==='ckForm'){e.preventDefau
 function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
   return `${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda')}
-  ${cats()}
-  <section class="rv"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo<br>en tu casa</h2><b class="rv-go">Abrir la cámara →</b></a></section>
   <section class="pvs" aria-label="Preventa exclusiva con descuentos de hasta 45%"><div class="pvs-t"><span>Preventa exclusiva con descuentos de hasta</span><b><b class="rv-n" data-to="45">0</b>%</b></div><div class="pvs-b"><i></i></div></section>
+  <section class="rv"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo<br>en tu casa</h2><b class="rv-go">Abrir la cámara →</b></a></section>
+  ${cats()}
   <section class="sec"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${proTile()}</div>
   <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
