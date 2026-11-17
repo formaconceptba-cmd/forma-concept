@@ -7,10 +7,12 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
   try {
     const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    if (!token) return res.status(401).json({ error: 'Sin sesión' });
     const H = { apikey: PUB, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
     // Con la sesión del profesional sólo puede leer sus propias reservas (RLS).
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
-    const [o] = await (await fetch(`${SB}/rest/v1/pedidos_pro?select=*&order=created_at.desc&limit=1${body.id ? '&id=eq.' + parseInt(body.id) : ''}`, { headers: H })).json();
+    const rows = await (await fetch(`${SB}/rest/v1/pedidos_pro?select=*&order=created_at.desc&limit=1${body.id ? '&id=eq.' + parseInt(body.id) : ''}`, { headers: H })).json();
+    const o = Array.isArray(rows) ? rows[0] : null;
     if (!o) return res.status(404).json({ error: 'Reserva no encontrada' });
     if (Date.now() - new Date(o.created_at) > 10 * 60 * 1000) return res.status(200).json({ ok: true, viejo: true });
     const its = (o.items || []).map(i => ({ q: i.q, precio: i.precio, color: i.color, nombre: i.producto }));
