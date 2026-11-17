@@ -66,6 +66,7 @@ td img{width:72px;height:72px}table.big td img,.cp td img{width:88px;height:88px
 .sbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:30;display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.15);padding:10px 12px 10px 18px;border-radius:999px}.sbar[hidden]{display:none}
 .sw{display:flex;gap:4px;flex-wrap:wrap;max-width:120px}.sw i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
 .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}.fg-i{display:grid;gap:4px;font-size:12px}.fg-i img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;background:var(--box)}
+.snav{display:flex;gap:6px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:61px;z-index:4}.snav[hidden]{display:none}.snav button{border:0;background:none;padding:7px 12px;border-radius:999px;cursor:pointer;color:var(--soft);font-size:13px}.snav button.on{background:var(--box);color:var(--ink)}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}.fslot{padding:10px;display:grid;gap:6px;align-content:start}.fslot img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;background:var(--box)}.fslot.chg{border-color:var(--ok)}.fsb{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.fsb label{margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:#fff;cursor:pointer}
 .colc{min-width:150px}.colc .hint{max-width:180px}
 .cpick{position:fixed;z-index:40;width:340px;max-height:80vh;overflow:auto;padding:14px;display:grid;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
@@ -100,6 +101,7 @@ const ars=n=>n==null?'—':'$'+Math.round(n).toLocaleString('es-AR');
 const pre=l=>l?Math.ceil(l*(1-PRE)/1000)*1000:null;
 const src=n=>!n?'':/^https?:/.test(n)?n:'img/'+n+'.jpg';
 function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2600)}
+let CUENTAS='mayorista', PEDF='publico';
 let tab='inicio', prods=[], orders=[], user=null, q='';
 
 /* ---------- ingreso ---------- */
@@ -142,15 +144,15 @@ sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){recovering=true;vi
 /* ---------- estructura ---------- */
 function shell(){
   app.innerHTML=`<header><div class="logo">forma<small>Admin</small></div>
-  <nav style="flex-wrap:wrap"><button data-t="inicio">Inicio</button><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="pro">Profesionales</button><button data-t="frm">FRM Studio</button><button data-t="fotos">Fotos</button><button data-t="maestro">Maestro</button><button data-t="eco">Economía</button><button data-t="compras">Compras</button></nav>
+  <nav id="gnav" style="flex-wrap:wrap"></nav>
   <span class="sp"></span><a class="who hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn hide-m" id="chp">Cambiar contraseña</button><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
-  app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+  $('header').insertAdjacentHTML('afterend','<nav id="snav" class="snav"></nav>');
   $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};
   $('#chp').onclick=()=>viewNewPass();
   draw();
 }
 async function draw(){
-  app.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  drawNav();PEDF=tab==='ppedidos'?'profesional':'publico';if(tab==='ppedidos'){await loadOrders();drawOrders();return}if(tab==='pprecios'){await drawProfPrecios();return}if(tab==='pcuentas'){CUENTAS='profesional';await drawPro();return}if(tab==='pro')CUENTAS='mayorista';
   if(tab==='inicio'){await drawInicio();await drawSubs()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
 }
 
@@ -364,6 +366,44 @@ async function drawFotos(){
     try{const url=await subirFoto(f,'sitio');const {error}=await sb.from('sitio_fotos').upsert({clave:i.dataset.fk,url});if(error)throw error;toast('Foto cambiada. Ya se ve en la tienda.');drawFotos()}catch(er){toast('No se pudo subir la foto')}});
   $('#m').querySelectorAll('[data-fr]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('sitio_fotos').delete().eq('clave',b.dataset.fr);toast(error?'No se pudo':'Volvió la foto original');drawFotos()});
 }
+
+/* ---------- profesionales: precios y mínimos (compran en la tienda) ---------- */
+async function drawProfPrecios(){
+  await Promise.all([loadProds(),loadMaster()]);
+  const dp=ST.desc_profesional??0.5, mp=ST.min_profesional??1;
+  const row=p=>{const d=p.pct_profesional??dp,pr=p.precio_lista?Math.round(p.precio_lista*(1-d)/1000)*1000:null,m=byCod(p.id),cA=m?costo(m.fob_usd,m.cbm)*ST.tc:null,mg=pr&&cA?(pr/(1+ST.iva)-cA)/(pr/(1+ST.iva)):null;return {d,pr,mg}};
+  let L=sortBy('pprof',prods.filter(p=>p.activo),(p,k)=>({nombre:p.tipo+' '+p.nombre,cat:p.categoria,lista:p.precio_lista,pct:row(p).d,precio:row(p).pr,min:p.min_profesional??mp,marg:row(p).mg}[k]));
+  $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Precios y mínimos para profesionales</b></div>
+  <p class="hint" style="margin-bottom:12px">Arquitectos, interioristas, gastronomía y hotelería compran en la tienda en el momento, con este precio y desde esta cantidad mínima. Los mayoristas tienen su propio catálogo (pestaña Mayoristas).</p>
+  <div class="bar"><label style="margin:0">Descuento general sobre lista</label><input id="gdp" class="num" style="width:70px" value="${Math.round(dp*100)}" inputmode="numeric"> %
+   <label style="margin:0 0 0 16px">Mínimo general</label><input id="gmp" class="num" style="width:70px" value="${mp}" inputmode="numeric"> u.</div>
+  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('pprof','nombre','Producto')}${thS('pprof','cat','Categoría','hide-m')}${thS('pprof','lista','Lista','n')}<th class="n hide-m">Preventa público</th>${thS('pprof','pct','% profesional','n')}${thS('pprof','precio','Precio profesional','n')}${thS('pprof','marg','Margen','n')}${thS('pprof','min','Mínimo','n')}</tr></thead><tbody>
+  ${L.map(p=>{const r=row(p);return `<tr data-pp="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td><td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.categoria)}</td>
+   <td class="n">${ars(p.precio_lista)}</td><td class="n hide-m">${ars(preP(p))}</td>
+   <td class="n"><input class="num n" style="width:64px" data-ppc value="${Math.round(r.d*100)}" inputmode="numeric"><div class="hint">${p.pct_profesional!=null?'propio':'general'}</div></td>
+   <td class="n"><b data-ppr>${ars(r.pr)}</b></td><td class="n" data-pmg>${r.mg==null?'—':`<span class="${r.mg<0.15?'neg':'pos'}">${pct(r.mg)}</span>`}</td>
+   <td class="n"><input class="num n" style="width:64px" data-pmin value="${p.min_profesional??mp}" inputmode="numeric"><div class="hint">${p.min_profesional!=null?'propio':'general'}</div></td></tr>`}).join('')}</tbody></table></div>
+  <p class="hint">Precio profesional = lista × (1 − %). Conviene que sea menor que la preventa al público. Margen sin IVA sobre el costo puesto en Argentina; en rojo, menos de 15%. Tocá "Guardar cambios" abajo para publicar.</p>`;
+  bindSort(drawProfPrecios);
+  const upd=tr=>{const p=prods.find(x=>x.id===tr.dataset.pp),r=row(p);tr.querySelector('[data-ppr]').textContent=ars(r.pr);tr.querySelector('[data-pmg]').innerHTML=r.mg==null?'—':`<span class="${r.mg<0.15?'neg':'pos'}">${pct(r.mg)}</span>`};
+  $('#m').querySelectorAll('[data-ppc]').forEach(i=>i.onchange=()=>{const tr=i.closest('tr'),p=prods.find(x=>x.id===tr.dataset.pp),t=i.value.trim(),v=t===''?null:Math.max(0,Math.min(90,+t.replace(',','.')))/100;p.pct_profesional=v;mark(i,'products','id',p.id,'pct_profesional',v);i.value=Math.round((v??dp)*100);upd(tr)});
+  $('#m').querySelectorAll('[data-pmin]').forEach(i=>i.onchange=()=>{const tr=i.closest('tr'),p=prods.find(x=>x.id===tr.dataset.pp),t=i.value.replace(/\D/g,''),v=t===''?null:Math.max(1,+t);p.min_profesional=v;mark(i,'products','id',p.id,'min_profesional',v);i.value=v??mp});
+  $('#gdp').onchange=e=>{const v=(+e.target.value.replace(',','.'))/100;ST.desc_profesional=v;mark(e.target,'settings','key','desc_profesional','value',v);drawProfPrecios()};
+  $('#gmp').onchange=e=>{const v=Math.max(1,+e.target.value.replace(/\D/g,'')||1);ST.min_profesional=v;mark(e.target,'settings','key','min_profesional','value',v);drawProfPrecios()};
+}
+/* ---------- menú del panel por secciones ---------- */
+const GRUPOS=[['inicio','Inicio',[['inicio','Resumen']]],
+ ['b2c','Tienda',[['productos','Productos'],['pedidos','Pedidos y arrepentimientos']]],
+ ['prof','Profesionales',[['pprecios','Precios y mínimos'],['pcuentas','Cuentas'],['ppedidos','Pedidos']]],
+ ['may','Mayoristas',[['pro','Cuentas, contenedor y catálogo']]],
+ ['cont','Contenido',[['frm','FRM Studio'],['fotos','Fotos de la página']]],
+ ['gest','Gestión',[['maestro','Maestro de productos'],['eco','Economía'],['compras','Órdenes a proveedores']]]];
+const grupoDe=t=>(GRUPOS.find(g=>g[2].some(s=>s[0]===t))||GRUPOS[0]);
+function drawNav(){const g=grupoDe(tab);const n=document.getElementById('gnav'),s=document.getElementById('snav');if(!n)return;
+  n.innerHTML=GRUPOS.map(x=>`<button data-g="${x[0]}" class="${x[0]===g[0]?'on':''}">${x[1]}</button>`).join('');
+  s.innerHTML=g[2].length>1?g[2].map(x=>`<button data-t="${x[0]}" class="${x[0]===tab?'on':''}">${x[1]}</button>`).join(''):'';s.hidden=g[2].length<2;
+  n.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{const gg=GRUPOS.find(x=>x[0]===b.dataset.g);tab=gg[2][0][0];draw()});
+  s.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()})}
 
 /* ---------- selector de colores por producto (tienda y catálogo pro, independientes) ---------- */
 let PALX=[];
@@ -606,16 +646,17 @@ async function drawArr(){
 
 /* ---------- profesionales ---------- */
 async function drawPro(){
-  const {data,error}=await sb.from('profesionales').select('*').order('created_at',{ascending:false});
+  const {data:allp,error}=await sb.from('profesionales').select('*').order('created_at',{ascending:false});const data=(allp||[]).filter(p=>(p.tipo||'mayorista')===CUENTAS);
   if(error){toast('Error al leer profesionales');return}
   const ET={pendiente:'Pendiente',aprobado:'Aprobado',rechazado:'Rechazado'};
   $('#m').innerHTML=`<div class="stats"><div class="card"><b>${data.filter(p=>p.estado==='pendiente').length}</b><span>solicitudes por revisar</span></div><div class="card"><b>${data.filter(p=>p.estado==='aprobado').length}</b><span>profesionales aprobados</span></div></div>
-  <p class="hint">Al aprobar, al profesional le llega un mail para entrar. Ve la tienda con los precios de la columna "Precio pro" (en Productos). Si un producto no tiene precio pro, le aparece "Consultar".</p>
-  ${data.length?`<div class="card wrap"><table><thead><tr><th>Fecha</th><th>Profesional</th><th class="hide-m">Estudio · Rubro</th><th class="hide-m">CUIT</th><th>Estado</th></tr></thead><tbody>
+  <p class="hint">${CUENTAS==='profesional'?'Profesionales (arquitectos, interioristas, gastronomía): al aprobarlos les llega un mail y ven la tienda con su precio y su mínimo (se cargan en Precios y mínimos). Compran en el momento.':'Mayoristas: al aprobarlos les llega un mail y entran a FORMA PRO (catálogo mayorista, contenedor y reservas).'} Si alguien eligió mal el tipo, cambialo en la columna Tipo. <span style="display:none">ltar".</p>
+  ${data.length?`<div class="card wrap"><table><thead><tr><th>Fecha</th><th>Profesional</th><th class="hide-m">Estudio · Rubro</th><th class="hide-m">CUIT</th><th>Tipo</th><th>Estado</th></tr></thead><tbody>
   ${data.map(p=>`<tr><td>${new Date(p.created_at).toLocaleDateString('es-AR')}</td><td><b>${esc(p.nombre)}</b><div class="hint">${esc(p.email)} · ${esc(p.telefono)}</div></td>
-   <td class="hide-m">${esc(p.estudio)}<div class="hint">${esc(p.rubro)}</div></td><td class="hide-m">${esc(p.cuit)}</td>
+   <td class="hide-m">${esc(p.estudio)}<div class="hint">${esc(p.rubro)}</div></td><td class="hide-m">${esc(p.cuit)}</td><td><select data-tp="${p.id}">${[['profesional','Profesional'],['mayorista','Mayorista']].map(([v,t])=>`<option value="${v}" ${(p.tipo||'mayorista')===v?'selected':''}>${t}</option>`).join('')}</select></td>
    <td><select data-pr="${p.id}">${Object.keys(ET).map(s=>`<option value="${s}" ${s===p.estado?'selected':''}>${ET[s]}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>`
   :`<div class="card" style="padding:40px;text-align:center;color:var(--soft)">Todavía no hay solicitudes. Los profesionales se registran desde la tienda, en Proyectos → Catálogo profesional.</div>`}`;
+  if(CUENTAS==='profesional'){bindPr();return}
   const [{data:st},{data:ce},{data:pp}]=await Promise.all([sb.from('settings').select('*').order('key'),sb.rpc('contenedor_estado'),sb.from('pedidos_pro').select('*').order('created_at',{ascending:false})]);
   const c0=(ce&&ce[0])||{cap:71,usado:0},pct=Math.round(c0.usado/c0.cap*100);
   const SL={cierre_contenedor:'Cierre estimado del contenedor',llegada_contenedor:'Llegada estimada a Buenos Aires',tc:'Tipo de cambio (ARS por USD)',markup_pro:'Margen profesionales sobre costo (0,40 = 40%)',iva:'IVA (0,21)',cap_cbm:'Capacidad del contenedor (m³)'};
@@ -627,7 +668,10 @@ async function drawPro(){
   ${(pp||[]).length?`<div class="card wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Profesional</th><th class="hide-m">Productos</th><th class="n">m³</th><th class="n">Total</th><th>Estado</th></tr></thead><tbody>${pp.map(o=>`<tr><td>${o.id}</td><td>${new Date(o.created_at).toLocaleDateString('es-AR')}</td><td><b>${esc(o.nombre)}</b><div class="hint">${esc(o.estudio)} · ${esc(o.email)}</div></td><td class="hide-m">${(o.items||[]).map(i=>`${i.q}× ${esc(i.producto)} · ${esc(i.color)}`).join('<br>')}</td><td class="n">${(+o.cbm).toFixed(2)}</td><td class="n">${ars(o.total)}</td><td><select data-pp="${o.id}">${['reservado','confirmado','cancelado'].map(s=>`<option ${s===o.estado?'selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>`:`<div class="card" style="padding:28px;text-align:center;color:var(--soft)">Todavía no hay reservas.</div>`}`);
   $('#m').querySelectorAll('[data-st]').forEach(i=>i.onchange=()=>{const v=i.dataset.dt?+i.value.replace(/-/g,''):parseFloat(i.value.replace(',','.'));if(isNaN(v)){toast('Número inválido');return}mark(i,'settings','key',i.dataset.st,'value',v)});
   $('#m').querySelectorAll('[data-pp]').forEach(s=>s.onchange=async()=>{const {error}=await sb.from('pedidos_pro').update({estado:s.value}).eq('id',+s.dataset.pp);toast(error?'No se pudo cambiar':'Estado actualizado')});
-  $('#m').querySelectorAll('select[data-pr]').forEach(s=>s.onchange=async()=>{
+  bindPr();}
+function bindPr(){
+  document.querySelectorAll("select[data-tp]").forEach(s=>s.onchange=async()=>{const {error}=await sb.from("profesionales").update({tipo:s.value}).eq("id",+s.dataset.tp);toast(error?"No se pudo cambiar":"Tipo cambiado: ahora es "+(s.value==="profesional"?"profesional":"mayorista"));draw()});
+  $("#m").querySelectorAll('select[data-pr]').forEach(s=>s.onchange=async()=>{
     s.disabled=true;
     const {data:{session}}=await sb.auth.getSession();
     const r=await fetch('/api/pro-approve',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({id:+s.dataset.pr,estado:s.value})});
@@ -637,7 +681,7 @@ async function drawPro(){
 }
 
 /* ---------- pedidos ---------- */
-async function loadOrders(){const {data,error}=await sb.from('orders').select('*,order_items(*,products(tipo,nombre))').order('created_at',{ascending:false});if(error){toast('Error al leer pedidos');return}orders=data}
+async function loadOrders(){const {data,error}=await sb.from('orders').select('*,order_items(*,products(tipo,nombre))').order('created_at',{ascending:false});if(error){toast('Error al leer pedidos');return}orders=(data||[]).filter(o=>PEDF==='profesional'?o.canal==='profesional':o.canal!=='profesional')}
 function drawOrders(){
   const pag=orders.filter(o=>o.estado!=='pendiente'&&o.estado!=='cancelado');
   $('#m').innerHTML=`<div class="stats"><div class="card"><b>${pag.length}</b><span>pedidos pagados</span></div><div class="card"><b>${ars(pag.reduce((a,o)=>a+o.total,0))}</b><span>vendido</span></div><div class="card"><b>${orders.filter(o=>o.estado==='pagado').length}</b><span>por despachar</span></div></div>

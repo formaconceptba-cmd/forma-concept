@@ -224,7 +224,7 @@ body.pro .mark::after{content:"PRO";font:600 9px/1 "Inter Tight",sans-serif;lett
 .pcb{display:grid;gap:6px}.pcb-t{display:flex;justify-content:space-between;font-size:12px;text-transform:uppercase;letter-spacing:.06em}.pcb small{color:var(--soft);font-size:11.5px;line-height:1.4}.pcb .cbar{height:12px}
 .pcat-g{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;align-items:start}
 body.home .prostrip{margin-top:52px}
-.prolink{display:none!important}body.pro .prolink{display:inline-block!important;background:#6E1F2B;color:#fff!important;padding:4px 10px}
+.prolink{display:none!important}body.may .prolink{display:inline-block!important;background:#6E1F2B;color:#fff!important;padding:4px 10px}
 .prostrip{display:block;margin-top:0;background:#6E1F2B;color:#fff;text-align:center;padding:12px var(--g);font-size:12px;letter-spacing:.06em;text-transform:uppercase}.prostrip b{font-weight:500}
 .ptabs a{border:1px solid var(--line);padding:9px 16px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink)}.ptabs a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .cbar3{display:flex;height:14px;background:rgba(110,31,43,.10);overflow:hidden}.cbar3 i{display:block;height:100%}.cbar3 .o,.lgd .o{background:#B98A92}.cbar3 .m,.lgd .m{background:#6E1F2B}.cbar3 .x,.lgd .x{background:repeating-linear-gradient(45deg,#6E1F2B 0 4px,#C9A6AC 4px 8px)}
@@ -641,7 +641,8 @@ function viewLegal(k){
 /* ---------- profesionales (B2B) ---------- */
 let sbc=null, ME=null, PRO=null, ISADM=false, CONT={cap:71,usado:0};
 async function contLoad(){try{const {data}=await sbInit().rpc('contenedor_estado');if(data&&data[0])CONT={cap:+data[0].cap||73,usado:+data[0].usado||0,cierre:data[0].cierre,llegada:data[0].llegada}}catch(e){}}
-const isPro=()=>!!(PRO&&PRO.estado==='aprobado');
+const isPro=()=>!!(PRO&&PRO.estado==='aprobado'&&(PRO.tipo||'mayorista')==='mayorista');
+const isProf=()=>!!(PRO&&PRO.estado==='aprobado'&&PRO.tipo==='profesional');
 function sbInit(){if(!sbc&&window.supabase)sbc=supabase.createClient(SB_URL,SB_KEY);return sbc}
 async function proLoad(){
   for(let i=0;i<40&&!window.supabase;i++)await new Promise(r=>setTimeout(r,100));
@@ -651,8 +652,9 @@ async function proLoad(){
     const r=await c.from('profesionales').select('*').maybeSingle(); PRO=r.data||null;
     ISADM=(await c.rpc('is_admin')).data===true;
     if(isPro()){const {data}=await c.rpc('pro_catalogo');PROCAT=data||[];await contLoad();await misLoad()}
+    if(isProf()){const {data}=await c.rpc('prof_precios');const m=Object.fromEntries((data||[]).map(x=>[x.id,x]));P.forEach(p=>{const x=m[p.id];if(x){p.price=x.precio;p.min=x.minimo||1}})}
   }
-  document.body.classList.toggle('pro',isPro());
+  document.body.classList.toggle('pro',isPro()||isProf());document.body.classList.toggle('may',isPro());
   try{ISADM?localStorage.setItem('fc_notrack','1'):localStorage.removeItem('fc_notrack')}catch(e){}
   if(new URLSearchParams(location.search).get('pro')){try{history.replaceState(null,'',location.pathname+(isPro()?'#inicio':'#pro'))}catch(e){}}
   if(!animating)render();
@@ -705,7 +707,7 @@ function viewProCat(){
     const agg={};misAct().forEach(o=>(o.items||[]).forEach(i=>{const k=i.producto+'|'+i.color;const a=agg[k]=agg[k]||{producto:i.producto,color:i.color,q:0,total:0,cbm:0};a.q+=i.q;a.total+=i.precio*i.q;a.cbm+=+i.cbm||0}));
     const A=Object.values(agg).sort((a,b)=>a.producto.localeCompare(b.producto)),T=A.reduce((s,a)=>s+a.total,0);
     return `<section class="pcat"><div class="pcat-h"><div><span class="k">FORMA PRO · Mi pedido</span><h1>${esc(PRO.estudio||PRO.nombre)}</h1>${proNav('res')}</div>${contBar()}</div>
-    ${A.length?`<div class="pbox"><table class="ptab"><thead><tr><th>Producto</th><th>Color</th><th class="n">Unidades</th><th class="n">m³</th><th class="n">Subtotal</th></tr></thead><tbody>${A.map(a=>`<tr><td>${esc(a.producto)}</td><td>${esc(a.color)}</td><td class="n">${a.q}</td><td class="n">${a.cbm.toFixed(2).replace('.',',')}</td><td class="n">${ars(a.total)}</td></tr>`).join('')}</tbody>
+    ${A.length?`<div class="pbox"><table class="ptab"><thead><tr><th>Producto</th><th>Color</th><th class="n">Unidades</th><th class="n">m³</th><th class="n">Subtotal</th><th></th></tr></thead><tbody>${A.map(a=>`<tr><td>${esc(a.producto)}</td><td>${esc(a.color)}</td><td class="n">${a.q}</td><td class="n">${a.cbm.toFixed(2).replace('.',',')}</td><td class="n">${ars(a.total)}</td><td class="n"><button class="lnk" data-mrm="${esc(a.producto)}|${esc(a.color)}">Quitar</button></td></tr>`).join('')}</tbody>
     <tfoot><tr><td colspan="2"><b>Total del pedido</b></td><td class="n"><b>${A.reduce((s,a)=>s+a.q,0)}</b></td><td class="n"><b>${misCbm().toFixed(2).replace('.',',')}</b></td><td class="n"><b>${ars(T)}</b></td></tr></tfoot></table>
     <p class="mut">IVA incluido. Lo confirmamos cuando se completa el contenedor (cierre estimado: ${fdate(CONT.cierre)}). Para cambiar algo, escribinos o sumá más desde el catálogo.</p></div>
     <details class="phist"><summary>Ver el detalle de cada vez que sumaste productos (${MIS.length})</summary>${MIS.map(o=>`<div class="mr-i"><span>#${o.id} · ${new Date(o.created_at).toLocaleDateString('es-AR')} · ${EST_PRO[o.estado]||o.estado}</span><span>${m3(o.cbm)} · ${ars(o.total)}</span></div>`).join('')}</details>`
@@ -719,11 +721,12 @@ function viewProCat(){
 }
 const RUBROS=['Arquitectura','Interiorismo','Desarrollo inmobiliario','Hotelería / gastronomía','Oficinas / corporativo','Otro'];
 function viewPro(){
-  const reg=(email='')=>`<div class="cko" id="prF"><b>Registrate</b><input id="pr_n" placeholder="Nombre y apellido" autocomplete="name"><input id="pr_s" placeholder="Estudio o empresa" autocomplete="organization"><input id="pr_c" placeholder="CUIT" inputmode="numeric"><input id="pr_t" type="tel" placeholder="Teléfono" autocomplete="tel"><select id="pr_r"><option value="">Rubro</option>${RUBROS.map(r=>`<option>${r}</option>`).join('')}</select><input id="pr_e" type="email" placeholder="Email" autocomplete="email" value="${esc(email)}"><button class="buy" id="proReg">Enviar solicitud</button><small>Revisamos cada solicitud y te avisamos por mail cuando tengas acceso.</small></div>`;
+  const reg=(email='')=>`<div class="cko" id="prF"><b>Registrate</b><select id="pr_k" aria-label="Tipo de cuenta"><option value="profesional">Profesional: compro para mis proyectos (arquitectura, interiorismo, gastronomía, hotelería)</option><option value="mayorista">Mayorista: compro para revender</option></select><input id="pr_n" placeholder="Nombre y apellido" autocomplete="name"><input id="pr_s" placeholder="Estudio o empresa" autocomplete="organization"><input id="pr_c" placeholder="CUIT" inputmode="numeric"><input id="pr_t" type="tel" placeholder="Teléfono" autocomplete="tel"><select id="pr_r"><option value="">Rubro</option>${RUBROS.map(r=>`<option>${r}</option>`).join('')}</select><input id="pr_e" type="email" placeholder="Email" autocomplete="email" value="${esc(email)}"><button class="buy" id="proReg">Enviar solicitud</button><small>Revisamos cada solicitud y te avisamos por mail cuando tengas acceso.</small></div>`;
   const adm=ISADM?`<p><a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 32px" href="/admin">Ir al panel de administración</a></p>`:'';
   let b;
   if(!ME) b=`<p>Precios especiales para estudios de arquitectura, interiorismo, desarrolladores y empresas. Mismo catálogo, condiciones para profesionales.</p>
     <div class="pro2"><div class="cko"><b>Ya tengo acceso</b><input id="pl_e" type="email" placeholder="Tu email" autocomplete="email"><button class="buy" id="proLogin">Enviarme el link para entrar</button><small>Sin contraseña: te llega un link al mail.</small></div>${reg()}</div>`;
+  else if(isProf()) b=`<p>Hola <b>${esc(PRO.nombre)}</b>${PRO.estudio?` · ${esc(PRO.estudio)}`:''}. Tu cuenta profesional está activa: <b>ya ves toda la tienda con tus precios profesionales</b> y podés comprar en el momento, desde la cantidad mínima de cada producto.</p><p><a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 32px" href="#tienda">Ver la tienda con mis precios</a></p>${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
   else if(isPro()) b=`<p>Hola <b>${esc(PRO.nombre)}</b>${PRO.estudio?` · ${esc(PRO.estudio)}`:''}. Tenés acceso al catálogo profesional.</p><p><a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 32px" href="#pro-catalogo">Entrar al catálogo profesional</a></p>${MIS.length?`<p>Tenés <b>${MIS.length}</b> reserva${MIS.length>1?'s':''} en el contenedor. <a href="#pro-catalogo">Verlas</a></p>`:''}${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
   else if(PRO&&PRO.estado==='pendiente') b=`<p>Recibimos tu solicitud, <b>${esc(PRO.nombre)}</b>. La estamos revisando y te avisamos por mail.</p>${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
   else if(PRO) b=`<p>Tu solicitud no fue aprobada. Si creés que es un error, escribinos a ${EMPRESA.mail}.</p><p><button class="lnk" id="proOut">Salir</button></p>`;
@@ -878,15 +881,16 @@ function viewProduct(p){
     <a class="back" href="#tienda" data-back>← Atrás</a>
     <h1>${esc(title(p))}</h1>
     ${p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>
-     <div class="price">${ars(p.price)} <span class="tag">${false?'Precio profesional':'Preventa −'+off(p)+'%'}</span></div>
-     <ul class="pay"><li><b>Precio de preventa · un solo pago</b><span>${ars(p.price)}</span></li>
+     <div class="price">${ars(p.price)} <span class="tag">${isProf()?'Precio profesional −'+off(p)+'%':'Preventa −'+off(p)+'%'}</span></div>
+     <ul class="pay"><li><b>${isProf()?"Precio profesional":"Precio de preventa"} · un solo pago</b><span>${ars(p.price)}</span></li>
       <li><b>Entrega estimada</b><span>${ENTREGA}</span></li>
+      ${isProf()&&p.min>1?`<li><b>Compra mínima profesional</b><span>${p.min} unidades</span></li>`:""}
       <li><b>Tarjeta, débito, dinero en cuenta o efectivo</b><span>Mercado Pago</span></li></ul>`:'<div class="cuo">Precio a confirmar</div>'}
     <div class="lb">Color</div>
     <div class="sw">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i?'':'on'}" style="background:${c[1]}" aria-label="${esc(c[0])}"></button>`).join('')}</div>
     <div class="swn" id="swn">${esc(p.colors[0][0])}</div>
     <form class="cpf" id="cpForm"><span class="lb">Calculá tu envío</span><div><input id="cp" inputmode="numeric" maxlength="4" placeholder="Tu código postal" aria-label="Código postal"><button type="submit">Calcular</button></div><div class="cpr" id="cpRes"></div></form>
-    ${p.price?`<div class="qty"><span>Cantidad</span><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">1</b><button data-qd="1" aria-label="Uno más">+</button></div>`:''}
+    ${p.price?`<div class="qty"><span>Cantidad</span><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">${isProf()?(p.min||1):1}</b><button data-qd="1" aria-label="Uno más">+</button></div>`:''}
     <button class="buy" data-add="${p.id}">${p.price?'Agregar al carrito':'Consultanos'}</button>
     <div class="tb"><span>Descripción</span><span>${esc(p.lead)}</span></div>
     <div class="tb"><span>Medidas</span><span>${dims(p)}</span></div>
@@ -1036,7 +1040,7 @@ document.addEventListener('click',e=>{
   if(a.dataset.add){const p=byId(a.dataset.add);
     if(!p.price){window.open('https://wa.me/541139443055?text='+encodeURIComponent('Hola, quiero consultar por '+title(p)),'_blank','noopener');return}
     track('agregar_carrito',{producto:p.id,valor:p.price});const n=+($('#qn')?.textContent)||1;const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q+=n:cart.push({id:p.id,c:col,q:n}); save(); openCart(); return}
-  if(a.dataset.qd){const e=$('#qn');e.textContent=Math.max(1,Math.min(20,(+e.textContent||1)+(+a.dataset.qd)));return}
+  if(a.dataset.qd){const e=$('#qn'),pq=P.find(x=>slug(x.id)===location.hash.slice(1));e.textContent=Math.max(isProf()&&pq?(pq.min||1):1,Math.min(20,(+e.textContent||1)+(+a.dataset.qd)));return}
   if(a.id==='menuBtn'){document.body.classList.contains('menu-on')?closeMenu():openMenu();return}
   if(a.closest('#mn'))closeMenu();
   if(a.dataset.fam!==undefined&&a.closest('.flt')){const x=a.dataset.fam;if(!x)selF.clear();else selF.has(x)?selF.delete(x):selF.add(x);render();return}
@@ -1048,7 +1052,7 @@ document.addEventListener('click',e=>{
   if(a.id==='proLogin'){const e=$('#pl_e').value.trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){toast('Escribí tu email.');return}
     a.disabled=true;sbInit().auth.signInWithOtp({email:e,options:{shouldCreateUser:false,emailRedirectTo:location.origin+'/?pro=1'}}).then(({error})=>{a.disabled=false;
       toast(error?(/signup|not allowed|not found/i.test(error.message)?'Ese mail todavía no tiene acceso. Registrate o esperá la aprobación.':'No pudimos mandar el link. Probá en unos minutos.'):'Te mandamos un link a '+e)});return}
-  if(a.id==='proReg'){const v=k=>$('#pr_'+k).value.trim();const d={nombre:v('n'),estudio:v('s'),cuit:v('c'),telefono:v('t'),rubro:v('r'),email:v('e').toLowerCase()};
+  if(a.id==='proReg'){const v=k=>$('#pr_'+k).value.trim();const d={nombre:v('n'),estudio:v('s'),cuit:v('c'),telefono:v('t'),rubro:v('r'),tipo:v('k')||'profesional',email:v('e').toLowerCase()};
     if(!d.nombre||!d.estudio||!d.telefono||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)){toast('Completá nombre, estudio, teléfono y email.');return}
     a.disabled=true;fetch(SB_URL+'/rest/v1/profesionales',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(d)})
       .then(r=>{if(r.status===409){a.disabled=false;toast('Ese mail ya está registrado.');return}if(!r.ok)throw 0;$('#prF').innerHTML=`<p><b>¡Listo!</b> Recibimos tu solicitud. Te avisamos a ${esc(d.email)} cuando tengas acceso.</p>`})
@@ -1056,6 +1060,10 @@ document.addEventListener('click',e=>{
   if(a.dataset.ptab){PTAB=a.dataset.ptab;render();return}
   if(a.dataset.pq){const[c,d]=a.dataset.pq.split(',');const e=document.getElementById('pq-'+c);e.textContent=Math.max(1,Math.min(50,(+e.textContent||1)+(+d)));return}
   if(a.dataset.arp){AR.id=a.dataset.arp;render();return}
+  if(a.dataset.mrm){const[pn,pc]=a.dataset.mrm.split('|');const tx=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));a.disabled=true;(async()=>{
+    for(const o of MIS.filter(o=>o.estado==='reservado')){const its=(o.items||[]).filter(i=>!(tx(i.producto)===pn&&tx(i.color)===pc));if(its.length===(o.items||[]).length)continue;
+      const patch=its.length?{items:its,cbm:+its.reduce((s,i)=>s+(+i.cbm||0),0).toFixed(3),total:its.reduce((s,i)=>s+i.precio*i.q,0)}:{items:[],cbm:0,total:0,estado:'cancelado'};await sbInit().from('pedidos_pro').update(patch).eq('id',o.id)}
+    await Promise.all([misLoad(),contLoad()]);render();toast('Quitado de tu pedido')})();return}
   if(a.dataset.pa){const p=pcBy(a.dataset.pa),color=$('#pcol-'+CSS.escape(p.codigo)).value,n=+(document.getElementById('pq-'+p.codigo)?.textContent)||1;const l=PCART.find(x=>x.codigo===p.codigo&&x.color===color);l?l.packs+=n:PCART.push({codigo:p.codigo,color,packs:n});savePC();track('agregar_carrito',{producto:p.codigo,valor:p.precio*p.moq});render();toast('Agregado: '+p.moq+' u. · '+color);return}
   if(a.dataset.pp){const[i,d]=a.dataset.pp.split(',').map(Number);PCART[i].packs+=d;if(PCART[i].packs<1)PCART.splice(i,1);savePC();render();return}
   if(a.id==='pcQuote'){const L=PCART.map(l=>{const p=pcBy(l.codigo);return p?`• ${l.packs*p.moq} × ${p.descripcion} · ${l.color}`:''}).join('\n');window.open('https://wa.me/541139443055?text='+encodeURIComponent(`Hola, soy ${PRO.nombre}${PRO.estudio?' ('+PRO.estudio+')':''}. Quiero consultar por:\n${L}`),'_blank','noopener');return}
@@ -1069,7 +1077,7 @@ document.addEventListener('click',e=>{
   if(a.dataset.to){$('#'+a.dataset.to).scrollIntoView({behavior:'smooth'});return}
   if(a.dataset.cs){const t=$('#cst');t.scrollBy({left:+a.dataset.cs*(t.firstElementChild.offsetWidth+14)});return}
   if(a.hasAttribute('data-close')){closeCart();return}
-  if(a.dataset.q){const[i,d]=a.dataset.q.split(',').map(Number);cart[i].q+=d;if(cart[i].q<(false?(byId(cart[i].id).moq||1):1))cart.splice(i,1);save();drawCart();return}
+  if(a.dataset.q){const[i,d]=a.dataset.q.split(',').map(Number);cart[i].q+=d;const mn=isProf()?(byId(cart[i].id).min||1):1;if(cart[i].q<mn){if(d<0&&cart[i].q<mn)cart.splice(i,1);else cart[i].q=mn}save();drawCart();return}
   if(a.id==='proReserve'){const items=cart.map(l=>{const p=byId(l.id);return{id:p.id,producto:title(p),color:p.colors[l.c][0],q:l.q,precio:p.price||0,cbm:+((p.cbm||0)*l.q).toFixed(3)}});
     const d={email:ME.email.toLowerCase(),nombre:PRO.nombre,estudio:PRO.estudio,items,cbm:+items.reduce((s,x)=>s+x.cbm,0).toFixed(3),total:items.reduce((s,x)=>s+x.precio*x.q,0)};
     a.disabled=true;sbInit().from('pedidos_pro').insert(d).select('id').single().then(async({data:nr,error})=>{if(error){a.disabled=false;toast('No pudimos reservar. Probá de nuevo o escribinos.');return}sbInit().auth.getSession().then(({data:{session}})=>fetch('/api/aviso-pro',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({id:nr&&nr.id})})).catch(()=>{});
@@ -1080,7 +1088,7 @@ document.addEventListener('click',e=>{
   if(a.hasAttribute('data-opencart')){openCart();return}
   if(a.dataset.env){ENV=a.dataset.env;drawEnvio();return}
   if(a.id==='payMP'){a.disabled=true;a.textContent='Abriendo Mercado Pago…';const tot=cart.reduce((s,l)=>s+(byId(l.id).price||0)*l.q,0);track('inicio_checkout',{valor:tot});
-    fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({buyer:{cp:CPV},envio:ENV,cp:CPV,visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0]}))})})
+    (async()=>{const ss=sbInit()?(await sbInit().auth.getSession()).data.session:null;return fetch('/api/checkout',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},ss?{Authorization:'Bearer '+ss.access_token}:{}),body:JSON.stringify({buyer:{cp:CPV},envio:ENV,cp:CPV,visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0]}))})})})()
       .then(r=>r.json()).then(d=>{if(d.url){location.href=d.url}else{toast(d.error||'No pudimos iniciar el pago.');a.disabled=false;a.textContent='Pagar con Mercado Pago'}})
       .catch(()=>{toast('No pudimos iniciar el pago. Probá de nuevo.');a.disabled=false;a.textContent='Pagar con Mercado Pago'});return}
   if(a.hasAttribute('data-back')){drawCart();return}
