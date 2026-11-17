@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>forma · Panel B2B</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&family=Outfit:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#F7F7F5;--box:#ECECEA;--ink:#141414;--soft:#77756F;--line:#DDDBD6;--ok:#3F6B4A;--bad:#9A3B33;--warn:#9A6B1F;--acc:#2F4A6B;--f:"Helvetica Neue",Helvetica,"Inter Tight",Arial,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--f)}
+button,input,select,textarea{font:inherit;color:inherit}
+header{display:flex;align-items:center;gap:18px;padding:14px 24px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5}
+.logo{font:500 22px "Outfit",sans-serif;letter-spacing:-.02em}
+.logo small{font:400 11px var(--f);letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin-left:8px}
+nav{display:flex;gap:4px;flex-wrap:wrap}nav button{border:0;background:none;padding:6px 12px;border-radius:999px;cursor:pointer;color:var(--soft)}nav button.on{background:var(--ink);color:#fff}
+.sp{flex:1}.who{color:var(--soft);font-size:12px}
+main{padding:24px;max-width:1400px;margin:0 auto}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px}
+#login{max-width:380px;margin:12vh auto}#login h1{font:500 28px "Outfit",sans-serif;margin:0 0 6px}
+label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin:12px 0 4px}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff}
+input.sm{padding:4px 6px;width:80px}
+.btn{border:1px solid var(--line);background:#fff;padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}.btn.dk{background:var(--ink);color:#fff;border-color:var(--ink)}.btn:disabled{opacity:.5}
+table{width:100%;border-collapse:collapse;background:#fff}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);font-weight:400;background:var(--bg);position:sticky;top:57px;z-index:1}
+tr.click{cursor:pointer}tr.click:hover td{background:#FAFAF8}
+.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:var(--box)}
+.pill.ok{background:#E3EDE5;color:var(--ok)}.pill.bad{background:#F3E2E0;color:var(--bad)}.pill.warn{background:#F4EBDC;color:var(--warn)}
+.hint{color:var(--soft);font-size:12px;margin-top:4px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;z-index:20}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.bar input,.bar select{width:auto}
+.stats{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}.stats .card{padding:12px 16px;min-width:150px}.stats b{display:block;font:500 22px "Outfit",sans-serif}.stats span{font-size:12px;color:var(--soft)}
+.thumb{width:44px;height:44px;object-fit:contain;background:var(--box);border-radius:6px;display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+h2{font:500 20px "Outfit",sans-serif;margin:0 0 10px}h3{font:500 15px "Outfit",sans-serif;margin:18px 0 8px}
+.drawer{position:fixed;inset:0;background:rgba(20,20,20,.35);z-index:10;display:flex;justify-content:flex-end}
+.drawer>div{background:#fff;width:min(620px,100%);height:100%;overflow:auto;padding:22px}
+.bk td{padding:5px 8px;font-size:13px}.bk tr.t td{font-weight:500;border-top:2px solid var(--ink)}
+.cont{height:26px;background:var(--box);border-radius:6px;position:relative;overflow:hidden;margin:6px 0}
+.cont i{position:absolute;top:0;bottom:0;left:0;background:var(--ink);transition:width .25s}
+.cont i.f{background:#B9B6AE}
+.cont .mk{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--bad)}
+.cont span{position:absolute;right:8px;top:4px;font-size:12px;mix-blend-mode:difference;color:#fff}
+.warnbox{background:#F4EBDC;color:var(--warn);padding:8px 12px;border-radius:6px;font-size:13px;margin:6px 0}
+.errbox{background:#F3E2E0;color:var(--bad);padding:8px 12px;border-radius:6px;font-size:13px;margin:6px 0}
+.okbox{background:#E3EDE5;color:var(--ok);padding:8px 12px;border-radius:6px;font-size:13px;margin:6px 0}
+.sw{display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)}.sw input{width:auto}
+@media(max-width:800px){header{flex-wrap:wrap;gap:10px}.g2,.g3,.g4{grid-template-columns:1fr}.hide-m{display:none}main{padding:14px}th{position:static}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast" hidden></div>
+<script>
+const SB_URL='https://znzbwtewxpcpqtmjbmdw.supabase.co', SB_KEY='sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const app=$('#app');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const usd=(n,d=2)=>n==null||isNaN(n)?'—':'US$ '+(+n).toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const num=(n,d=2)=>n==null||isNaN(n)?'—':(+n).toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const up10=x=>Math.ceil(x*10-1e-9)/10;
+function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2800)}
+
+let user=null, tab='productos', P=null, prods=[], clients=[], orders=[], conts=[];
+let f={q:'',prov:'',sub:'',act:''};
+let sim={tipo:'profesional',mod:'compartido40',lines:[]};
+
+/* ================= COSTO Y PRECIO (por producto, nunca promedio) ================= */
+const CT=m=>m==='propio20'?'20':'40HQ';
+function costo(p,T){
+  const c=P.cont[T], u=+c.util, fob=+p.fob||0, cbm=+p.cbm||0;
+  const sc=P.subcats[p.subcategoria]||{};
+  const flete=+c.flete/u*cbm;
+  const seguro=fob*P.seguro_pct/100;
+  const cif=fob+flete+seguro;
+  const arP=p.arancel??sc.arancel??P.arancel_def, taP=sc.tasa??P.tasa_def;
+  const der=cif*arP/100, tasa=cif*taP/100;
+  const hon=fob*P.honorarios_pct/100;
+  const fijosC=+c.locales+Object.values(P.fijos).reduce((a,b)=>a+(+b||0),0);
+  const fij=fijosC/u*cbm;
+  const sub=cif+der+tasa+hon+fij;
+  const imp=sub*((+P.imprevistos_pct||0)+(+P.otros_pct||0))/100;
+  return {fob,flete,seguro,cif,der,tasa,hon,fij,imp,arP,taP,fijosC,total:sub+imp};
+}
+const mult=(p,tipo)=>tipo==='mayorista'?(p.mult_may??P.mult_may):(p.mult_prof??P.mult_prof);
+const precio=(p,tipo,T)=>up10(costo(p,T).total*mult(p,tipo));
+
+/* ================= INGRESO ================= */
+function viewLogin(msg=''){
+  app.innerHTML=`<div class="card" id="login"><h1>forma <span style="color:var(--soft)">B2B</span></h1><p>Panel interno del canal B2B. Te mandamos un link al mail para entrar.</p>
+  <form id="lf"><label>Mail</label><input type="email" id="em" required autocomplete="email">
+  <button class="btn dk" style="width:100%;margin-top:16px">Enviarme el link</button></form>
+  <p class="hint" id="lm" style="margin-top:14px">${esc(msg)}</p></div>`;
+  $('#lf').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;
+    const {error}=await sb.auth.signInWithOtp({email:$('#em').value.trim(),options:{shouldCreateUser:false,emailRedirectTo:location.origin+location.pathname}});
+    b.disabled=false;$('#lm').textContent=error?'No pudimos mandar el link. ¿Ese mail es de un administrador?':'Listo. Revisá tu mail y tocá el link.'};
+}
+async function start(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){viewLogin();return}
+  user=session.user;
+  const {data:isAdm}=await sb.rpc('is_admin');
+  if(!isAdm){await sb.auth.signOut();user=null;viewLogin('Ese mail no tiene permiso de administrador.');return}
+  app.innerHTML='<main><p class="hint">Cargando…</p></main>';
+  await loadAll(); shell();
+}
+sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_IN'&&!user)start()});
+
+async function loadAll(){
+  const [a,b,c,d,e]=await Promise.all([
+    sb.from('b2b_params').select('data').eq('id',1).maybeSingle(),
+    sb.from('b2b_products').select('*').order('codigo'),
+    sb.from('b2b_clients').select('*').order('created_at',{ascending:false}),
+    sb.from('b2b_orders').select('*,b2b_order_items(*)').order('created_at',{ascending:false}),
+    sb.from('b2b_containers').select('*').order('created_at',{ascending:false})]);
+  const err=[a,b,c,d,e].find(r=>r.error);
+  if(err){app.innerHTML=`<main><div class="errbox">Error leyendo la base: ${esc(err.error.message)}. ¿Corriste supabase/b2b.sql?</div></main>`;throw err.error}
+  P=a.data?.data||{}; P.subcats=P.subcats||{}; P.fijos=P.fijos||{};
+  prods=b.data; clients=c.data; orders=d.data; conts=e.data;
+}
+
+function shell(){
+  app.innerHTML=`<header><div class="logo">forma<small>Panel B2B</small></div>
+  <nav>${[['productos','Productos'],['simulador','Armar pedido'],['parametros','Parámetros'],['pedidos','Pedidos'],['contenedores','Contenedores'],['clientes','Clientes']].map(([k,t])=>`<button data-t="${k}">${t}</button>`).join('')}</nav>
+  <span class="sp"></span><span class="who hide-m">${esc(user.email)}</span><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
+  $$('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+  $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};
+  draw();
+}
+function draw(){
+  $$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  ({productos:vProductos,simulador:vSim,parametros:vParams,pedidos:vPedidos,contenedores:vConts,clientes:vClientes})[tab]();
+}
+
+/* ================= PRODUCTOS ================= */
+const provName=p=>(p||'').replace('PROV-CHN-','').replace('RUD','Rudi').replace('BAI','Baicheng');
+function vProductos(){
+  const subs=[...new Set(prods.map(p=>p.subcategoria).filter(Boolean))].sort();
+  const provs=[...new Set(prods.map(p=>p.proveedor).filter(Boolean))].sort();
+  const act=prods.filter(p=>p.activo).length;
+  $('#m').innerHTML=`
+  <div class="stats"><div class="card"><b>${prods.length}</b><span>productos en el Master</span></div>
+  <div class="card"><b>${act}</b><span>activos para el portal</span></div>
+  <div class="card"><b>×${P.mult_prof} / ×${P.mult_may}</b><span>Profesional / Mayorista</span></div>
+  <div class="card"><b>${esc(P.flete_validez||'—')}</b><span>vencen los fletes</span></div></div>
+  <div class="bar"><input id="fq" placeholder="Buscar código, nombre, material…" value="${esc(f.q)}" style="min-width:240px">
+  <select id="fp"><option value="">Todos los proveedores</option>${provs.map(x=>`<option ${f.prov===x?'selected':''} value="${esc(x)}">${esc(provName(x))}</option>`).join('')}</select>
+  <select id="fs"><option value="">Todas las subcategorías</option>${subs.map(x=>`<option ${f.sub===x?'selected':''}>${esc(x)}</option>`).join('')}</select>
+  <select id="fa"><option value="">Activos e inactivos</option><option value="1" ${f.act==='1'?'selected':''}>Solo activos</option><option value="0" ${f.act==='0'?'selected':''}>Solo inactivos</option></select>
+  <span class="sp"></span><button class="btn dk" id="pub">Publicar al portal (${act})</button></div>
+  <p class="hint" style="margin:-6px 0 12px">Costo y precio por unidad, en USD sin IVA. Precio = costo × multiplicador, redondeado para arriba a 10 centavos. Tocá una fila para ver el desglose y editar.</p>
+  <div style="overflow:auto"><table><thead><tr><th>Activo</th><th></th><th>Código</th><th>Producto</th><th class="n">MOQ</th><th class="n">FOB</th><th class="n">m³</th><th class="n">Costo 40HQ</th><th class="n">Costo 20'</th><th class="n">Prof. 40HQ</th><th class="n">May. 40HQ</th></tr></thead><tbody id="tb"></tbody></table></div>`;
+  const rows=()=>{
+    const q=f.q.toLowerCase();
+    const L=prods.filter(p=>(!f.prov||p.proveedor===f.prov)&&(!f.sub||p.subcategoria===f.sub)&&(f.act===''||String(+p.activo)===f.act)
+      &&(!q||[p.codigo,p.cod_proveedor,p.nombre,p.material,p.familia,p.medidas].join(' ').toLowerCase().includes(q)));
+    $('#tb').innerHTML=L.map(p=>{const c4=costo(p,'40HQ'),c2=costo(p,'20');
+      const flag=(!+p.fob||!+p.cbm)?' <span class="pill bad">falta dato</span>':'';
+      return `<tr class="click" data-c="${esc(p.codigo)}"><td><input type="checkbox" data-a="${esc(p.codigo)}" ${p.activo?'checked':''}></td>
+      <td>${p.foto?`<img class="thumb" loading="lazy" src="${esc(p.foto)}" alt="">`:''}</td>
+      <td>${esc(p.codigo)}<div class="hint">${esc(provName(p.proveedor))} · ${esc(p.cod_proveedor)}</div></td>
+      <td>${esc(p.nombre)}${flag}<div class="hint">${esc(p.subcategoria)} · ${esc(p.medidas)} · ${p.colores.length} color${p.colores.length===1?'':'es'}</div></td>
+      <td class="n">${p.moq}</td><td class="n">${num(p.fob)}</td><td class="n">${num(p.cbm,3)}</td>
+      <td class="n">${num(c4.total)}</td><td class="n">${num(c2.total)}</td>
+      <td class="n"><b>${num(precio(p,'profesional','40HQ'))}</b>${p.mult_prof!=null?' *':''}</td><td class="n"><b>${num(precio(p,'mayorista','40HQ'))}</b>${p.mult_may!=null?' *':''}</td></tr>`}).join('')
+      ||'<tr><td colspan="11" class="hint">Nada con esos filtros.</td></tr>';
+  };
+  rows();
+  $('#fq').oninput=e=>{f.q=e.target.value;rows()};
+  $('#fp').onchange=e=>{f.prov=e.target.value;rows()};
+  $('#fs').onchange=e=>{f.sub=e.target.value;rows()};
+  $('#fa').onchange=e=>{f.act=e.target.value;rows()};
+  $('#tb').onclick=async e=>{
+    const a=e.target.dataset.a;
+    if(a){const p=prods.find(x=>x.codigo===a);p.activo=e.target.checked;
+      const {error}=await sb.from('b2b_products').update({activo:p.activo,updated_at:new Date().toISOString()}).eq('codigo',a);
+      if(error){toast('No se guardó: '+error.message);p.activo=!p.activo;e.target.checked=p.activo}
+      else{$('#pub').textContent=`Publicar al portal (${prods.filter(p=>p.activo).length})`}
+      return}
+    const tr=e.target.closest('tr[data-c]'); if(tr) drawer(prods.find(x=>x.codigo===tr.dataset.c));
+  };
+  $('#pub').onclick=publicar;
+}
+
+function breakdown(p,T){
+  const c=costo(p,T), cc=P.cont[T];
+  const r=(t,v,h='')=>`<tr><td>${t}<div class="hint">${h}</div></td><td class="n">${num(v,3)}</td></tr>`;
+  return `<table class="bk">${r('FOB',c.fob,'precio de fábrica')}
+  ${r('Flete marítimo',c.flete,`US$ ${cc.flete} ÷ ${cc.util} m³ útiles × ${num(p.cbm,3)} m³`)}
+  ${r('Seguro',c.seguro,`${P.seguro_pct}% del FOB`)}
+  <tr><td><i>CIF</i></td><td class="n"><i>${num(c.cif,3)}</i></td></tr>
+  ${r('Derechos de importación',c.der,`${c.arP}% del CIF`)}
+  ${r('Tasa de estadística',c.tasa,`${c.taP}% del CIF`)}
+  ${r('Honorarios despachante',c.hon,`${P.honorarios_pct}% del FOB`)}
+  ${r('Gastos fijos del contenedor',c.fij,`US$ ${num(c.fijosC,0)} (locales ${cc.locales} + SIM, terminal, transporte, verificación, resguardo) ÷ ${cc.util} × m³`)}
+  ${r('Imprevistos y otros',c.imp,`${(+P.imprevistos_pct||0)+(+P.otros_pct||0)}% del subtotal`)}
+  <tr class="t"><td>Costo puesto en depósito</td><td class="n">${num(c.total,2)}</td></tr>
+  <tr><td>Precio Profesional (×${mult(p,'profesional')})</td><td class="n"><b>${num(precio(p,'profesional',T))}</b></td></tr>
+  <tr><td>Precio Mayorista (×${mult(p,'mayorista')})</td><td class="n"><b>${num(precio(p,'mayorista',T))}</b></td></tr></table>`;
+}
+function drawer(p){
+  const d=document.createElement('div');d.className='drawer';
+  const paint=()=>{d.innerHTML=`<div>
+    <div style="display:flex;gap:14px;align-items:flex-start">${p.foto?`<img src="${esc(p.foto)}" style="width:120px;height:120px;object-fit:contain;background:var(--box);border-radius:8px">`:''}
+    <div style="flex:1"><h2>${esc(p.nombre)}</h2><div class="hint">${esc(p.codigo)} · ${esc(provName(p.proveedor))} ${esc(p.cod_proveedor)}<br>${esc(p.subcategoria)} · ${esc(p.material)} · ${esc(p.medidas)} · ${esc(p.armado)}</div>
+    ${p.observaciones?`<div class="hint">Obs. Master: ${esc(p.observaciones)}</div>`:''}</div><button class="btn" id="x">Cerrar</button></div>
+    <h3>Datos (editables)</h3>
+    <div class="g3"><div><label>MOQ por color</label><input id="e_moq" type="number" min="1" value="${p.moq}"></div>
+    <div><label>FOB US$</label><input id="e_fob" type="number" step="0.01" value="${p.fob}"></div>
+    <div><label>m³ por unidad</label><input id="e_cbm" type="number" step="0.0001" value="${p.cbm}"></div>
+    <div><label>Arancel % (vacío = subcat.)</label><input id="e_ar" type="number" step="0.1" value="${p.arancel??''}" placeholder="${(P.subcats[p.subcategoria]||{}).arancel??P.arancel_def}"></div>
+    <div><label>Mult. Profesional</label><input id="e_mp" type="number" step="0.01" value="${p.mult_prof??''}" placeholder="${P.mult_prof}"></div>
+    <div><label>Mult. Mayorista</label><input id="e_mm" type="number" step="0.01" value="${p.mult_may??''}" placeholder="${P.mult_may}"></div></div>
+    <label>Colores disponibles (separados por coma). El MOQ se exige por cada color.</label>
+    <input id="e_col" value="${esc(p.colores.join(', '))}" placeholder="Negro, Blanco, Natural">
+    <label class="sw" style="margin-top:12px"><input type="checkbox" id="e_act" ${p.activo?'checked':''}> Activo en el portal</label>
+    <p class="hint">FOB, MOQ y m³ vienen del Master; si volvés a importar el Master se pisan. Lo demás (activo, colores, overrides) se respeta.</p>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn dk" id="sv">Guardar</button></div>
+    <div class="g2" style="margin-top:8px"><div><h3>En 40HQ (compartido o propio)</h3>${breakdown(p,'40HQ')}</div><div><h3>En 20' propio</h3>${breakdown(p,'20')}</div></div>
+  </div>`;
+    d.querySelector('#x').onclick=()=>d.remove();
+    d.querySelector('#sv').onclick=async()=>{
+      const v=id=>d.querySelector(id).value.trim(), nn=x=>x===''?null:+x;
+      const upd={moq:Math.max(1,parseInt(v('#e_moq'))||1),fob:+v('#e_fob')||0,cbm:+v('#e_cbm')||0,arancel:nn(v('#e_ar')),mult_prof:nn(v('#e_mp')),mult_may:nn(v('#e_mm')),
+        colores:v('#e_col').split(',').map(s=>s.trim()).filter(Boolean),activo:d.querySelector('#e_act').checked,updated_at:new Date().toISOString()};
+      const {error}=await sb.from('b2b_products').update(upd).eq('codigo',p.codigo);
+      if(error){toast('No se guardó: '+error.message);return}
+      Object.assign(p,upd);toast('Guardado');paint();if(tab==='productos')vProductos();
+    };
+  };
+  d.onclick=e=>{if(e.target===d)d.remove()};
+  paint();document.body.appendChild(d);
+}
+
+async function publicar(){
+  const A=prods.filter(p=>p.activo);
+  const bad=A.filter(p=>!+p.fob||!+p.cbm||!p.colores.length);
+  if(bad.length&&!confirmBox(`${bad.length} activos sin FOB, m³ o colores (${bad.slice(0,4).map(p=>p.codigo).join(', ')}…). Se publican igual salvo los que no tienen FOB o m³.`))return;
+  const ok=A.filter(p=>+p.fob&&+p.cbm);
+  const b=$('#pub');b.disabled=true;b.textContent='Publicando…';
+  const cat=ok.map((p,i)=>({codigo:p.codigo,nombre:p.nombre,subcategoria:p.subcategoria,familia:p.familia,material:p.material,terminacion:p.terminacion,
+    medidas:p.medidas,armado:p.armado,foto:p.foto,moq:p.moq,cbm:p.cbm,colores:p.colores.length?p.colores:['Único'],orden:i,published_at:new Date().toISOString()}));
+  const pr=[];ok.forEach(p=>['profesional','mayorista'].forEach(t=>['40HQ','20'].forEach(T=>pr.push({codigo:p.codigo,tipo:t,contenedor:T,precio:precio(p,t,T)}))));
+  const rules={min_cbm_compartido:P.min_cbm_compartido,acepto_completar:P.acepto_completar,min_fill_propio_pct:P.min_fill_propio_pct,
+    util:{'40HQ':P.cont['40HQ'].util,'20':P.cont['20'].util},cobro:P.cobro,iva:P.iva};
+  let r=await sb.from('b2b_catalog').upsert(cat);
+  if(!r.error){const keep=ok.map(p=>p.codigo);const {data:old}=await sb.from('b2b_catalog').select('codigo');
+    const del=(old||[]).map(x=>x.codigo).filter(c=>!keep.includes(c));
+    if(del.length) r=await sb.from('b2b_catalog').delete().in('codigo',del)}
+  if(!r.error) r=await sb.from('b2b_prices').upsert(pr);
+  if(!r.error) r=await sb.from('b2b_rules').upsert({id:1,data:rules,updated_at:new Date().toISOString()});
+  b.disabled=false;b.textContent=`Publicar al portal (${A.length})`;
+  toast(r.error?'Error: '+r.error.message:`Publicados ${ok.length} productos con sus precios`);
+}
+function confirmBox(t){return window.confirm(t)}
+
+/* ================= PARÁMETROS ================= */
+function vParams(){
+  const subs=[...new Set(prods.map(p=>p.subcategoria).filter(Boolean))].sort();
+  const inp=(path,lab,step='any',hint='')=>`<div><label>${lab}</label><input data-p="${path}" type="number" step="${step}" value="${esc(get(path)??'')}">${hint?`<div class="hint">${hint}</div>`:''}</div>`;
+  $('#m').innerHTML=`<div class="bar"><h2 style="margin:0">Parámetros de costo y reglas</h2><span class="sp"></span><button class="btn dk" id="sv">Guardar parámetros</button></div>
+  <p class="hint">Todo se recalcula en vivo en Productos y Armar pedido. Para que el portal vea los cambios de precio, después tocá “Publicar al portal”.</p>
+  <div class="card"><h3 style="margin-top:0">Contenedores (USD)</h3>
+  <div class="g4">${inp('cont.40HQ.flete','Flete 40HQ')}${inp('cont.40HQ.locales','Locales forwarder 40HQ')}${inp('cont.40HQ.util','m³ útiles 40HQ')}
+  <div><label>Validez fletes</label><input data-p="flete_validez" data-s="1" type="date" value="${esc(P.flete_validez||'')}"></div>
+  ${inp('cont.20.flete',"Flete 20'")}${inp('cont.20.locales',"Locales forwarder 20'")}${inp('cont.20.util',"m³ útiles 20'")}${inp('tc','Tipo de cambio (referencia)')}</div>
+  <h3>Gastos fijos por contenedor (USD, se reparten por m³)</h3>
+  <div class="g4">${inp('fijos.sim','SIM')}${inp('fijos.terminal','Terminal','any','revisar si se superpone con “locales”')}${inp('fijos.transporte','Transporte')}${inp('fijos.verificacion','Verificación')}${inp('fijos.resguardo','Resguardo')}</div>
+  <h3>Porcentajes</h3>
+  <div class="g4">${inp('seguro_pct','Seguro % FOB')}${inp('honorarios_pct','Honorarios despachante % FOB')}${inp('imprevistos_pct','Imprevistos %')}${inp('otros_pct','Otros % (merma, garantía)')}
+  ${inp('arancel_def','Arancel % por defecto')}${inp('tasa_def','Tasa estadística % por defecto')}${inp('iva','IVA %')}</div></div>
+  <div class="card" style="margin-top:16px"><h3 style="margin-top:0">Arancel por subcategoría</h3><p class="hint">Vacío = usa el valor por defecto. Confirmar NCM y % con el despachante.</p>
+  <table><thead><tr><th>Subcategoría</th><th>NCM</th><th class="n">Arancel %</th><th class="n">Tasa %</th><th class="n">Productos</th></tr></thead><tbody>
+  ${subs.map(s=>{const v=P.subcats[s]||{};return `<tr><td>${esc(s)}</td><td><input data-sc="${esc(s)}" data-k="ncm" value="${esc(v.ncm||'')}" placeholder="9401.xx.xx" style="width:130px"></td>
+  <td class="n"><input class="sm" data-sc="${esc(s)}" data-k="arancel" type="number" step="0.1" value="${v.arancel??''}" placeholder="${P.arancel_def}"></td>
+  <td class="n"><input class="sm" data-sc="${esc(s)}" data-k="tasa" type="number" step="0.1" value="${v.tasa??''}" placeholder="${P.tasa_def}"></td>
+  <td class="n">${prods.filter(p=>p.subcategoria===s).length}</td></tr>`}).join('')}</tbody></table></div>
+  <div class="card" style="margin-top:16px"><h3 style="margin-top:0">Precios y reglas de pedido</h3>
+  <div class="g4">${inp('mult_prof','Multiplicador Profesional','0.01')}${inp('mult_may','Multiplicador Mayorista','0.01')}${inp('min_cbm_compartido','Mínimo m³ (40HQ compartido)')}${inp('min_fill_propio_pct','Llenado mínimo contenedor propio %')}
+  ${inp('cobro.0','Cobro % al confirmar')}${inp('cobro.1','Cobro % antes de embarque')}${inp('cobro.2','Cobro % contra entrega')}</div>
+  <label class="sw" style="margin-top:14px"><input type="checkbox" id="acc" ${P.acepto_completar?'checked':''}> Acepto completar contenedores (habilita el 40HQ compartido con mínimo de m³)</label>
+  <p class="hint">Si lo apagás, los clientes solo pueden pedir un contenedor propio (20' o 40HQ) lleno al ${P.min_fill_propio_pct}% como mínimo.</p></div>`;
+  function get(path){return path.split('.').reduce((o,k)=>o?.[k],P)}
+  function set(path,val){const ks=path.split('.');let o=P;ks.slice(0,-1).forEach(k=>o=o[k]);o[ks.at(-1)]=val}
+  $$('[data-p]').forEach(i=>i.oninput=()=>set(i.dataset.p,i.dataset.s?i.value:(i.value===''?0:+i.value)));
+  $$('[data-sc]').forEach(i=>i.oninput=()=>{const s=i.dataset.sc,k=i.dataset.k;P.subcats[s]=P.subcats[s]||{};
+    if(i.value==='')delete P.subcats[s][k];else P.subcats[s][k]=k==='ncm'?i.value:+i.value});
+  $('#acc').onchange=e=>P.acepto_completar=e.target.checked;
+  $('#sv').onclick=async()=>{
+    const s=P.cobro.reduce((a,b)=>a+ +b,0); if(Math.abs(s-100)>0.01){toast('El cobro tiene que sumar 100% (ahora suma '+s+'%)');return}
+    const {error}=await sb.from('b2b_params').upsert({id:1,data:P,updated_at:new Date().toISOString()});
+    toast(error?'Error: '+error.message:'Parámetros guardados. Acordate de publicar al portal.');
+  };
+}
+
+/* ================= ARMAR PEDIDO (simulador con contenedor en vivo) ================= */
+function rulesFor(mod){
+  const T=CT(mod), util=+P.cont[T].util;
+  if(mod==='compartido40') return {T,util,min:+P.min_cbm_compartido,max:util,habil:!!P.acepto_completar};
+  return {T,util,min:util*P.min_fill_propio_pct/100,max:util,habil:true};
+}
+function checkOrder(lines,mod){
+  const R=rulesFor(mod), errs=[], warns=[];
+  const seen={};
+  lines.forEach(l=>{const p=prods.find(x=>x.codigo===l.codigo);if(!p)return;const k=l.codigo+'|'+l.color;
+    seen[k]=(seen[k]||0)+(+l.cant||0);});
+  Object.entries(seen).forEach(([k,q])=>{const [c,col]=k.split('|');const p=prods.find(x=>x.codigo===c);
+    if(q<p.moq) errs.push(`${p.nombre} (${c}) en ${col||'sin color'}: ${q} u. — el mínimo es ${p.moq} de ese color.`)});
+  if(!R.habil) errs.push('El 40HQ compartido está deshabilitado (no estás aceptando completar contenedores).');
+  const cbm=lines.reduce((a,l)=>{const p=prods.find(x=>x.codigo===l.codigo);return a+(p?(+p.cbm)*(+l.cant||0):0)},0);
+  if(cbm>R.max) errs.push(`Se pasa del contenedor: ${num(cbm)} m³ de ${R.max} útiles.`);
+  else if(cbm<R.min) errs.push(`Faltan ${num(R.min-cbm)} m³ para el mínimo (${num(R.min)} m³).`);
+  return {R,cbm,errs,warns};
+}
+function vSim(){
+  const ch=checkOrder(sim.lines,sim.mod), R=ch.R;
+  let sub=0,cost=0;
+  sim.lines.forEach(l=>{const p=prods.find(x=>x.codigo===l.codigo);if(!p)return;const q=+l.cant||0;sub+=precio(p,sim.tipo,R.T)*q;cost+=costo(p,R.T).total*q});
+  const iva=sub*P.iva/100, tot=sub+iva;
+  const pct=Math.min(100,ch.cbm/R.util*100), minp=R.min/R.util*100;
+  const forma=sim.mod==='compartido40'?Math.max(0,R.util-ch.cbm):0;
+  const actives=prods.filter(p=>p.activo&&+p.fob&&+p.cbm);
+  $('#m').innerHTML=`<div class="g2" style="grid-template-columns:1.4fr 1fr;align-items:start">
+  <div class="card"><h2>Armar pedido</h2><p class="hint">Simulá lo que va a ver un cliente: elegís productos activos, color y cantidad. El MOQ se controla por cada color.</p>
+  <div class="g3"><div><label>Tipo de cliente</label><select id="s_t"><option value="profesional">Profesional (×${P.mult_prof})</option><option value="mayorista" ${sim.tipo==='mayorista'?'selected':''}>Mayorista (×${P.mult_may})</option></select></div>
+  <div><label>Modalidad</label><select id="s_m">
+    <option value="compartido40" ${sim.mod==='compartido40'?'selected':''} ${P.acepto_completar?'':'disabled'}>40HQ compartido (mín. ${P.min_cbm_compartido} m³)</option>
+    <option value="propio40" ${sim.mod==='propio40'?'selected':''}>40HQ propio</option>
+    <option value="propio20" ${sim.mod==='propio20'?'selected':''}>20' propio</option></select></div>
+  <div><label>Agregar producto</label><select id="s_add"><option value="">${actives.length?'Elegir…':'No hay productos activos'}</option>${actives.map(p=>`<option value="${esc(p.codigo)}">${esc(p.codigo)} · ${esc(p.nombre)}</option>`).join('')}</select></div></div>
+  <table style="margin-top:14px"><thead><tr><th>Producto</th><th>Color</th><th class="n">Cant.</th><th class="n">m³</th><th class="n">Precio u.</th><th class="n">Subtotal</th><th></th></tr></thead><tbody>
+  ${sim.lines.map((l,i)=>{const p=prods.find(x=>x.codigo===l.codigo);const pu=precio(p,sim.tipo,R.T);const low=(+l.cant||0)<p.moq;
+    return `<tr><td>${esc(p.nombre)}<div class="hint">${esc(p.codigo)} · MOQ ${p.moq} por color</div></td>
+    <td><select data-i="${i}" data-k="color">${(p.colores.length?p.colores:['Único']).map(c=>`<option ${c===l.color?'selected':''}>${esc(c)}</option>`).join('')}</select></td>
+    <td class="n"><input class="sm" data-i="${i}" data-k="cant" type="number" min="0" step="1" value="${l.cant}" style="${low?'border-color:var(--bad)':''}"></td>
+    <td class="n">${num(p.cbm*(+l.cant||0))}</td><td class="n">${num(pu)}</td><td class="n">${num(pu*(+l.cant||0))}</td>
+    <td><button class="btn" data-del="${i}" title="Quitar">×</button></td></tr>`}).join('')||'<tr><td colspan="7" class="hint">Todavía no agregaste productos.</td></tr>'}
+  </tbody></table></div>
+  <div class="card" style="position:sticky;top:76px"><h2>Contenedor ${R.T==='20'?"20'":'40HQ'}</h2>
+  <div class="cont"><i style="width:${pct}%"></i>${forma&&ch.cbm?`<i class="f" style="left:${pct}%;width:${100-pct}%"></i>`:''}<div class="mk" style="left:${minp}%" title="mínimo"></div><span>${num(ch.cbm)} / ${R.util} m³</span></div>
+  <div class="hint">Línea roja = mínimo (${num(R.min)} m³). ${sim.mod==='compartido40'?`Gris = lo completa FORMA (${num(forma)} m³).`:''}</div>
+  ${ch.errs.map(e=>`<div class="errbox">${esc(e)}</div>`).join('')}${!ch.errs.length&&sim.lines.length?'<div class="okbox">Pedido válido.</div>':''}
+  <table class="bk" style="margin-top:10px">
+  <tr><td>Subtotal sin IVA</td><td class="n">${usd(sub)}</td></tr><tr><td>IVA ${P.iva}%</td><td class="n">${usd(iva)}</td></tr>
+  <tr class="t"><td>Total con IVA</td><td class="n">${usd(tot)}</td></tr></table>
+  <h3>Cobro</h3><table class="bk">${P.cobro.map((c,i)=>`<tr><td>${['Al confirmar','Antes del embarque','Contra entrega'][i]} (${c}%)</td><td class="n">${usd(tot*c/100)}</td></tr>`).join('')}</table>
+  <h3>Solo para vos</h3><table class="bk"><tr><td>Costo puesto</td><td class="n">${usd(cost)}</td></tr>
+  <tr><td>Margen bruto</td><td class="n"><b>${usd(sub-cost)}</b> ${sub?`(${num((sub-cost)/sub*100,1)}%)`:''}</td></tr>
+  <tr><td>Precio medio por m³</td><td class="n">${ch.cbm?usd(sub/ch.cbm,0):'—'}</td></tr></table>
+  <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="s_clr">Vaciar</button></div></div></div>`;
+  $('#s_t').onchange=e=>{sim.tipo=e.target.value;vSim()};
+  $('#s_m').onchange=e=>{sim.mod=e.target.value;vSim()};
+  $('#s_add').onchange=e=>{const p=prods.find(x=>x.codigo===e.target.value);if(!p)return;sim.lines.push({codigo:p.codigo,color:(p.colores[0]||'Único'),cant:p.moq});vSim()};
+  $$('[data-k]').forEach(i=>i.onchange=()=>{const l=sim.lines[+i.dataset.i];l[i.dataset.k]=i.dataset.k==='cant'?Math.max(0,parseInt(i.value)||0):i.value;vSim()});
+  $$('[data-del]').forEach(b=>b.onclick=()=>{sim.lines.splice(+b.dataset.del,1);vSim()});
+  $('#s_clr').onclick=()=>{sim.lines=[];vSim()};
+}
+
+/* ================= PEDIDOS ================= */
+const EST=['solicitado','aprobado','anticipo1','anticipo2','en_transito','entregado','cancelado'];
+const EST_T={solicitado:'Solicitado',aprobado:'Aprobado',anticipo1:`Cobrado ${P?.cobro?.[0]??30}%`,anticipo2:'Cobrado 90%',en_transito:'En tránsito',entregado:'Entregado',cancelado:'Cancelado'};
+const MOD_T={compartido40:'40HQ compartido',propio40:'40HQ propio',propio20:"20' propio"};
+function vPedidos(){
+  $('#m').innerHTML=`<h2>Pedidos B2B</h2><p class="hint">Llegan desde el portal de clientes. Asigná cada uno a un contenedor para ver el llenado.</p>
+  <table><thead><tr><th>#</th><th>Cliente</th><th>Modalidad</th><th class="n">m³</th><th class="n">Sin IVA</th><th>Estado</th><th>Contenedor</th><th>Fecha</th></tr></thead><tbody>
+  ${orders.map(o=>{const c=clients.find(x=>x.id===o.client_id)||{};return `<tr class="click" data-o="${o.id}"><td>${o.numero}</td><td>${esc(c.razon_social||c.email)}<div class="hint">${esc(c.tipo)}</div></td>
+  <td>${MOD_T[o.modalidad]}</td><td class="n">${num(o.cbm_total)}</td><td class="n">${usd(o.subtotal_usd,0)}</td>
+  <td><select data-e="${o.id}">${EST.map(e=>`<option value="${e}" ${o.estado===e?'selected':''}>${EST_T[e]}</option>`).join('')}</select></td>
+  <td><select data-k="${o.id}"><option value="">—</option>${conts.map(k=>`<option value="${k.id}" ${o.container_id===k.id?'selected':''}>${esc(k.nombre)}</option>`).join('')}</select></td>
+  <td>${new Date(o.created_at).toLocaleDateString('es-AR')}</td></tr>
+  <tr hidden id="it-${o.id}"><td></td><td colspan="7">${(o.b2b_order_items||[]).map(i=>`${esc(i.codigo)} · ${esc(i.nombre)} · ${esc(i.color)} · ${i.cantidad} u × ${usd(i.precio_unit)}`).join('<br>')}${o.notas?`<div class="hint">Nota: ${esc(o.notas)}</div>`:''}</td></tr>`}).join('')
+  ||'<tr><td colspan="8" class="hint">Todavía no hay pedidos. Van a aparecer cuando esté el portal /b2b.</td></tr>'}</tbody></table>`;
+  $$('[data-e]').forEach(s=>{s.onclick=e=>e.stopPropagation();s.onchange=async()=>{const {error}=await sb.from('b2b_orders').update({estado:s.value}).eq('id',s.dataset.e);
+    if(!error)orders.find(o=>o.id===s.dataset.e).estado=s.value;toast(error?'Error: '+error.message:'Estado actualizado')}});
+  $$('[data-k]').forEach(s=>{s.onclick=e=>e.stopPropagation();s.onchange=async()=>{const v=s.value||null;const {error}=await sb.from('b2b_orders').update({container_id:v}).eq('id',s.dataset.k);
+    if(!error)orders.find(o=>o.id===s.dataset.k).container_id=v;toast(error?'Error: '+error.message:'Contenedor asignado')}});
+  $$('tr[data-o]').forEach(r=>r.onclick=()=>{const x=$('#it-'+r.dataset.o);x.hidden=!x.hidden});
+}
+
+/* ================= CONTENEDORES ================= */
+function vConts(){
+  $('#m').innerHTML=`<div class="bar"><h2 style="margin:0">Contenedores</h2><span class="sp"></span>
+  <input id="c_n" placeholder="Nombre (ej. CONCEPT 02)"><select id="c_t"><option value="40HQ">40HQ</option><option value="20">20'</option></select><button class="btn dk" id="c_add">Crear</button></div>
+  ${conts.map(k=>{const os=orders.filter(o=>o.container_id===k.id&&o.estado!=='cancelado');const cbm=os.reduce((a,o)=>a+ +o.cbm_total,0);const u=+P.cont[k.tipo].util;
+    const v=os.reduce((a,o)=>a+ +o.subtotal_usd,0);
+    return `<div class="card" style="margin-bottom:12px"><div class="bar" style="margin:0"><b>${esc(k.nombre)}</b><span class="pill">${k.tipo==='20'?"20'":'40HQ'}</span><span class="pill">${esc(k.estado)}</span><span class="sp"></span>
+    <span class="hint">${os.length} pedidos · ${usd(v,0)} sin IVA</span></div>
+    <div class="cont"><i style="width:${Math.min(100,cbm/u*100)}%"></i><span>${num(cbm)} / ${u} m³</span></div>
+    <div class="hint">${cbm<u?`Libre: ${num(u-cbm)} m³ para completar con stock FORMA.`:'Lleno.'}</div></div>`}).join('')||'<p class="hint">Todavía no creaste contenedores.</p>'}`;
+  $('#c_add').onclick=async()=>{const n=$('#c_n').value.trim();if(!n){toast('Poné un nombre');return}
+    const {data,error}=await sb.from('b2b_containers').insert({nombre:n,tipo:$('#c_t').value}).select().single();
+    if(error){toast('Error: '+error.message);return}conts.unshift(data);vConts()};
+}
+
+/* ================= CLIENTES ================= */
+function vClientes(){
+  $('#m').innerHTML=`<h2>Clientes B2B</h2><p class="hint">Se registran desde el portal con CUIT. Hasta que los aprobás no ven ni productos ni precios.</p>
+  <table><thead><tr><th>Razón social</th><th>CUIT</th><th>Contacto</th><th>Tipo</th><th>Estado</th><th>Alta</th></tr></thead><tbody>
+  ${clients.map(c=>`<tr><td>${esc(c.razon_social)}</td><td>${esc(c.cuit)}</td><td>${esc(c.email)}<div class="hint">${esc(c.contacto)} ${esc(c.telefono)}</div></td>
+  <td><select data-c="${c.id}" data-k="tipo"><option value="profesional">Profesional</option><option value="mayorista" ${c.tipo==='mayorista'?'selected':''}>Mayorista</option></select></td>
+  <td><select data-c="${c.id}" data-k="estado">${['pendiente','aprobado','rechazado'].map(e=>`<option ${c.estado===e?'selected':''}>${e}</option>`).join('')}</select></td>
+  <td>${new Date(c.created_at).toLocaleDateString('es-AR')}</td></tr>`).join('')||'<tr><td colspan="6" class="hint">Todavía no hay clientes.</td></tr>'}</tbody></table>`;
+  $$('[data-c]').forEach(s=>s.onchange=async()=>{const {error}=await sb.from('b2b_clients').update({[s.dataset.k]:s.value}).eq('id',s.dataset.c);
+    if(!error)clients.find(c=>c.id===s.dataset.c)[s.dataset.k]=s.value;toast(error?'Error: '+error.message:'Cliente actualizado')});
+}
+
+start();
+</script>
+</body>
+</html>
