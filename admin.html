@@ -410,11 +410,15 @@ async function drawColores(){
   $('#cadd').onclick=()=>{const n=$('#cn').value.trim();if(!n){toast('Escribí el nombre del color');return}CNEW.push([n,$('#ch').value]);drawColores();toast('Color agregado: tildá en qué productos va')};
 }
 
+async function backup(){const T=['products','orders','order_items','arrepentimientos','profesionales','pedidos_pro','catalogo_pro','product_b2b','product_costs','master_productos','settings','frm_proyectos','sitio_fotos','suscriptores','compras','admins'];
+  toast('Armando la copia…');const out={fecha:new Date().toISOString()};for(const t of T){const {data,error}=await sb.from(t).select('*');out[t]=error?{error:error.message}:data}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,1)],{type:'application/json'}));a.download='forma-copia-'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('Copia descargada')}
 async function drawSubs(){
   const {data}=await sb.from('suscriptores').select('*').order('created_at',{ascending:false});const L=data||[];
   $('#m').insertAdjacentHTML('beforeend',`<div class="card pad" style="margin-top:14px"><div class="bar" style="margin:0 0 8px"><h4 style="margin:0">Suscriptores · ${L.length}</h4><span class="sp"></span><button class="btn" id="subcsv" ${L.length?'':'disabled'}>Exportar a Excel (CSV)</button></div>
    <p class="hint">Gente que dejó su mail para enterarse de la próxima preventa (desde el pie de página o el cartel). Sirven para mandar novedades y para anuncios.</p>
    ${L.slice(0,8).map(s=>`<div class="rw"><span>${esc(s.email)}</span><b style="font-weight:400;color:var(--soft)">${new Date(s.created_at).toLocaleDateString('es-AR')} · ${esc(s.origen||'')}</b></div>`).join('')}</div>`);
+  $('#m').insertAdjacentHTML('beforeend','<div class="card pad" style="margin-top:14px"><div class="bar" style="margin:0"><div><h4 style="margin:0 0 4px">Copia de seguridad</h4><span class="hint">Descarga un archivo con todos los datos de la tienda (productos, pedidos, clientes, profesionales, costos). Guardalo en Drive una vez por semana.</span></div><span class="sp"></span><button class="btn dk" id="bkp">Descargar copia</button></div></div>');$('#bkp').onclick=backup;
   const b=$('#subcsv');if(b)b.onclick=()=>{const csv='﻿'+[['Email','Fecha','Origen']].concat(L.map(s=>[s.email,new Date(s.created_at).toLocaleString('es-AR'),s.origen||''])).map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='suscriptores-forma.csv';a.click()};
 }
 /* ---------- inicio (tablero) ---------- */
