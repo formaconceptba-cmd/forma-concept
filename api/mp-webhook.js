@@ -1,4 +1,5 @@
 // Aviso de Mercado Pago: confirma el pago consultando a MP y marca el pedido como pagado.
+import { sendMail, layout, tablaItems, ars, esc, ADMIN_MAIL } from './_mail.js';
 const SB = 'https://znzbwtewxpcpqtmjbmdw.supabase.co';
 
 const sb = (path, opts = {}) => fetch(SB + '/rest/v1/' + path, {
@@ -45,6 +46,15 @@ export default async function handler(req, res) {
         const [p] = await (await sb(`products?select=vendidas&id=eq.${encodeURIComponent(it.product_id)}`)).json();
         if (p) await sb(`products?id=eq.${encodeURIComponent(it.product_id)}`, { method: 'PATCH', body: JSON.stringify({ vendidas: (p.vendidas || 0) + it.cantidad }) });
       }
+      // Mails: confirmación al cliente y aviso a FORMA
+      try {
+        const [o] = await (await sb(`orders?select=*,order_items(cantidad,precio,color,products(tipo,nombre))&id=eq.${orderId}`)).json();
+        const its = (o.order_items || []).map(i => ({ q: i.cantidad, precio: i.precio, color: i.color, nombre: i.products ? i.products.tipo + ' ' + i.products.nombre : '' }));
+        const det = tablaItems(its) + `<p style="font-size:14px;margin:12px 0">Envío: ${esc(o.envio || 'a coordinar')}${o.costo_envio ? ' · ' + ars(o.costo_envio) : ''}<br><b>Total pagado: ${ars(o.total)}</b></p>`;
+        const nombre = (o.nombre || '').split(' ')[0];
+        if (o.email) await sendMail({ to: o.email, subject: `Recibimos tu compra · Pedido #${o.id}`, html: layout(`¡Gracias${nombre ? ', ' + esc(nombre) : ''}! Recibimos tu compra`, `<p style="font-size:14px;line-height:1.6">Tu pedido <b>#${o.id}</b> está confirmado. Los productos de la preventa tienen entrega estimada en <b>marzo 2027</b>. Te vamos a escribir por WhatsApp para coordinar el día.</p>${det}<p style="font-size:13px;color:#77756F">¿Dudas? Respondé este mail o escribinos por WhatsApp.</p>`) });
+        await sendMail({ to: ADMIN_MAIL, subject: `Nuevo pedido pagado #${o.id} · ${ars(o.total)}`, html: layout(`Nuevo pedido #${o.id}`, `<p style="font-size:14px">${esc(o.nombre || '')} · ${esc(o.email || '')} · ${esc(o.telefono || '')}<br>CP ${esc(o.cp || '')}</p>${det}<p><a href="https://www.formaconceptba.com/admin">Abrir el panel</a></p>`) });
+      } catch (e) { console.error('mail', e); }
     } else if (['rejected', 'cancelled', 'refunded', 'charged_back'].includes(pay.status) && order.estado === 'pendiente') {
       await sb(`orders?id=eq.${orderId}`, { method: 'PATCH', body: JSON.stringify({ mp_payment: String(pay.id) + ' (' + pay.status + ')' }) });
     }

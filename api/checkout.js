@@ -70,6 +70,7 @@ export default async function handler(req, res) {
         back_urls: { success: SITE + '/?pago=ok', pending: SITE + '/?pago=pendiente', failure: SITE + '/?pago=error' },
         auto_return: 'approved',
         notification_url: SITE + '/api/mp-webhook',
+        payment_methods: { installments: 1 },
         statement_descriptor: 'FORMA CONCEPT'
       })
     });
