@@ -214,6 +214,18 @@ body.pro .mark::after{content:"PRO";font:600 9px/1 "Inter Tight",sans-serif;lett
 body.home .prostrip{margin-top:52px}
 .prolink{display:none!important}body.pro .prolink{display:inline-block!important;background:#6E1F2B;color:#fff!important;padding:4px 10px}
 .prostrip{display:block;margin-top:0;background:#6E1F2B;color:#fff;text-align:center;padding:12px var(--g);font-size:12px;letter-spacing:.06em;text-transform:uppercase}.prostrip b{font-weight:500}
+.ptabs a{border:1px solid var(--line);padding:9px 16px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink)}.ptabs a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cbar3{display:flex;height:14px;background:rgba(110,31,43,.10);overflow:hidden}.cbar3 i{display:block;height:100%}.cbar3 .o,.lgd .o{background:#B98A92}.cbar3 .m,.lgd .m{background:#6E1F2B}.cbar3 .x,.lgd .x{background:repeating-linear-gradient(45deg,#6E1F2B 0 4px,#C9A6AC 4px 8px)}
+.lgd{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:11.5px;color:var(--soft);text-transform:none;letter-spacing:0}.lgd i{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px;background:rgba(110,31,43,.10)}
+.phome{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;margin-bottom:40px}.pbox{border:1px solid var(--line);background:#fff;padding:22px;display:grid;gap:14px;align-content:start}
+.pbox h3,.psec{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin:0}.psec{margin:0 0 16px}.pbox p{text-transform:none;letter-spacing:0;font-size:14px;line-height:1.55;margin:0}
+.pkv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.pkv span{display:block;font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.06em}.pkv b{font-weight:500;font-size:15px;text-transform:none;letter-spacing:0}.pkv a{color:inherit;text-decoration:underline}
+.buy.ghost{background:none;color:var(--ink);border:1px solid var(--ink)}.pbox .buy{display:flex;align-items:center;justify-content:center;margin:0}
+.pcats{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}.pcats a{display:grid;gap:4px;color:inherit}.pcats b{font-weight:500;font-size:15px;text-transform:none}.pcats small{color:var(--soft);font-size:12px;text-transform:none;letter-spacing:0}
+.pchips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 24px}.pchips a{border:1px solid var(--line);padding:8px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink)}.pchips a.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ptab{width:100%;border-collapse:collapse;font-size:14px;text-transform:none;letter-spacing:0}.ptab th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);font-weight:400;text-align:left;padding:8px;border-bottom:1px solid var(--line)}.ptab td{padding:10px 8px;border-bottom:1px solid var(--line)}.ptab .n{text-align:right}.ptab tfoot td{border-bottom:0}
+.phist{margin-top:16px;font-size:13px;text-transform:none;letter-spacing:0}.phist summary{cursor:pointer;color:var(--soft);margin-bottom:8px}.phist .mr-i{padding:6px 0;border-bottom:1px solid var(--line)}
+@media (max-width:900px){.phome{grid-template-columns:1fr}}
 .pcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:32px 20px}
 .qty{display:flex;align-items:center;gap:10px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin:8px 0}.qty span{flex:1;color:var(--soft)}.qty button{width:34px;height:34px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:16px}.qty b{min-width:22px;text-align:center;font-weight:500}
 .ptabs{display:flex;gap:6px;margin-top:16px}.ptabs button{border:1px solid var(--line);background:none;padding:9px 16px;font:inherit;font-size:12px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.ptabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -530,7 +542,7 @@ function viewLegal(k){
 }
 /* ---------- profesionales (B2B) ---------- */
 let sbc=null, ME=null, PRO=null, ISADM=false, CONT={cap:71,usado:0};
-async function contLoad(){try{const {data}=await sbInit().rpc('contenedor_estado');if(data&&data[0])CONT={cap:+data[0].cap||71,usado:+data[0].usado||0}}catch(e){}}
+async function contLoad(){try{const {data}=await sbInit().rpc('contenedor_estado');if(data&&data[0])CONT={cap:+data[0].cap||73,usado:+data[0].usado||0,cierre:data[0].cierre,llegada:data[0].llegada}}catch(e){}}
 const isPro=()=>!!(PRO&&PRO.estado==='aprobado');
 function sbInit(){if(!sbc&&window.supabase)sbc=supabase.createClient(SB_URL,SB_KEY);return sbc}
 async function proLoad(){
@@ -544,7 +556,7 @@ async function proLoad(){
   }
   document.body.classList.toggle('pro',isPro());
   try{ISADM?localStorage.setItem('fc_notrack','1'):localStorage.removeItem('fc_notrack')}catch(e){}
-  if(new URLSearchParams(location.search).get('pro')){try{history.replaceState(null,'',location.pathname+(isPro()?'#pro-catalogo':'#pro'))}catch(e){}}
+  if(new URLSearchParams(location.search).get('pro')){try{history.replaceState(null,'',location.pathname+(isPro()?'#inicio':'#pro'))}catch(e){}}
   if(!animating)render();
 }
 let PROCAT=[], MIS=[], PCART=[], PTAB='cat';try{PCART=JSON.parse(localStorage.getItem('fc_pcart')||'[]')}catch(e){}
@@ -553,11 +565,35 @@ async function misLoad(){try{const {data}=await sbInit().from('pedidos_pro').sel
 const pcBy=c=>PROCAT.find(x=>x.codigo===c);
 const m3=n=>(+n||0).toFixed(2).replace('.',',')+' m³';
 const EST_PRO={reservado:'Reservado · esperando que se complete el contenedor',confirmado:'Confirmado',cancelado:'Cancelado'};
+let PCATF='';
+const fdate=n=>{n=String(n||'');return n.length===8?new Date(+n.slice(0,4),+n.slice(4,6)-1,+n.slice(6,8)).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}):'a confirmar'};
+const misAct=()=>MIS.filter(o=>o.estado!=='cancelado');
+const misCbm=()=>misAct().reduce((s,o)=>s+(+o.cbm||0),0);
+function contBar(extra=0){
+  const mine=misCbm(),others=Math.max(0,CONT.usado-mine),cap=CONT.cap||73,w=x=>Math.min(100,x/cap*100);
+  return `<div class="pcb"><div class="pcb-t"><span>Contenedor compartido · ${cap} m³</span><b>${Math.round(w(CONT.usado+extra))}% lleno</b></div>
+  <div class="cbar3"><i class="o" style="width:${w(others)}%"></i><i class="m" style="width:${w(mine)}%"></i>${extra?`<i class="x" style="width:${w(extra)}%"></i>`:''}</div>
+  <div class="lgd"><span><i class="o"></i>Otros estudios ${m3(others)}</span><span><i class="m"></i>Tus reservas ${m3(mine)} (${Math.round(w(mine))}%)</span>${extra?`<span><i class="x"></i>Pedido en armado ${m3(extra)}</span>`:''}<span><i></i>Libre ${m3(Math.max(0,cap-CONT.usado-extra))}</span></div></div>`;
+}
+function proNav(act){return `<div class="ptabs"><a href="#inicio" class="${act==='home'?'on':''}">Inicio</a><a href="#pro-catalogo" class="${act==='cat'?'on':''}">Catálogo</a><a href="#pro-pedido" class="${act==='res'?'on':''}">Mi pedido${misAct().length?` (${misAct().length})`:''}</a></div>`}
+function viewProHome(){
+  const cats=[...new Set(PROCAT.map(p=>p.categoria))];
+  return `<section class="pcat"><div class="pcat-h"><div><span class="k">FORMA PRO</span><h1>${esc(PRO.estudio||PRO.nombre)}</h1>${proNav('home')}</div></div>
+  <div class="phome">
+   <div class="pbox"><h3>Tu contenedor</h3>${contBar()}
+    <div class="pkv"><div><span>Cierre estimado</span><b>${fdate(CONT.cierre)}</b></div><div><span>Llegada a Buenos Aires</span><b>${fdate(CONT.llegada)}</b></div><div><span>Tus reservas</span><b>${misAct().length} · ${ars(misAct().reduce((s,o)=>s+o.total,0))}</b></div></div>
+    <p class="mut">Compramos en contenedores compartidos con otros estudios. Cuando se completa, confirmamos los pedidos y se fabrica. Mientras tanto podés sumar o ajustar tu pedido.</p>
+    <a class="buy" href="#pro-pedido">Ver mi pedido</a></div>
+   <div class="pbox"><h3>Contacto</h3><p>Tu equipo en FORMA Proyectos responde dudas de producto, terminaciones, medidas y entregas.</p>
+    <div class="pkv"><div><span>WhatsApp</span><b><a href="https://wa.me/541139443055" target="_blank" rel="noopener">+54 11 3944 3055</a></b></div><div><span>Mail</span><b><a href="mailto:formaconcept.ba@gmail.com">formaconcept.ba@gmail.com</a></b></div><div><span>Showroom</span><b>Buenos Aires, con cita previa</b></div></div>
+    <a class="buy ghost" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, soy '+(PRO.nombre||'')+(PRO.estudio?' ('+PRO.estudio+')':'')+'. Tengo una consulta.')}" target="_blank" rel="noopener">Escribinos</a></div>
+  </div>
+  <h3 class="psec">Catálogo por categoría</h3>
+  <div class="pcats">${cats.map(c=>{const f=PROCAT.find(p=>p.categoria===c);return `<a href="#tienda/${encodeURIComponent(c)}"><div class="pc-i"><img src="${src(f.foto)}" alt="" loading="lazy"></div><b>${esc(c)}</b><small>${PROCAT.filter(p=>p.categoria===c).length} productos</small></a>`}).join('')}</div></section>`;
+}
 function viewProCat(){
   const lines=PCART.map((l,i)=>{const p=pcBy(l.codigo);if(!p)return null;const q=l.packs*p.moq;return {...l,i,p,q,sub:(p.precio||0)*q,cbm:(+p.cbm||0)*q}}).filter(Boolean);
   const tot=lines.reduce((a,l)=>a+l.sub,0),cbm=lines.reduce((a,l)=>a+l.cbm,0),units=lines.reduce((a,l)=>a+l.q,0);
-  const p0=Math.min(100,CONT.usado/CONT.cap*100),p1=Math.min(100-p0,cbm/CONT.cap*100);
-  const bar=`<div class="pcb"><div class="pcb-t"><span>Contenedor compartido · ${CONT.cap} m³</span><b>${Math.round(p0+p1)}% lleno</b></div><div class="cbar"><i style="width:${p0}%"></i><b style="left:${p0}%;width:${p1}%"></b></div><small>Bordó oscuro: reservas confirmadas de todos. Claro: tu pedido actual (${m3(cbm)}). Quedan ${m3(Math.max(0,CONT.cap-CONT.usado-cbm))} libres.</small></div>`;
   const card=p=>{const cols=(p.colores||'').split(',').map(s=>s.trim()).filter(Boolean);return `<div class="pc"><div class="pc-i"><img src="${src(p.foto)}" alt="" loading="lazy">${p.precio&&p.lista?`<span class="circ">−${Math.round(p.descuento*100)}%</span>`:''}</div>
     <b>${esc(p.descripcion)}</b><small>${esc([p.medidas&&p.medidas+' mm',p.material].filter(Boolean).join(' · '))}</small>
     <div class="pc-p">${p.precio?`<s>${ars(p.lista)}</s><span>${ars(p.precio)}</span>`:'<span>Consultar</span>'}</div>
@@ -565,15 +601,23 @@ function viewProCat(){
     ${p.precio?`<select id="pcol-${esc(p.codigo)}" aria-label="Color">${cols.length?cols.map(c=>`<option>${esc(c)}</option>`).join(''):'<option>A definir</option>'}</select><div class="qty"><span>Lotes de ${p.moq} u.</span><button data-pq="${esc(p.codigo)},-1" aria-label="Un lote menos">−</button><b id="pq-${esc(p.codigo)}">1</b><button data-pq="${esc(p.codigo)},1" aria-label="Un lote más">+</button></div><button class="buy" data-pa="${esc(p.codigo)}">Agregar al pedido</button>`:''}</div>`};
   const order=lines.length?`${lines.map(l=>`<div class="pl"><div><b>${esc(l.p.descripcion)}</b><small>${esc(l.color)} · ${l.packs} lote${l.packs>1?'s':''} × ${l.p.moq} = <b>${l.q} u.</b> · ${m3(l.cbm)}</small></div><div class="pl-q"><button data-pp="${l.i},-1" aria-label="Un lote menos">−</button>${l.packs}<button data-pp="${l.i},1" aria-label="Un lote más">+</button></div><span>${ars(l.sub)}</span></div>`).join('')}
     <div class="pl-t"><span>${units} unidades · ${m3(cbm)}</span><b>${ars(tot)}</b></div><small class="mut">IVA incluido · IVA contenido ${ars(Math.round(tot-tot/1.21))}</small>
-    <button class="buy" id="pcReserve">Reservar en el contenedor</button><button class="lnk" id="pcQuote">Consultar por WhatsApp</button>`
-    :'<p class="mut">Elegí el color y tocá "Agregar lote" en los productos que quieras. Cada lote es el mínimo de compra del proveedor.</p>';
-  const mis=MIS.length?MIS.map(o=>`<div class="mr"><div class="mr-h"><b>Reserva #${o.id}</b><span>${new Date(o.created_at).toLocaleDateString('es-AR')}</span><span class="st st-${o.estado}">${EST_PRO[o.estado]||o.estado}</span></div>
-    ${(o.items||[]).map(i=>`<div class="mr-i"><span>${i.q} × ${esc(i.producto)} · ${esc(i.color)}</span><span>${ars(i.precio*i.q)}</span></div>`).join('')}
-    <div class="mr-i mr-t"><span>${m3(o.cbm)}</span><b>${ars(o.total)}</b></div></div>`).join(''):'<p class="mut">Todavía no reservaste nada.</p>';
-  const tabs=`<div class="ptabs"><button data-ptab="cat" class="${PTAB==='cat'?'on':''}">Catálogo</button><button data-ptab="res" class="${PTAB==='res'?'on':''}">Mis reservas${MIS.length?` (${MIS.length})`:''}</button></div>`;
-  return `<section class="pcat"><div class="pcat-h"><div><span class="k">Catálogo profesional</span><h1>${esc(PRO.estudio||PRO.nombre)}</h1>${tabs}</div>${bar}</div>
-  ${PTAB==='res'?`<div class="mres">${mis}</div>`:`<div class="pcat-g"><div class="pcgrid">${PROCAT.map(card).join('')||'<p class="mut">El catálogo se está armando.</p>'}</div>
-  <aside class="pcat-o"><h3>Tu pedido</h3>${order}</aside></div>`}</section>`;
+    <button class="buy" id="pcReserve">Sumar a mi pedido en el contenedor</button><button class="lnk" id="pcQuote">Consultar por WhatsApp</button>`
+    :'<p class="mut">Elegí color y cantidad de lotes y tocá "Agregar al pedido". Cada lote es el mínimo de compra del fabricante.</p>';
+  if(PTAB==='res'){
+    const agg={};misAct().forEach(o=>(o.items||[]).forEach(i=>{const k=i.producto+'|'+i.color;const a=agg[k]=agg[k]||{producto:i.producto,color:i.color,q:0,total:0,cbm:0};a.q+=i.q;a.total+=i.precio*i.q;a.cbm+=+i.cbm||0}));
+    const A=Object.values(agg).sort((a,b)=>a.producto.localeCompare(b.producto)),T=A.reduce((s,a)=>s+a.total,0);
+    return `<section class="pcat"><div class="pcat-h"><div><span class="k">FORMA PRO · Mi pedido</span><h1>${esc(PRO.estudio||PRO.nombre)}</h1>${proNav('res')}</div>${contBar()}</div>
+    ${A.length?`<div class="pbox"><table class="ptab"><thead><tr><th>Producto</th><th>Color</th><th class="n">Unidades</th><th class="n">m³</th><th class="n">Subtotal</th></tr></thead><tbody>${A.map(a=>`<tr><td>${esc(a.producto)}</td><td>${esc(a.color)}</td><td class="n">${a.q}</td><td class="n">${a.cbm.toFixed(2).replace('.',',')}</td><td class="n">${ars(a.total)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="2"><b>Total del pedido</b></td><td class="n"><b>${A.reduce((s,a)=>s+a.q,0)}</b></td><td class="n"><b>${misCbm().toFixed(2).replace('.',',')}</b></td><td class="n"><b>${ars(T)}</b></td></tr></tfoot></table>
+    <p class="mut">IVA incluido. Lo confirmamos cuando se completa el contenedor (cierre estimado: ${fdate(CONT.cierre)}). Para cambiar algo, escribinos o sumá más desde el catálogo.</p></div>
+    <details class="phist"><summary>Ver el detalle de cada vez que sumaste productos (${MIS.length})</summary>${MIS.map(o=>`<div class="mr-i"><span>#${o.id} · ${new Date(o.created_at).toLocaleDateString('es-AR')} · ${EST_PRO[o.estado]||o.estado}</span><span>${m3(o.cbm)} · ${ars(o.total)}</span></div>`).join('')}</details>`
+    :`<div class="pbox"><p class="mut">Todavía no sumaste productos al contenedor. <a href="#pro-catalogo">Ir al catálogo</a></p></div>`}</section>`;
+  }
+  const cats=[...new Set(PROCAT.map(p=>p.categoria))],L=PROCAT.filter(p=>!PCATF||p.categoria===PCATF);
+  return `<section class="pcat"><div class="pcat-h"><div><span class="k">FORMA PRO · Catálogo</span><h1>${esc(PCATF||'Todos los productos')}</h1>${proNav('cat')}</div>${contBar(cbm)}</div>
+  <div class="flt pchips"><a href="#pro-catalogo" class="${PCATF?'':'on'}">Todos</a>${cats.map(c=>`<a href="#tienda/${encodeURIComponent(c)}" class="${PCATF===c?'on':''}">${esc(c)}</a>`).join('')}</div>
+  <div class="pcat-g"><div class="pcgrid">${L.map(card).join('')||'<p class="mut">No hay productos en esta categoría.</p>'}</div>
+  <aside class="pcat-o"><h3>Pedido en armado</h3>${order}</aside></div></section>`;
 }
 const RUBROS=['Arquitectura','Interiorismo','Desarrollo inmobiliario','Hotelería / gastronomía','Oficinas / corporativo','Otro'];
 function viewPro(){
@@ -727,7 +771,13 @@ let animating=false;
 function render(){
   const h=decodeURIComponent((location.hash||'#inicio').slice(1));
   let html,home=false;
-  if(h.startsWith('p-')){const p=P.find(x=>slug(x.id)===h);html=p?viewProduct(p):viewHome();if(p)track('vista_producto',{producto:p.id});}
+  if(isPro()&&!['pro','frm','proyectos','terminos','privacidad','arrepentimiento'].includes(h)){
+    if(h.startsWith('tienda')){PCATF=decodeURIComponent(h.split('/')[1]||'');PTAB='cat';html=viewProCat()}
+    else if(h==='pro-catalogo'){PCATF='';PTAB='cat';html=viewProCat()}
+    else if(h==='pro-pedido'){PTAB='res';html=viewProCat()}
+    else if(h.startsWith('p-')){PTAB='cat';html=viewProCat()}
+    else html=viewProHome()}
+  else if(h.startsWith('p-')){const p=P.find(x=>slug(x.id)===h);html=p?viewProduct(p):viewHome();if(p)track('vista_producto',{producto:p.id});}
   else if(h.startsWith('tienda')){let s=h.split('/')[1]||'Todos';
     if(FAMS.includes(s)){selF=new Set([s]);s='Todos';try{history.replaceState(null,'','#tienda')}catch(e){}}
     html=viewShop(s)}
@@ -738,7 +788,6 @@ function render(){
   else if(h==='pro-catalogo'){html=isPro()?viewProCat():viewPro()}
   else{html=viewHome();home=true}
   document.body.classList.toggle('home',home);
-  if(isPro()&&h!=='pro-catalogo'&&h!=='pro')html=`<a class="prostrip" href="#pro-catalogo">Estás viendo la tienda al público · <b>Ir a tu catálogo profesional con tus precios y el contenedor →</b></a>`+html;
   app.innerHTML=html;
   document.querySelectorAll('header [data-r]').forEach(a=>a.classList.toggle('on',h==='tienda'&&a.dataset.r==='tienda'||h==='tienda/'+a.dataset.r||h===a.dataset.r));
   carI=0; carStart();
@@ -806,7 +855,7 @@ document.addEventListener('click',e=>{
   if(a.id==='pcReserve'){const items=PCART.map(l=>{const p=pcBy(l.codigo);if(!p)return null;const q=l.packs*p.moq;return {id:p.codigo,producto:p.descripcion,color:l.color,packs:l.packs,q,precio:p.precio||0,cbm:+((+p.cbm||0)*q).toFixed(3)}}).filter(Boolean);
     const d={email:ME.email.toLowerCase(),nombre:PRO.nombre,estudio:PRO.estudio,items,cbm:+items.reduce((s,x)=>s+x.cbm,0).toFixed(3),total:items.reduce((s,x)=>s+x.precio*x.q,0)};
     a.disabled=true;sbInit().from('pedidos_pro').insert(d).then(async({error})=>{if(error){a.disabled=false;toast('No pudimos reservar. Probá de nuevo o escribinos.');return}
-      PCART=[];savePC();await Promise.all([contLoad(),misLoad()]);PTAB='res';render();toast('¡Reservado! Acá ves el detalle.')});return}
+      PCART=[];savePC();await Promise.all([contLoad(),misLoad()]);location.hash='#pro-pedido';toast('¡Listo! Lo sumamos a tu pedido.')});return}
   if(a.id==='proOut'){sbInit().auth.signOut().finally(()=>location.reload());return}
   if(a.dataset.car){carGo(+a.dataset.car);carStart();return}
   if(a.hasAttribute('data-soon')){toast('Esta sección se completa en la versión real.');return}
