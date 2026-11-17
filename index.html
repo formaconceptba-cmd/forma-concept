@@ -202,6 +202,10 @@ html.cur,html.cur *{cursor:none!important}
 .cko select{height:42px;border:1px solid var(--line);padding:0 10px;font:inherit;font-size:14px;background:#fff;color:var(--ink);border-radius:0}
 .lgl .lnk{text-decoration:underline;font-size:13px;color:var(--soft)}
 body.pro .mark::after{content:"PRO";font:600 9px/1 "Inter Tight",sans-serif;letter-spacing:.1em;background:#6E1F2B;color:#fff;padding:3px 5px;margin-left:6px;vertical-align:super}
+.cnt{display:grid!important;gap:6px;margin:6px 0 4px}.cnt>div:first-child{display:flex;justify-content:space-between}.cnt small{color:var(--soft);font-size:11.5px;line-height:1.4}
+.cbar{position:relative;height:8px;background:rgba(110,31,43,.14)}.cbar i{position:absolute;left:0;top:0;bottom:0;background:#6E1F2B}.cbar b{position:absolute;top:0;bottom:0;background:#C08A92}
+.cwarn{color:#6E1F2B;font-size:12px;margin:0}#proReserve[disabled]{opacity:.4;cursor:not-allowed}
+#cartFt .lnk{font-size:12px;color:var(--soft);text-decoration:underline;padding:8px 0;width:100%}
 .cko{display:grid;gap:8px}.cko b{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;margin-bottom:4px}.cko input{height:42px;border:1px solid var(--line);padding:0 12px;font:inherit;font-size:14px;background:#fff;color:var(--ink);border-radius:0}.cko input:focus{outline:none;border-color:var(--ink)}.cko small{color:var(--soft);font-size:12px;margin:2px 0 6px}.cko .lnk{font-size:12px;color:var(--soft);text-decoration:underline;padding:6px 0}
 .empty{color:var(--soft);font-size:12px;padding:20px 0}
 
@@ -488,7 +492,8 @@ function viewLegal(k){
   return `<section class="lgl"><span class="k">Legales</span><h1>${h}</h1>${b}</section>`;
 }
 /* ---------- profesionales (B2B) ---------- */
-let sbc=null, ME=null, PRO=null, ISADM=false;
+let sbc=null, ME=null, PRO=null, ISADM=false, CONT={cap:71,usado:0};
+async function contLoad(){try{const {data}=await sbInit().rpc('contenedor_estado');if(data&&data[0])CONT={cap:+data[0].cap||71,usado:+data[0].usado||0}}catch(e){}}
 const isPro=()=>!!(PRO&&PRO.estado==='aprobado');
 function sbInit(){if(!sbc&&window.supabase)sbc=supabase.createClient(SB_URL,SB_KEY);return sbc}
 async function proLoad(){
@@ -498,7 +503,7 @@ async function proLoad(){
   if(ME){
     const r=await c.from('profesionales').select('*').maybeSingle(); PRO=r.data||null;
     ISADM=(await c.rpc('is_admin')).data===true;
-    if(isPro()){const {data}=await c.from('product_b2b').select('*');const m=Object.fromEntries((data||[]).map(x=>[x.product_id,x.precio]));P.forEach(p=>{p.price=m[p.id]||null})}
+    if(isPro()){const {data}=await c.rpc('pro_catalog');const m=Object.fromEntries((data||[]).map(x=>[x.product_id,x]));P.forEach(p=>{const x=m[p.id];p.price=x&&x.precio||null;p.moq=x&&x.moq||1;p.cbm=x&&+x.cbm||0});await contLoad()}
   }
   document.body.classList.toggle('pro',isPro());
   if(new URLSearchParams(location.search).get('pro')){try{history.replaceState(null,'',location.pathname+'#pro')}catch(e){}}
@@ -610,7 +615,7 @@ function viewProduct(p){
     ${p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>
      <div class="price">${ars(p.price)} <span class="tag">${isPro()?'Precio profesional':'Preventa −45%'}</span></div>
      <ul class="pay"><li><b>Transferencia o un pago</b><span>${ars(p.price)}</span></li>
-      ${isPro()?'':`<li><b>3 cuotas sin interés</b><span>3 × ${ars(p.list/3)}</span></li>`}
+      ${isPro()?`<li><b>Mínimo por pedido</b><span>${p.moq||1} unidades</span></li>`:`<li><b>3 cuotas sin interés</b><span>3 × ${ars(p.list/3)}</span></li>`}
       <li><b>Tarjetas de crédito y débito</b><span>Mercado Pago</span></li></ul>`:'<div class="cuo">Precio a confirmar</div>'}
     <div class="lb">Color</div>
     <div class="sw">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i?'':'on'}" style="background:${c[1]}" aria-label="${esc(c[0])}"></button>`).join('')}</div>
@@ -639,7 +644,11 @@ function drawCart(){
   $('#cartList').innerHTML=cart.length?cart.map((l,i)=>{const p=byId(l.id);return `<div class="ci"><div class="ph"><img src="${src(p.img)}" alt=""></div>
     <div>${esc(title(p))}<small>${esc(p.colors[l.c][0])}</small><div class="q"><button data-q="${i},-1" aria-label="Uno menos">−</button>${l.q}<button data-q="${i},1" aria-label="Uno más">+</button><button data-rm="${i}">Quitar</button></div></div>
     <div>${ars(p.price*l.q)}</div></div>`}).join(''):'<p class="empty">Tu carrito está vacío.</p>';
-  if(isPro()){$('#cartFt').innerHTML=cart.length?`<div><span>Total profesional</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>IVA incluido</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="proQuote">Pedir cotización por WhatsApp</button>`:'';return}
+  if(isPro()){const cbm=cart.reduce((s,l)=>s+(byId(l.id).cbm||0)*l.q,0),tot=CONT.usado+cbm,pc=Math.min(100,Math.round(tot/CONT.cap*100)),pc0=Math.min(100,Math.round(CONT.usado/CONT.cap*100)),bad=cart.filter(l=>l.q<(byId(l.id).moq||1));
+    $('#cartFt').innerHTML=cart.length?`<div><span>Total profesional</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>IVA incluido</span><span>${ars(Math.round(t-t/1.21))}</span></div>
+    <div class="cnt"><div><span>Contenedor compartido</span><span>${pc}% lleno</span></div><div class="cbar"><i style="width:${pc0}%"></i><b style="left:${pc0}%;width:${Math.max(0,pc-pc0)}%"></b></div><small>Tu pedido ocupa ${cbm.toFixed(2).replace('.',',')} m³. Lo confirmamos cuando el contenedor se completa con otros pedidos y la preventa.</small></div>
+    ${bad.length?`<p class="cwarn">Revisá los mínimos: ${bad.map(l=>esc(title(byId(l.id)))+' ('+(byId(l.id).moq||1)+' u.)').join(', ')}</p>`:''}
+    <button class="buy" id="proReserve" ${bad.length?'disabled':''}>Reservar en el contenedor</button><button class="lnk" id="proQuote">Consultar por WhatsApp</button>`:'';return}
   $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>3 cuotas sin interés</span><span>sobre precio de lista</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="pay">Pagar con Mercado Pago</button>`:'';
 }
 const openCart=()=>{drawCart();$('#dr').classList.add('on');$('#dr').setAttribute('aria-hidden','false')};
@@ -702,7 +711,7 @@ document.addEventListener('click',e=>{
   if(a.dataset.col){col=+a.dataset.col;document.querySelectorAll('.sw button').forEach((b,i)=>b.classList.toggle('on',i===col));const p=P.find(x=>slug(x.id)===location.hash.slice(1));$('#swn').textContent=p.colors[col][0];return}
   if(a.dataset.add){const p=byId(a.dataset.add);
     if(!p.price){window.open('https://wa.me/541139443055?text='+encodeURIComponent('Hola, quiero consultar por '+title(p)),'_blank','noopener');return}
-    const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q++:cart.push({id:p.id,c:col,q:1}); save(); openCart(); return}
+    const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q++:cart.push({id:p.id,c:col,q:isPro()?(p.moq||1):1}); save(); openCart(); return}
   if(a.id==='menuBtn'){document.body.classList.contains('menu-on')?closeMenu():openMenu();return}
   if(a.closest('#mn'))closeMenu();
   if(a.dataset.fam!==undefined&&a.closest('.flt')){const x=a.dataset.fam;if(!x)selF.clear();else selF.has(x)?selF.delete(x):selF.add(x);render();return}
@@ -725,7 +734,11 @@ document.addEventListener('click',e=>{
   if(a.dataset.to){$('#'+a.dataset.to).scrollIntoView({behavior:'smooth'});return}
   if(a.dataset.cs){const t=$('#cst');t.scrollBy({left:+a.dataset.cs*(t.firstElementChild.offsetWidth+14)});return}
   if(a.hasAttribute('data-close')){closeCart();return}
-  if(a.dataset.q){const[i,d]=a.dataset.q.split(',').map(Number);cart[i].q+=d;if(cart[i].q<1)cart.splice(i,1);save();drawCart();return}
+  if(a.dataset.q){const[i,d]=a.dataset.q.split(',').map(Number);cart[i].q+=d;if(cart[i].q<(isPro()?(byId(cart[i].id).moq||1):1))cart.splice(i,1);save();drawCart();return}
+  if(a.id==='proReserve'){const items=cart.map(l=>{const p=byId(l.id);return{id:p.id,producto:title(p),color:p.colors[l.c][0],q:l.q,precio:p.price||0,cbm:+((p.cbm||0)*l.q).toFixed(3)}});
+    const d={email:ME.email.toLowerCase(),nombre:PRO.nombre,estudio:PRO.estudio,items,cbm:+items.reduce((s,x)=>s+x.cbm,0).toFixed(3),total:items.reduce((s,x)=>s+x.precio*x.q,0)};
+    a.disabled=true;sbInit().from('pedidos_pro').insert(d).then(async({error})=>{if(error){a.disabled=false;toast('No pudimos reservar. Probá de nuevo o escribinos.');return}
+      cart=[];save();await contLoad();drawCart();toast('¡Reservado! Te avisamos cuando se complete el contenedor.')});return}
   if(a.dataset.rm){cart.splice(+a.dataset.rm,1);save();drawCart();return}
   if(a.id==='pay'){$('#cartFt').innerHTML=`<div class="cko"><b>Tus datos</b><input id="ck_n" placeholder="Nombre y apellido" autocomplete="name"><input id="ck_e" type="email" placeholder="Email" autocomplete="email"><input id="ck_t" type="tel" placeholder="Teléfono" autocomplete="tel"><input id="ck_d" placeholder="Dirección de entrega" autocomplete="street-address"><input id="ck_c" placeholder="Código postal" autocomplete="postal-code"><small>El envío se coordina por WhatsApp después de la compra.</small><button class="buy" id="payGo">Continuar a Mercado Pago</button><button class="lnk" data-back>Volver</button></div>`;$('#ck_n').focus();return}
   if(a.hasAttribute('data-back')){drawCart();return}
