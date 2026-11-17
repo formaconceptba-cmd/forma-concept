@@ -44,9 +44,13 @@ export default async function handler(req, res) {
       if (l.q > libre) return res.status(409).json({ error: `No queda stock suficiente de ${p.tipo} ${p.nombre}.` });
       items.push({ p, q: l.q, color: l.color, precio: p.precio_preventa || Math.ceil(p.precio_lista * (1 - PRE) / 1000) * 1000 });
     }
-    const total = items.reduce((a, i) => a + i.precio * i.q, 0);
+    const ENVIOS = { gratis: 'Envío gratis (martes, jueves o sábado, a coordinar)', express: 'Envío express 24 h', retiro: 'Retiro en Buenos Aires' };
+    const envio = ENVIOS[body.envio] ? body.envio : 'gratis';
+    let costoEnvio = 0;
+    if (envio === 'express') { const [s] = await (await sb('settings?select=value&key=eq.envio_express')).json(); costoEnvio = Math.round(+((s && s.value) || 35000)); }
+    const total = items.reduce((a, i) => a + i.precio * i.q, 0) + costoEnvio;
 
-    const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, envio: 'a coordinar', total, visitante: clean(body.visitante, 64) || null }) });
+    const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, envio: ENVIOS[envio], costo_envio: costoEnvio, total, visitante: clean(body.visitante, 64) || null }) });
     if (!or.ok) throw new Error('orders ' + (await or.text()));
     const [order] = await or.json();
     const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio }))) });
@@ -57,7 +61,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + process.env.MP_ACCESS_TOKEN, 'Content-Type': 'application/json', 'X-Idempotency-Key': 'order-' + order.id },
       body: JSON.stringify({
-        items: items.map(i => ({ id: i.p.id, title: `${i.p.tipo} ${i.p.nombre}${i.color ? ' · ' + i.color : ''}`, quantity: i.q, unit_price: i.precio, currency_id: 'ARS' })),
+        items: items.map(i => ({ id: i.p.id, title: `${i.p.tipo} ${i.p.nombre}${i.color ? ' · ' + i.color : ''}`, quantity: i.q, unit_price: i.precio, currency_id: 'ARS' })).concat(costoEnvio ? [{ id: 'envio', title: 'Envío express 24 h', quantity: 1, unit_price: costoEnvio, currency_id: 'ARS' }] : []),
         ...(buyer.email ? { payer: { name: nom, surname: ape.join(' '), email: buyer.email } } : {}),
         external_reference: String(order.id),
         back_urls: { success: SITE + '/?pago=ok', pending: SITE + '/?pago=pendiente', failure: SITE + '/?pago=error' },
