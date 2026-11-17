@@ -101,7 +101,7 @@ sb.auth.onAuthStateChange((ev)=>{if(ev==='SIGNED_IN'&&!user)start()});
 /* ---------- estructura ---------- */
 function shell(){
   app.innerHTML=`<header><div class="logo">forma<small>Admin</small></div>
-  <nav><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button></nav>
+  <nav><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button><button data-t="pro">Profesionales</button></nav>
   <span class="sp"></span><a class="who hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
   app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
   $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};
@@ -109,21 +109,23 @@ function shell(){
 }
 async function draw(){
   app.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
-  if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else{await loadOrders();drawOrders()}
+  if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro()}else{await loadOrders();drawOrders()}
 }
 
 /* ---------- productos ---------- */
-async function loadProds(){const {data,error}=await sb.from('products').select('*').order('orden');if(error){toast('Error al leer productos');return}prods=data}
+async function loadProds(){const {data,error}=await sb.from('products').select('*').order('orden');if(error){toast('Error al leer productos');return}prods=data;const r=await sb.from('product_b2b').select('*');b2b=Object.fromEntries((r.data||[]).map(x=>[x.product_id,x.precio]))}
+let b2b={};
 function drawProds(){
   const list=prods.filter(p=>!q||(p.tipo+' '+p.nombre+' '+p.id+' '+p.linea+' '+p.categoria).toLowerCase().includes(q.toLowerCase()));
   const vend=prods.reduce((a,p)=>a+(p.vendidas||0),0), cupo=prods.filter(p=>p.activo).reduce((a,p)=>a+(p.unidades||0),0);
   $('#m').innerHTML=`<div class="stats"><div class="card"><b>${prods.filter(p=>p.activo).length}</b><span>productos publicados</span></div><div class="card"><b>${vend} / ${cupo}</b><span>unidades vendidas en preventa</span></div></div>
   <div class="bar"><input id="q" placeholder="Buscar…" value="${esc(q)}"><span class="sp"></span><button class="btn dk" id="nw">+ Nuevo producto</button></div>
-  <div class="card wrap"><table><thead><tr><th></th><th>Producto</th><th class="hide-m">Línea · Categoría</th><th class="n">Precio de lista</th><th class="n hide-m">Preventa</th><th class="n">Cupo</th><th class="n">Vendidas</th><th>Publicado</th><th></th></tr></thead><tbody>
+  <div class="card wrap"><table><thead><tr><th></th><th>Producto</th><th class="hide-m">Línea · Categoría</th><th class="n">Precio de lista</th><th class="n hide-m">Preventa</th><th class="n">Precio pro</th><th class="n">Cupo</th><th class="n">Vendidas</th><th>Publicado</th><th></th></tr></thead><tbody>
   ${list.map(p=>`<tr class="${p.activo?'':'off'}" data-id="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td>
    <td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.linea)} · ${esc(p.categoria)}</td>
    <td class="n"><input class="num n" data-f="precio_lista" value="${p.precio_lista??''}" inputmode="numeric" placeholder="sin precio"></td>
    <td class="n hide-m">${ars(pre(p.precio_lista))}</td>
+   <td class="n"><input class="num n" data-b2b value="${b2b[p.id]??''}" inputmode="numeric" placeholder="consultar"></td>
    <td class="n"><input class="num n" style="width:70px" data-f="unidades" value="${p.unidades??0}" inputmode="numeric"></td>
    <td class="n"><input class="num n" style="width:70px" data-f="vendidas" value="${p.vendidas??0}" inputmode="numeric"></td>
    <td><input type="checkbox" data-f="activo" ${p.activo?'checked':''} style="width:auto"></td>
@@ -134,6 +136,9 @@ function drawProds(){
   $('#m').querySelectorAll('tr[data-id]').forEach(tr=>{
     const id=tr.dataset.id;
     tr.querySelector('[data-ed]').onclick=()=>editProd(prods.find(p=>p.id===id));
+    const bi=tr.querySelector('[data-b2b]');bi.onchange=async()=>{const v=bi.value.replace(/\D/g,'');
+      const {error}=v?await sb.from('product_b2b').upsert({product_id:id,precio:+v}):await sb.from('product_b2b').delete().eq('product_id',id);
+      if(error){toast('No se pudo guardar');return} if(v)b2b[id]=+v;else delete b2b[id]; toast('Precio profesional guardado')};
     tr.querySelectorAll('[data-f]').forEach(inp=>inp.onchange=async()=>{
       const f=inp.dataset.f; let v=inp.type==='checkbox'?inp.checked:inp.value.replace(/\D/g,'');
       if(f!=='activo')v=v===''?(f==='precio_lista'?null:0):+v;
@@ -205,6 +210,27 @@ async function drawArr(){
   $('#m').querySelectorAll('select[data-a]').forEach(s=>s.onchange=async()=>{
     const {error}=await sb.from('arrepentimientos').update({estado:s.value}).eq('id',+s.dataset.a);
     toast(error?'No se pudo cambiar':'Estado actualizado');
+  });
+}
+
+/* ---------- profesionales ---------- */
+async function drawPro(){
+  const {data,error}=await sb.from('profesionales').select('*').order('created_at',{ascending:false});
+  if(error){toast('Error al leer profesionales');return}
+  const ET={pendiente:'Pendiente',aprobado:'Aprobado',rechazado:'Rechazado'};
+  $('#m').innerHTML=`<div class="stats"><div class="card"><b>${data.filter(p=>p.estado==='pendiente').length}</b><span>solicitudes por revisar</span></div><div class="card"><b>${data.filter(p=>p.estado==='aprobado').length}</b><span>profesionales aprobados</span></div></div>
+  <p class="hint">Al aprobar, al profesional le llega un mail para entrar. Ve la tienda con los precios de la columna "Precio pro" (en Productos). Si un producto no tiene precio pro, le aparece "Consultar".</p>
+  ${data.length?`<div class="card wrap"><table><thead><tr><th>Fecha</th><th>Profesional</th><th class="hide-m">Estudio · Rubro</th><th class="hide-m">CUIT</th><th>Estado</th></tr></thead><tbody>
+  ${data.map(p=>`<tr><td>${new Date(p.created_at).toLocaleDateString('es-AR')}</td><td><b>${esc(p.nombre)}</b><div class="hint">${esc(p.email)} · ${esc(p.telefono)}</div></td>
+   <td class="hide-m">${esc(p.estudio)}<div class="hint">${esc(p.rubro)}</div></td><td class="hide-m">${esc(p.cuit)}</td>
+   <td><select data-pr="${p.id}">${Object.keys(ET).map(s=>`<option value="${s}" ${s===p.estado?'selected':''}>${ET[s]}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>`
+  :`<div class="card" style="padding:40px;text-align:center;color:var(--soft)">Todavía no hay solicitudes. Los profesionales se registran desde la tienda, en Proyectos → Catálogo profesional.</div>`}`;
+  $('#m').querySelectorAll('select[data-pr]').forEach(s=>s.onchange=async()=>{
+    s.disabled=true;
+    const {data:{session}}=await sb.auth.getSession();
+    const r=await fetch('/api/pro-approve',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({id:+s.dataset.pr,estado:s.value})});
+    const d=await r.json().catch(()=>({}));s.disabled=false;
+    toast(!r.ok?(d.error||'No se pudo cambiar'):d.aviso||(d.invitado?'Aprobado: le mandamos el mail de acceso':'Estado actualizado'));
   });
 }
 

@@ -198,6 +198,10 @@ html.cur,html.cur *{cursor:none!important}
 .dr .ft div{display:flex;justify-content:space-between;margin-bottom:14px}
 .dr .buy{margin:0}
 .lgl{max-width:760px;margin:0 auto;padding:140px var(--g) 96px}.lgl p,.lgl h3,.lgl input{text-transform:none!important;letter-spacing:0!important;font-weight:400!important;font-size:15px!important;line-height:1.6!important}.lgl h3{font-weight:600!important;margin:28px 0 8px}.lgl h1{font-size:clamp(28px,3.2vw,44px)!important;font-weight:400!important;line-height:1.08!important;letter-spacing:-.01em!important;margin-bottom:28px}.lgl b{font-weight:600!important}.lgl .k{display:block;font-size:12px;color:var(--soft);margin-bottom:16px;text-transform:uppercase;letter-spacing:.08em}.lgl h1{font:400 clamp(28px,3.2vw,44px)/1.08 var(--f);margin-bottom:28px}.lgl h3{font-size:14px;font-weight:600;margin:28px 0 8px}.lgl p{color:var(--ink);line-height:1.6;margin-bottom:12px}.lgl a{text-decoration:underline}.lgl .arr{max-width:420px;margin-top:24px}
+.pro2{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:28px;align-items:start}@media (max-width:720px){.pro2{grid-template-columns:1fr}}
+.cko select{height:42px;border:1px solid var(--line);padding:0 10px;font:inherit;font-size:14px;background:#fff;color:var(--ink);border-radius:0}
+.lgl .lnk{text-decoration:underline;font-size:13px;color:var(--soft)}
+body.pro .mark::after{content:"PRO";font:600 9px/1 "Inter Tight",sans-serif;letter-spacing:.1em;background:#6E1F2B;color:#fff;padding:3px 5px;margin-left:6px;vertical-align:super}
 .cko{display:grid;gap:8px}.cko b{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;margin-bottom:4px}.cko input{height:42px;border:1px solid var(--line);padding:0 12px;font:inherit;font-size:14px;background:#fff;color:var(--ink);border-radius:0}.cko input:focus{outline:none;border-color:var(--ink)}.cko small{color:var(--soft);font-size:12px;margin:2px 0 6px}.cko .lnk{font-size:12px;color:var(--soft);text-decoration:underline;padding:6px 0}
 .empty{color:var(--soft);font-size:12px;padding:20px 0}
 
@@ -364,6 +368,7 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 </aside></div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" defer></script>
 <script>
 const WHATS='+54 11 3944 3055';
 const CUOTAS=3, OFF_1P=0.15, PRE=0.45, IVA=1.21;
@@ -421,7 +426,7 @@ const save=()=>{try{localStorage.setItem('fc_cart_c',JSON.stringify(cart))}catch
 
 /* ---------- piezas ---------- */
 function card(p){
-  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.price?'<span class="circ">−45%</span>':''}<img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="${src(p.img2)}" alt="" loading="lazy">`:''}</div>
+  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.price?`<span class="circ">${isPro()?'PRO':'−45%'}</span>`:''}<img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="${src(p.img2)}" alt="" loading="lazy">`:''}</div>
   <div class="n"><span>${esc(title(p))}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></div></a>`;
 }
 /* toda la foto es un link, no solo el botón */
@@ -482,10 +487,41 @@ function viewLegal(k){
   const [h,b]=L[k];
   return `<section class="lgl"><span class="k">Legales</span><h1>${h}</h1>${b}</section>`;
 }
+/* ---------- profesionales (B2B) ---------- */
+let sbc=null, ME=null, PRO=null, ISADM=false;
+const isPro=()=>!!(PRO&&PRO.estado==='aprobado');
+function sbInit(){if(!sbc&&window.supabase)sbc=supabase.createClient(SB_URL,SB_KEY);return sbc}
+async function proLoad(){
+  for(let i=0;i<40&&!window.supabase;i++)await new Promise(r=>setTimeout(r,100));
+  const c=sbInit(); if(!c)return;
+  const {data:{session}}=await c.auth.getSession(); ME=session?session.user:null; PRO=null; ISADM=false;
+  if(ME){
+    const r=await c.from('profesionales').select('*').maybeSingle(); PRO=r.data||null;
+    ISADM=(await c.rpc('is_admin')).data===true;
+    if(isPro()){const {data}=await c.from('product_b2b').select('*');const m=Object.fromEntries((data||[]).map(x=>[x.product_id,x.precio]));P.forEach(p=>{p.price=m[p.id]||null})}
+  }
+  document.body.classList.toggle('pro',isPro());
+  if(new URLSearchParams(location.search).get('pro')){try{history.replaceState(null,'',location.pathname+'#pro')}catch(e){}}
+  if(!animating)render();
+}
+const RUBROS=['Arquitectura','Interiorismo','Desarrollo inmobiliario','Hotelería / gastronomía','Oficinas / corporativo','Otro'];
+function viewPro(){
+  const reg=(email='')=>`<div class="cko" id="prF"><b>Registrate</b><input id="pr_n" placeholder="Nombre y apellido" autocomplete="name"><input id="pr_s" placeholder="Estudio o empresa" autocomplete="organization"><input id="pr_c" placeholder="CUIT" inputmode="numeric"><input id="pr_t" type="tel" placeholder="Teléfono" autocomplete="tel"><select id="pr_r"><option value="">Rubro</option>${RUBROS.map(r=>`<option>${r}</option>`).join('')}</select><input id="pr_e" type="email" placeholder="Email" autocomplete="email" value="${esc(email)}"><button class="buy" id="proReg">Enviar solicitud</button><small>Revisamos cada solicitud y te avisamos por mail cuando tengas acceso.</small></div>`;
+  const adm=ISADM?`<p><a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 32px" href="/admin">Ir al panel de administración</a></p>`:'';
+  let b;
+  if(!ME) b=`<p>Precios especiales para estudios de arquitectura, interiorismo, desarrolladores y empresas. Mismo catálogo, condiciones para profesionales.</p>
+    <div class="pro2"><div class="cko"><b>Ya tengo acceso</b><input id="pl_e" type="email" placeholder="Tu email" autocomplete="email"><button class="buy" id="proLogin">Enviarme el link para entrar</button><small>Sin contraseña: te llega un link al mail.</small></div>${reg()}</div>`;
+  else if(isPro()) b=`<p>Hola <b>${esc(PRO.nombre)}</b>${PRO.estudio?` · ${esc(PRO.estudio)}`:''}. Estás viendo la tienda con <b>precios profesionales</b>.</p><p><a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 32px" href="#tienda">Ver catálogo profesional</a></p>${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
+  else if(PRO&&PRO.estado==='pendiente') b=`<p>Recibimos tu solicitud, <b>${esc(PRO.nombre)}</b>. La estamos revisando y te avisamos por mail.</p>${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
+  else if(PRO) b=`<p>Tu solicitud no fue aprobada. Si creés que es un error, escribinos a ${EMPRESA.mail}.</p><p><button class="lnk" id="proOut">Salir</button></p>`;
+  else b=`<p>Entraste como <b>${esc(ME.email)}</b>.</p>${adm}${ISADM?'':reg(ME.email)}<p><button class="lnk" id="proOut">Salir</button></p>`;
+  return `<section class="lgl"><span class="k">FORMA Proyectos</span><h1>Catálogo profesional</h1>${b}</section>`;
+}
 function viewProjects(){
   return `<section class="prj"><div><span class="k" style="font-size:12px;color:var(--soft);display:block;margin-bottom:16px">FORMA Proyectos</span><h1 style="font:400 clamp(28px,3.2vw,44px)/1.08 var(--f);margin-bottom:20px">Equipamos proyectos completos</h1>
    <p style="color:var(--soft);max-width:400px;margin-bottom:28px">Desarrollos, hoteles, oficinas y gastronomía. Armamos la selección de piezas para cada obra y la coordinamos de punta a punta.</p>
-   <a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 40px" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto')}" target="_blank" rel="noopener">Contanos tu proyecto</a></div>
+   <a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 40px" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto')}" target="_blank" rel="noopener">Contanos tu proyecto</a>
+   <a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 40px;margin-left:8px;background:none;color:var(--ink);border:1px solid var(--ink)" href="#pro">Catálogo profesional</a></div>
    <img src="img/prj_obra-fachada.jpg" alt="Obra de FORMA Proyectos"></section>
 
   <section class="pj-step"><div class="pj-n"><span>01</span><h3>Estándar <i>|</i> Por pedido</h3></div>
@@ -572,9 +608,9 @@ function viewProduct(p){
     <a class="back" href="#tienda" data-back>← Atrás</a>
     <h1>${esc(title(p))}</h1>
     ${p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>
-     <div class="price">${ars(p.price)} <span class="tag">Preventa −45%</span></div>
+     <div class="price">${ars(p.price)} <span class="tag">${isPro()?'Precio profesional':'Preventa −45%'}</span></div>
      <ul class="pay"><li><b>Transferencia o un pago</b><span>${ars(p.price)}</span></li>
-      <li><b>3 cuotas sin interés</b><span>3 × ${ars(p.list/3)}</span></li>
+      ${isPro()?'':`<li><b>3 cuotas sin interés</b><span>3 × ${ars(p.list/3)}</span></li>`}
       <li><b>Tarjetas de crédito y débito</b><span>Mercado Pago</span></li></ul>`:'<div class="cuo">Precio a confirmar</div>'}
     <div class="lb">Color</div>
     <div class="sw">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i?'':'on'}" style="background:${c[1]}" aria-label="${esc(c[0])}"></button>`).join('')}</div>
@@ -603,6 +639,7 @@ function drawCart(){
   $('#cartList').innerHTML=cart.length?cart.map((l,i)=>{const p=byId(l.id);return `<div class="ci"><div class="ph"><img src="${src(p.img)}" alt=""></div>
     <div>${esc(title(p))}<small>${esc(p.colors[l.c][0])}</small><div class="q"><button data-q="${i},-1" aria-label="Uno menos">−</button>${l.q}<button data-q="${i},1" aria-label="Uno más">+</button><button data-rm="${i}">Quitar</button></div></div>
     <div>${ars(p.price*l.q)}</div></div>`}).join(''):'<p class="empty">Tu carrito está vacío.</p>';
+  if(isPro()){$('#cartFt').innerHTML=cart.length?`<div><span>Total profesional</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>IVA incluido</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="proQuote">Pedir cotización por WhatsApp</button>`:'';return}
   $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>3 cuotas sin interés</span><span>sobre precio de lista</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="pay">Pagar con Mercado Pago</button>`:'';
 }
 const openCart=()=>{drawCart();$('#dr').classList.add('on');$('#dr').setAttribute('aria-hidden','false')};
@@ -621,6 +658,7 @@ function render(){
   else if(h==='proyectos'){html=viewProjects()}
   else if(h==='frm'){html=viewStudio()}
   else if(['terminos','privacidad','arrepentimiento'].includes(h)){html=viewLegal(h)}
+  else if(h==='pro'){html=viewPro()}
   else{html=viewHome();home=true}
   document.body.classList.toggle('home',home);
   app.innerHTML=html;
@@ -669,7 +707,19 @@ document.addEventListener('click',e=>{
   if(a.closest('#mn'))closeMenu();
   if(a.dataset.fam!==undefined&&a.closest('.flt')){const x=a.dataset.fam;if(!x)selF.clear();else selF.has(x)?selF.delete(x):selF.add(x);render();return}
   if(a.id==='cartBtn'){closeMenu();openCart();return}
-  if(a.id==='adminBtn'){location.href='/admin';return}
+  if(a.id==='adminBtn'){fadeTo('#pro');return}
+  if(a.id==='proQuote'){const t=cart.reduce((s,l)=>s+(byId(l.id).price||0)*l.q,0);
+    const txt=`Hola, soy ${PRO.nombre}${PRO.estudio?' ('+PRO.estudio+')':''}. Quiero cotizar:\n`+cart.map(l=>{const p=byId(l.id);return `• ${l.q} × ${title(p)} · ${p.colors[l.c][0]} — ${p.price?ars(p.price*l.q):'a consultar'}`}).join('\n')+`\nTotal profesional: ${ars(t)}`;
+    window.open('https://wa.me/541139443055?text='+encodeURIComponent(txt),'_blank','noopener');return}
+  if(a.id==='proLogin'){const e=$('#pl_e').value.trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){toast('Escribí tu email.');return}
+    a.disabled=true;sbInit().auth.signInWithOtp({email:e,options:{shouldCreateUser:false,emailRedirectTo:location.origin+'/?pro=1'}}).then(({error})=>{a.disabled=false;
+      toast(error?(/signup|not allowed|not found/i.test(error.message)?'Ese mail todavía no tiene acceso. Registrate o esperá la aprobación.':'No pudimos mandar el link. Probá en unos minutos.'):'Te mandamos un link a '+e)});return}
+  if(a.id==='proReg'){const v=k=>$('#pr_'+k).value.trim();const d={nombre:v('n'),estudio:v('s'),cuit:v('c'),telefono:v('t'),rubro:v('r'),email:v('e').toLowerCase()};
+    if(!d.nombre||!d.estudio||!d.telefono||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)){toast('Completá nombre, estudio, teléfono y email.');return}
+    a.disabled=true;fetch(SB_URL+'/rest/v1/profesionales',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(d)})
+      .then(r=>{if(r.status===409){a.disabled=false;toast('Ese mail ya está registrado.');return}if(!r.ok)throw 0;$('#prF').innerHTML=`<p><b>¡Listo!</b> Recibimos tu solicitud. Te avisamos a ${esc(d.email)} cuando tengas acceso.</p>`})
+      .catch(()=>{a.disabled=false;toast('No pudimos enviarla. Escribinos a '+EMPRESA.mail)});return}
+  if(a.id==='proOut'){sbInit().auth.signOut().finally(()=>location.reload());return}
   if(a.dataset.car){carGo(+a.dataset.car);carStart();return}
   if(a.hasAttribute('data-soon')){toast('Esta sección se completa en la versión real.');return}
   if(a.dataset.to){$('#'+a.dataset.to).scrollIntoView({behavior:'smooth'});return}
@@ -745,7 +795,7 @@ addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
   else if(q==='pendiente'){cart=[];setTimeout(()=>toast('Tu pago está pendiente. Te avisamos cuando se acredite.'),600)}
   else setTimeout(()=>toast('El pago no se completó. Podés intentar de nuevo.'),600);
   try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}})();
-save(); render(); loadDB();
+save(); render(); loadDB().then(proLoad);
 (()=>{if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
 const c=document.createElement('div');c.id='cur';document.body.appendChild(c);document.documentElement.classList.add('cur');
 addEventListener('mousemove',e=>{c.style.transform=`translate(${e.clientX}px,${e.clientY}px)`;c.classList.add('on');
