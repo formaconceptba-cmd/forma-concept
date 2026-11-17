@@ -398,7 +398,8 @@ const P=[
  {id:'MES-MAD-208-BAI',img:'102E1.0',t:'Mesa ratona',n:'REFLEJO',fam:'Laca',cat:'Mesas bajas',lead:'Base laqueada mate y tapa de vidrio templado teñido.',mat:'MDF y vidrio templado',fin:'Laqueado mate',d:[100,100,35],round:1,price:1770000,units:12,armado:false,colors:[['Bordó','#6B2630']],feat:1}
 ];
 // list = precio de lista · one = un pago (−15%) · price = preventa (−45% sobre lista, redondeado a $1.000)
-const norm=p=>{p.name=p.t+' '+p.n; p.list=p.price; if(p.price){p.one=p.list*(1-OFF_1P); p.price=Math.ceil(p.list*(1-PRE)/1000)*1000} return p};
+const norm=p=>{p.name=p.t+' '+p.n; p.list=p.price; if(p.price){p.one=p.list*(1-OFF_1P); p.price=p.pre||Math.ceil(p.list*(1-PRE)/1000)*1000} return p};
+const off=p=>Math.round((1-p.price/p.list)*100);
 P.forEach(norm);
 /* Base de datos (Supabase): si responde, reemplaza la lista de arriba por la real. Si falla, queda la de arriba. */
 const SB_URL='https://znzbwtewxpcpqtmjbmdw.supabase.co', SB_KEY='sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
@@ -406,7 +407,7 @@ async function loadDB(){
   try{
     const r=await fetch(SB_URL+'/rest/v1/products?select=*&activo=eq.true&order=orden',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
     if(!r.ok)return; const rows=await r.json(); if(!rows.length)return;
-    const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores||[],feat:x.destacado?1:0}));
+    const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores||[],feat:x.destacado?1:0}));
     P.splice(0,P.length,...list);
     if(!animating)render();
   }catch(e){console.warn('DB',e)}
@@ -430,7 +431,7 @@ const save=()=>{try{localStorage.setItem('fc_cart_c',JSON.stringify(cart))}catch
 
 /* ---------- piezas ---------- */
 function card(p){
-  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.price?`<span class="circ">${isPro()?'PRO':'−45%'}</span>`:''}<img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="${src(p.img2)}" alt="" loading="lazy">`:''}</div>
+  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.price?`<span class="circ">${isPro()?'PRO':'−'+off(p)+'%'}</span>`:''}<img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="${src(p.img2)}" alt="" loading="lazy">`:''}</div>
   <div class="n"><span>${esc(title(p))}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></div></a>`;
 }
 /* toda la foto es un link, no solo el botón */
@@ -613,7 +614,7 @@ function viewProduct(p){
     <a class="back" href="#tienda" data-back>← Atrás</a>
     <h1>${esc(title(p))}</h1>
     ${p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>
-     <div class="price">${ars(p.price)} <span class="tag">${isPro()?'Precio profesional':'Preventa −45%'}</span></div>
+     <div class="price">${ars(p.price)} <span class="tag">${isPro()?'Precio profesional':'Preventa −'+off(p)+'%'}</span></div>
      <ul class="pay"><li><b>Transferencia o un pago</b><span>${ars(p.price)}</span></li>
       ${isPro()?`<li><b>Mínimo por pedido</b><span>${p.moq||1} unidades</span></li>`:`<li><b>3 cuotas sin interés</b><span>3 × ${ars(p.list/3)}</span></li>`}
       <li><b>Tarjetas de crédito y débito</b><span>Mercado Pago</span></li></ul>`:'<div class="cuo">Precio a confirmar</div>'}

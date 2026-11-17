@@ -124,13 +124,13 @@ function drawProds(){
   ${list.map(p=>`<tr class="${p.activo?'':'off'}" data-id="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td>
    <td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.linea)} · ${esc(p.categoria)}</td>
    <td class="n"><input class="num n" data-f="precio_lista" value="${p.precio_lista??''}" inputmode="numeric" placeholder="sin precio"></td>
-   <td class="n hide-m">${ars(pre(p.precio_lista))}</td>
+   <td class="n hide-m"><input class="num n" data-f="precio_preventa" value="${p.precio_preventa??''}" inputmode="numeric" placeholder="${p.precio_lista?ars(pre(p.precio_lista)):''}" title="Vacío = automático (lista −45%)"></td>
    <td class="n"><input class="num n" data-b2b value="${b2b[p.id]??''}" inputmode="numeric" placeholder="consultar"></td>
    <td class="n"><input class="num n" style="width:70px" data-f="unidades" value="${p.unidades??0}" inputmode="numeric"></td>
    <td class="n"><input class="num n" style="width:70px" data-f="vendidas" value="${p.vendidas??0}" inputmode="numeric"></td>
    <td><input type="checkbox" data-f="activo" ${p.activo?'checked':''} style="width:auto"></td>
    <td><button class="lnk" data-ed>Editar</button></td></tr>`).join('')}</tbody></table></div>
-  <p class="hint">Los cambios en la tabla se guardan solos al salir de cada casilla. La preventa se calcula sola (−45% sobre lista).</p>`;
+  <p class="hint">Los cambios en la tabla se guardan solos al salir de cada casilla. La preventa se calcula sola (−45% sobre lista); si escribís un precio en la columna Preventa, ese manda. Dejala vacía para volver al automático.</p>`;
   $('#q').oninput=e=>{q=e.target.value;const pos=e.target.selectionStart;drawProds();const i=$('#q');i.focus();i.setSelectionRange(pos,pos)};
   $('#nw').onclick=()=>editProd(null);
   $('#m').querySelectorAll('tr[data-id]').forEach(tr=>{
@@ -141,7 +141,7 @@ function drawProds(){
       if(error){toast('No se pudo guardar');return} if(v)b2b[id]=+v;else delete b2b[id]; toast('Precio profesional guardado')};
     tr.querySelectorAll('[data-f]').forEach(inp=>inp.onchange=async()=>{
       const f=inp.dataset.f; let v=inp.type==='checkbox'?inp.checked:inp.value.replace(/\D/g,'');
-      if(f!=='activo')v=v===''?(f==='precio_lista'?null:0):+v;
+      if(f!=='activo')v=v===''?((f==='precio_lista'||f==='precio_preventa')?null:0):+v;
       const {error}=await sb.from('products').update({[f]:v,updated_at:new Date().toISOString()}).eq('id',id);
       if(error){toast('No se pudo guardar');return}
       Object.assign(prods.find(p=>p.id===id),{[f]:v});toast('Guardado');drawProds();
