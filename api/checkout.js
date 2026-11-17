@@ -28,8 +28,6 @@ export default async function handler(req, res) {
       nombre: clean(b.nombre, 120), email: clean(b.email, 160), telefono: clean(b.telefono, 40),
       direccion: clean(b.direccion, 240), cp: clean(b.cp, 12)
     };
-    if (!buyer.nombre || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyer.email) || !buyer.telefono || !buyer.direccion)
-      return res.status(400).json({ error: 'Completá nombre, email, teléfono y dirección.' });
 
     const lines = (body.items || []).slice(0, 30).map(l => ({ id: clean(l.id, 40), color: clean(l.color, 60), q: Math.max(1, Math.min(20, parseInt(l.q) || 1)) }));
     if (!lines.length) return res.status(400).json({ error: 'El carrito está vacío.' });
@@ -48,19 +46,19 @@ export default async function handler(req, res) {
     }
     const total = items.reduce((a, i) => a + i.precio * i.q, 0);
 
-    const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, envio: 'a coordinar', total }) });
+    const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, envio: 'a coordinar', total, visitante: clean(body.visitante, 64) || null }) });
     if (!or.ok) throw new Error('orders ' + (await or.text()));
     const [order] = await or.json();
     const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio }))) });
     if (!ir.ok) throw new Error('items ' + (await ir.text()));
 
-    const [nom, ...ape] = buyer.nombre.split(' ');
+    const [nom, ...ape] = (buyer.nombre || '').split(' ');
     const mp = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + process.env.MP_ACCESS_TOKEN, 'Content-Type': 'application/json', 'X-Idempotency-Key': 'order-' + order.id },
       body: JSON.stringify({
         items: items.map(i => ({ id: i.p.id, title: `${i.p.tipo} ${i.p.nombre}${i.color ? ' · ' + i.color : ''}`, quantity: i.q, unit_price: i.precio, currency_id: 'ARS' })),
-        payer: { name: nom, surname: ape.join(' '), email: buyer.email },
+        ...(buyer.email ? { payer: { name: nom, surname: ape.join(' '), email: buyer.email } } : {}),
         external_reference: String(order.id),
         back_urls: { success: SITE + '/?pago=ok', pending: SITE + '/?pago=pendiente', failure: SITE + '/?pago=error' },
         auto_return: 'approved',

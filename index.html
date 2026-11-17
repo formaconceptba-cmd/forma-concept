@@ -211,7 +211,12 @@ body.pro .mark::after{content:"PRO";font:600 9px/1 "Inter Tight",sans-serif;lett
 .pcat-h{display:grid;grid-template-columns:1fr minmax(0,460px);gap:32px;align-items:end;margin-bottom:28px}
 .pcb{display:grid;gap:6px}.pcb-t{display:flex;justify-content:space-between;font-size:12px;text-transform:uppercase;letter-spacing:.06em}.pcb small{color:var(--soft);font-size:11.5px;line-height:1.4}.pcb .cbar{height:12px}
 .pcat-g{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;align-items:start}
-.pcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px 16px}
+.pcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:32px 20px}
+.qty{display:flex;align-items:center;gap:10px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin:8px 0}.qty span{flex:1;color:var(--soft)}.qty button{width:34px;height:34px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:16px}.qty b{min-width:22px;text-align:center;font-weight:500}
+.ptabs{display:flex;gap:6px;margin-top:16px}.ptabs button{border:1px solid var(--line);background:none;padding:9px 16px;font:inherit;font-size:12px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.ptabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mres{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}.mres .mr{font-size:13.5px;padding:16px;background:#fff}
+#cartFt .safe{display:block;color:var(--soft);font-size:11.5px;text-align:center;margin-top:8px;text-transform:none;letter-spacing:0}
+.ck{position:fixed;left:16px;right:16px;bottom:16px;z-index:60;max-width:520px;background:var(--ink);color:#fff;padding:16px 18px;display:grid;gap:12px;font-size:13px;line-height:1.45;text-transform:none;letter-spacing:0}.ck div{display:flex;gap:8px;justify-content:flex-end}.ck button{border:1px solid rgba(255,255,255,.4);background:none;color:#fff;padding:9px 14px;font:inherit;font-size:12px;cursor:pointer}.ck button.ok{background:#fff;color:var(--ink);border-color:#fff}.ck a{color:#fff;text-decoration:underline}
 .pc{display:grid;gap:6px;align-content:start}.pc-i{position:relative;aspect-ratio:1;background:var(--box);overflow:hidden}.pc-i img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
 .pc-i .circ{position:absolute;top:8px;left:8px}.pc b{font-weight:500;font-size:14px;text-transform:none;letter-spacing:0}.pc small{color:var(--soft);font-size:12px;text-transform:none;letter-spacing:0}
 .pc-p{display:flex;gap:10px;align-items:baseline}.pc-p s{color:var(--soft);font-size:13px}.pc-p span{font-size:17px;color:#6E1F2B}
@@ -428,7 +433,7 @@ const VID=(()=>{try{let v=localStorage.getItem('fc_vid');if(!v){v=Math.random().
 const SID=(()=>{try{let v=sessionStorage.getItem('fc_sid');if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);sessionStorage.setItem('fc_sid',v)}return v}catch(e){return 'x'}})();
 const UTM=(()=>{const q=new URLSearchParams(location.search);const u=['utm_source','utm_medium','utm_campaign'].map(k=>q.get(k)).filter(Boolean).join(' / ');try{if(u)sessionStorage.setItem('fc_utm',u);return u||sessionStorage.getItem('fc_utm')||''}catch(e){return u}})();
 const REF=(()=>{try{const r=document.referrer?new URL(document.referrer).hostname:'';return r&&r!==location.hostname?r:''}catch(e){return ''}})();
-function track(tipo,x={}){try{if(/[?&]notrack/.test(location.search)||localStorage.getItem('fc_notrack'))return;
+function track(tipo,x={}){try{if(/[?&]notrack/.test(location.search)||localStorage.getItem('fc_notrack')||localStorage.getItem('fc_consent')==='no')return;
   fetch(SB_URL+'/rest/v1/eventos',{method:'POST',keepalive:true,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
   body:JSON.stringify({tipo,visitante:VID,sesion:SID,path:(location.hash||'#inicio').slice(0,200),ref:REF.slice(0,200),utm:UTM.slice(0,200),dispositivo:/Mobi|Android/i.test(navigator.userAgent)?'celular':'computadora',producto:x.producto||null,email:x.email||null,valor:x.valor||null})}).catch(()=>{})}catch(e){}}
 async function loadDB(){
@@ -531,14 +536,15 @@ async function proLoad(){
   const {data:{session}}=await c.auth.getSession(); ME=session?session.user:null; PRO=null; ISADM=false;
   if(ME){
     const r=await c.from('profesionales').select('*').maybeSingle(); PRO=r.data||null;
-    ISADM=(await c.rpc('is_admin')).data===true;if(ISADM){try{localStorage.setItem('fc_notrack','1')}catch(e){}}
+    ISADM=(await c.rpc('is_admin')).data===true;
     if(isPro()){const {data}=await c.rpc('pro_catalogo');PROCAT=data||[];await contLoad();await misLoad()}
   }
   document.body.classList.toggle('pro',isPro());
+  try{ISADM?localStorage.setItem('fc_notrack','1'):localStorage.removeItem('fc_notrack')}catch(e){}
   if(new URLSearchParams(location.search).get('pro')){try{history.replaceState(null,'',location.pathname+'#pro')}catch(e){}}
   if(!animating)render();
 }
-let PROCAT=[], MIS=[], PCART=[];try{PCART=JSON.parse(localStorage.getItem('fc_pcart')||'[]')}catch(e){}
+let PROCAT=[], MIS=[], PCART=[], PTAB='cat';try{PCART=JSON.parse(localStorage.getItem('fc_pcart')||'[]')}catch(e){}
 const savePC=()=>{try{localStorage.setItem('fc_pcart',JSON.stringify(PCART))}catch(e){}};
 async function misLoad(){try{const {data}=await sbInit().from('pedidos_pro').select('*').order('created_at',{ascending:false});MIS=data||[]}catch(e){}}
 const pcBy=c=>PROCAT.find(x=>x.codigo===c);
@@ -553,7 +559,7 @@ function viewProCat(){
     <b>${esc(p.descripcion)}</b><small>${esc([p.medidas&&p.medidas+' mm',p.material].filter(Boolean).join(' · '))}</small>
     <div class="pc-p">${p.precio?`<s>${ars(p.lista)}</s><span>${ars(p.precio)}</span>`:'<span>Consultar</span>'}</div>
     <small>Lote mínimo: <b>${p.moq} u.</b> · ${m3(p.cbm*p.moq)} por lote</small>
-    ${p.precio?`<select id="pcol-${esc(p.codigo)}" aria-label="Color">${cols.length?cols.map(c=>`<option>${esc(c)}</option>`).join(''):'<option>A definir</option>'}</select><button class="buy" data-pa="${esc(p.codigo)}">Agregar lote · ${p.moq} u.</button>`:''}</div>`};
+    ${p.precio?`<select id="pcol-${esc(p.codigo)}" aria-label="Color">${cols.length?cols.map(c=>`<option>${esc(c)}</option>`).join(''):'<option>A definir</option>'}</select><div class="qty"><span>Lotes de ${p.moq} u.</span><button data-pq="${esc(p.codigo)},-1" aria-label="Un lote menos">−</button><b id="pq-${esc(p.codigo)}">1</b><button data-pq="${esc(p.codigo)},1" aria-label="Un lote más">+</button></div><button class="buy" data-pa="${esc(p.codigo)}">Agregar al pedido</button>`:''}</div>`};
   const order=lines.length?`${lines.map(l=>`<div class="pl"><div><b>${esc(l.p.descripcion)}</b><small>${esc(l.color)} · ${l.packs} lote${l.packs>1?'s':''} × ${l.p.moq} = <b>${l.q} u.</b> · ${m3(l.cbm)}</small></div><div class="pl-q"><button data-pp="${l.i},-1" aria-label="Un lote menos">−</button>${l.packs}<button data-pp="${l.i},1" aria-label="Un lote más">+</button></div><span>${ars(l.sub)}</span></div>`).join('')}
     <div class="pl-t"><span>${units} unidades · ${m3(cbm)}</span><b>${ars(tot)}</b></div><small class="mut">IVA incluido · IVA contenido ${ars(Math.round(tot-tot/1.21))}</small>
     <button class="buy" id="pcReserve">Reservar en el contenedor</button><button class="lnk" id="pcQuote">Consultar por WhatsApp</button>`
@@ -561,9 +567,10 @@ function viewProCat(){
   const mis=MIS.length?MIS.map(o=>`<div class="mr"><div class="mr-h"><b>Reserva #${o.id}</b><span>${new Date(o.created_at).toLocaleDateString('es-AR')}</span><span class="st st-${o.estado}">${EST_PRO[o.estado]||o.estado}</span></div>
     ${(o.items||[]).map(i=>`<div class="mr-i"><span>${i.q} × ${esc(i.producto)} · ${esc(i.color)}</span><span>${ars(i.precio*i.q)}</span></div>`).join('')}
     <div class="mr-i mr-t"><span>${m3(o.cbm)}</span><b>${ars(o.total)}</b></div></div>`).join(''):'<p class="mut">Todavía no reservaste nada.</p>';
-  return `<section class="pcat"><div class="pcat-h"><div><span class="k">Catálogo profesional</span><h1>${esc(PRO.estudio||PRO.nombre)}</h1></div>${bar}</div>
-  <div class="pcat-g"><div class="pcgrid">${PROCAT.map(card).join('')||'<p class="mut">El catálogo se está armando.</p>'}</div>
-  <aside class="pcat-o"><h3>Tu pedido</h3>${order}<h3 style="margin-top:28px">Mis reservas</h3>${mis}</aside></div></section>`;
+  const tabs=`<div class="ptabs"><button data-ptab="cat" class="${PTAB==='cat'?'on':''}">Catálogo</button><button data-ptab="res" class="${PTAB==='res'?'on':''}">Mis reservas${MIS.length?` (${MIS.length})`:''}</button></div>`;
+  return `<section class="pcat"><div class="pcat-h"><div><span class="k">Catálogo profesional</span><h1>${esc(PRO.estudio||PRO.nombre)}</h1>${tabs}</div>${bar}</div>
+  ${PTAB==='res'?`<div class="mres">${mis}</div>`:`<div class="pcat-g"><div class="pcgrid">${PROCAT.map(card).join('')||'<p class="mut">El catálogo se está armando.</p>'}</div>
+  <aside class="pcat-o"><h3>Tu pedido</h3>${order}</aside></div>`}</section>`;
 }
 const RUBROS=['Arquitectura','Interiorismo','Desarrollo inmobiliario','Hotelería / gastronomía','Oficinas / corporativo','Otro'];
 function viewPro(){
@@ -677,6 +684,7 @@ function viewProduct(p){
     <div class="sw">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i?'':'on'}" style="background:${c[1]}" aria-label="${esc(c[0])}"></button>`).join('')}</div>
     <div class="swn" id="swn">${esc(p.colors[0][0])}</div>
     <form class="cpf" id="cpForm"><span class="lb">Calculá tu envío</span><div><input id="cp" inputmode="numeric" maxlength="4" placeholder="Tu código postal" aria-label="Código postal"><button type="submit">Calcular</button></div><div class="cpr" id="cpRes"></div></form>
+    ${p.price?`<div class="qty"><span>Cantidad</span><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">1</b><button data-qd="1" aria-label="Uno más">+</button></div>`:''}
     <button class="buy" data-add="${p.id}">${p.price?'Agregar al carrito':'Consultanos'}</button>
     <div class="tb"><span>Descripción</span><span>${esc(p.lead)}</span></div>
     <div class="tb"><span>Medidas</span><span>${dims(p)}</span></div>
@@ -705,7 +713,7 @@ function drawCart(){
     <div class="cnt"><div><span>Contenedor compartido</span><span>${pc}% lleno</span></div><div class="cbar"><i style="width:${pc0}%"></i><b style="left:${pc0}%;width:${Math.max(0,pc-pc0)}%"></b></div><small>Tu pedido ocupa ${cbm.toFixed(2).replace('.',',')} m³. Lo confirmamos cuando el contenedor se completa con otros pedidos y la preventa.</small></div>
     ${bad.length?`<p class="cwarn">Revisá los mínimos: ${bad.map(l=>esc(title(byId(l.id)))+' ('+(byId(l.id).moq||1)+' u.)').join(', ')}</p>`:''}
     <button class="buy" id="proReserve" ${bad.length?'disabled':''}>Reservar en el contenedor</button><button class="lnk" id="proQuote">Consultar por WhatsApp</button>`:'';return}
-  $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>3 cuotas sin interés</span><span>sobre precio de lista</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="pay">Pagar con Mercado Pago</button>`:'';
+  $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>3 cuotas sin interés</span><span>sobre precio de lista</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="pay">Ir a pagar</button><small class="safe">🔒 Pago seguro con Mercado Pago · tarjeta, débito, transferencia o efectivo</small>`:'';
 }
 const openCart=()=>{drawCart();$('#dr').classList.add('on');$('#dr').setAttribute('aria-hidden','false')};
 const closeCart=()=>{$('#dr').classList.remove('on');$('#dr').setAttribute('aria-hidden','true')};
@@ -768,7 +776,8 @@ document.addEventListener('click',e=>{
   if(a.dataset.col){col=+a.dataset.col;document.querySelectorAll('.sw button').forEach((b,i)=>b.classList.toggle('on',i===col));const p=P.find(x=>slug(x.id)===location.hash.slice(1));$('#swn').textContent=p.colors[col][0];return}
   if(a.dataset.add){const p=byId(a.dataset.add);
     if(!p.price){window.open('https://wa.me/541139443055?text='+encodeURIComponent('Hola, quiero consultar por '+title(p)),'_blank','noopener');return}
-    track('agregar_carrito',{producto:p.id,valor:p.price});const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q++:cart.push({id:p.id,c:col,q:false?(p.moq||1):1}); save(); openCart(); return}
+    track('agregar_carrito',{producto:p.id,valor:p.price});const n=+($('#qn')?.textContent)||1;const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q+=n:cart.push({id:p.id,c:col,q:n}); save(); openCart(); return}
+  if(a.dataset.qd){const e=$('#qn');e.textContent=Math.max(1,Math.min(20,(+e.textContent||1)+(+a.dataset.qd)));return}
   if(a.id==='menuBtn'){document.body.classList.contains('menu-on')?closeMenu():openMenu();return}
   if(a.closest('#mn'))closeMenu();
   if(a.dataset.fam!==undefined&&a.closest('.flt')){const x=a.dataset.fam;if(!x)selF.clear();else selF.has(x)?selF.delete(x):selF.add(x);render();return}
@@ -785,13 +794,15 @@ document.addEventListener('click',e=>{
     a.disabled=true;fetch(SB_URL+'/rest/v1/profesionales',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(d)})
       .then(r=>{if(r.status===409){a.disabled=false;toast('Ese mail ya está registrado.');return}if(!r.ok)throw 0;$('#prF').innerHTML=`<p><b>¡Listo!</b> Recibimos tu solicitud. Te avisamos a ${esc(d.email)} cuando tengas acceso.</p>`})
       .catch(()=>{a.disabled=false;toast('No pudimos enviarla. Escribinos a '+EMPRESA.mail)});return}
-  if(a.dataset.pa){const p=pcBy(a.dataset.pa),color=$('#pcol-'+CSS.escape(p.codigo)).value;const l=PCART.find(x=>x.codigo===p.codigo&&x.color===color);l?l.packs++:PCART.push({codigo:p.codigo,color,packs:1});savePC();track('agregar_carrito',{producto:p.codigo,valor:p.precio*p.moq});render();toast('Agregado: '+p.moq+' u. · '+color);return}
+  if(a.dataset.ptab){PTAB=a.dataset.ptab;render();return}
+  if(a.dataset.pq){const[c,d]=a.dataset.pq.split(',');const e=document.getElementById('pq-'+c);e.textContent=Math.max(1,Math.min(50,(+e.textContent||1)+(+d)));return}
+  if(a.dataset.pa){const p=pcBy(a.dataset.pa),color=$('#pcol-'+CSS.escape(p.codigo)).value,n=+(document.getElementById('pq-'+p.codigo)?.textContent)||1;const l=PCART.find(x=>x.codigo===p.codigo&&x.color===color);l?l.packs+=n:PCART.push({codigo:p.codigo,color,packs:n});savePC();track('agregar_carrito',{producto:p.codigo,valor:p.precio*p.moq});render();toast('Agregado: '+p.moq+' u. · '+color);return}
   if(a.dataset.pp){const[i,d]=a.dataset.pp.split(',').map(Number);PCART[i].packs+=d;if(PCART[i].packs<1)PCART.splice(i,1);savePC();render();return}
   if(a.id==='pcQuote'){const L=PCART.map(l=>{const p=pcBy(l.codigo);return p?`• ${l.packs*p.moq} × ${p.descripcion} · ${l.color}`:''}).join('\n');window.open('https://wa.me/541139443055?text='+encodeURIComponent(`Hola, soy ${PRO.nombre}${PRO.estudio?' ('+PRO.estudio+')':''}. Quiero consultar por:\n${L}`),'_blank','noopener');return}
   if(a.id==='pcReserve'){const items=PCART.map(l=>{const p=pcBy(l.codigo);if(!p)return null;const q=l.packs*p.moq;return {id:p.codigo,producto:p.descripcion,color:l.color,packs:l.packs,q,precio:p.precio||0,cbm:+((+p.cbm||0)*q).toFixed(3)}}).filter(Boolean);
     const d={email:ME.email.toLowerCase(),nombre:PRO.nombre,estudio:PRO.estudio,items,cbm:+items.reduce((s,x)=>s+x.cbm,0).toFixed(3),total:items.reduce((s,x)=>s+x.precio*x.q,0)};
     a.disabled=true;sbInit().from('pedidos_pro').insert(d).then(async({error})=>{if(error){a.disabled=false;toast('No pudimos reservar. Probá de nuevo o escribinos.');return}
-      PCART=[];savePC();await Promise.all([contLoad(),misLoad()]);render();toast('¡Reservado! Lo ves abajo en "Mis reservas".')});return}
+      PCART=[];savePC();await Promise.all([contLoad(),misLoad()]);PTAB='res';render();toast('¡Reservado! Acá ves el detalle.')});return}
   if(a.id==='proOut'){sbInit().auth.signOut().finally(()=>location.reload());return}
   if(a.dataset.car){carGo(+a.dataset.car);carStart();return}
   if(a.hasAttribute('data-soon')){toast('Esta sección se completa en la versión real.');return}
@@ -804,7 +815,10 @@ document.addEventListener('click',e=>{
     a.disabled=true;sbInit().from('pedidos_pro').insert(d).then(async({error})=>{if(error){a.disabled=false;toast('No pudimos reservar. Probá de nuevo o escribinos.');return}
       cart=[];save();await contLoad();drawCart();toast('¡Reservado! Te avisamos cuando se complete el contenedor.')});return}
   if(a.dataset.rm){cart.splice(+a.dataset.rm,1);save();drawCart();return}
-  if(a.id==='pay'){$('#cartFt').innerHTML=`<div class="cko"><b>Tus datos</b><input id="ck_n" placeholder="Nombre y apellido" autocomplete="name"><input id="ck_e" type="email" placeholder="Email" autocomplete="email"><input id="ck_t" type="tel" placeholder="Teléfono" autocomplete="tel"><input id="ck_d" placeholder="Dirección de entrega" autocomplete="street-address"><input id="ck_c" placeholder="Código postal" autocomplete="postal-code"><small>El envío se coordina por WhatsApp después de la compra.</small><button class="buy" id="payGo">Continuar a Mercado Pago</button><button class="lnk" data-back>Volver</button></div>`;$('#ck_n').focus();return}
+  if(a.id==='pay'){a.disabled=true;a.textContent='Abriendo Mercado Pago…';const tot=cart.reduce((s,l)=>s+(byId(l.id).price||0)*l.q,0);track('inicio_checkout',{valor:tot});
+    fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({buyer:{},visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0]}))})})
+      .then(r=>r.json()).then(d=>{if(d.url){location.href=d.url}else{toast(d.error||'No pudimos iniciar el pago.');a.disabled=false;a.textContent='Ir a pagar'}})
+      .catch(()=>{toast('No pudimos iniciar el pago. Probá de nuevo.');a.disabled=false;a.textContent='Ir a pagar'});return}
   if(a.hasAttribute('data-back')){drawCart();return}
   if(a.id==='arrGo'){const v=k=>$('#ar_'+k).value.trim();const d={nombre:v('n'),email:v('e'),telefono:v('t'),pedido:v('p'),motivo:v('m')};
     if(!d.nombre||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)){toast('Completá tu nombre y email.');return}
@@ -872,6 +886,14 @@ addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
   else if(q==='pendiente'){cart=[];setTimeout(()=>toast('Tu pago está pendiente. Te avisamos cuando se acredite.'),600)}
   else setTimeout(()=>toast('El pago no se completó. Podés intentar de nuevo.'),600);
   try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}})();
+/* Aviso de cookies: medición propia y anónima; se puede rechazar. */
+(()=>{let c;try{c=localStorage.getItem('fc_consent')}catch(e){}if(c)return;
+  const d=document.createElement('div');d.className='ck';d.setAttribute('role','dialog');d.setAttribute('aria-label','Cookies');
+  d.innerHTML='<p>Usamos cookies propias para que la tienda funcione (carrito, sesión) y para medir visitas de forma anónima y mejorar la tienda. <a href="#privacidad">Más info</a></p><div><button data-ck="no">Solo necesarias</button><button class="ok" data-ck="si">Aceptar</button></div>';
+  document.body.appendChild(d);d.addEventListener('click',e=>{const b=e.target.closest('[data-ck]');if(!b)return;try{localStorage.setItem('fc_consent',b.dataset.ck)}catch(_){}d.remove();e.stopPropagation()});})();
+/* Profesionales: el catálogo, el contenedor y las reservas se actualizan solos */
+async function proRefresh(){if(!isPro()||document.hidden)return;const {data}=await sbInit().rpc('pro_catalogo');PROCAT=data||PROCAT;await Promise.all([contLoad(),misLoad()]);if((location.hash==='#pro-catalogo')&&!document.activeElement?.closest?.('.pcat select'))render()}
+document.addEventListener('visibilitychange',proRefresh);setInterval(proRefresh,60000);
 save(); render(); loadDB().then(proLoad); track('visita');
 (()=>{if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
 const c=document.createElement('div');c.id='cur';document.body.appendChild(c);document.documentElement.classList.add('cur');

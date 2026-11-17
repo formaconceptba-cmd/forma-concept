@@ -61,6 +61,11 @@ dialog::backdrop{background:rgba(20,20,20,.4)}
 th.s{cursor:pointer;white-space:nowrap}th.s:hover{color:var(--ink)}.sel{max-width:180px}.tag{font-size:11px;padding:1px 6px;border-radius:4px;background:#DDE9DF;color:var(--ok)}
 .ecog{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-bottom:16px}.ecog .card{padding:10px 12px}.ecog label{margin:0 0 4px}.ecog input{padding:6px 8px}
 .pos{color:var(--ok)}.neg{color:var(--bad)}
+td img{width:72px;height:72px}table.big td img,.cp td img{width:88px;height:88px}
+.dirty{background:#FFF6D8!important}.dirty input{border-color:#C9A227}
+.sbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:30;display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.15);padding:10px 12px 10px 18px;border-radius:999px}.sbar[hidden]{display:none}
+.sw{display:flex;gap:4px;flex-wrap:wrap;max-width:120px}.sw i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.cm td,.cm th{text-align:center}.cm td:nth-child(2),.cm th:nth-child(2){text-align:left}.cm th i{display:block;width:18px;height:18px;border-radius:50%;margin:0 auto 4px;border:1px solid rgba(0,0,0,.15)}.cm input[type=checkbox]{width:18px;height:18px}
 .kps{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:14px}.kp{padding:12px 14px;display:grid;gap:2px}.kp span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}.kp b{font:500 24px "Outfit",sans-serif;font-variant-numeric:tabular-nums}.kp em{font-style:normal;font-size:12px}.kp small{font-size:11.5px;color:var(--soft)}
 .g2d{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px;margin-bottom:14px}.pad{padding:14px 16px}.pad h4{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
 .chart{width:100%;height:auto;display:block}.chart .br{fill:#6E1F2B}.chart .gl{stroke:var(--line)}.chart .gt{font-size:10px;fill:var(--soft)}
@@ -130,7 +135,7 @@ sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){recovering=true;vi
 /* ---------- estructura ---------- */
 function shell(){
   app.innerHTML=`<header><div class="logo">forma<small>Admin</small></div>
-  <nav style="flex-wrap:wrap"><button data-t="inicio">Inicio</button><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button><button data-t="pro">Profesionales</button><button data-t="maestro">Maestro</button><button data-t="eco">Economía</button><button data-t="compras">Compras</button></nav>
+  <nav style="flex-wrap:wrap"><button data-t="inicio">Inicio</button><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button><button data-t="pro">Profesionales</button><button data-t="colores">Colores</button><button data-t="maestro">Maestro</button><button data-t="eco">Economía</button><button data-t="compras">Compras</button></nav>
   <span class="sp"></span><a class="who hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn hide-m" id="chp">Cambiar contraseña</button><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
   app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
   $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};
@@ -139,43 +144,56 @@ function shell(){
 }
 async function draw(){
   app.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
-  if(tab==='inicio'){await drawInicio()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders()}
+  if(tab==='inicio'){await drawInicio()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders()}
 }
 
 /* ---------- productos ---------- */
 async function loadProds(){const {data,error}=await sb.from('products').select('*').order('orden');if(error){toast('Error al leer productos');return}prods=data;const r=await sb.from('product_b2b').select('*');b2b=Object.fromEntries((r.data||[]).map(x=>[x.product_id,x.precio]))}
 let b2b={};
+/* ---------- cambios pendientes: se editan muchas cosas y se guarda todo junto ---------- */
+const PEND=new Map();
+function mark(el,table,pkCol,pk,field,value){PEND.set(`${table}|${pk}|${field}`,{table,pkCol,pk,field,value});el&&el.closest('td,.card')?.classList.add('dirty');saveBar()}
+function saveBar(){let b=$('#sbar');if(!b){b=document.createElement('div');b.id='sbar';b.className='sbar';document.body.appendChild(b)}
+  b.hidden=!PEND.size;b.innerHTML=`<span><b>${PEND.size}</b> cambio${PEND.size>1?'s':''} sin guardar</span><button class="btn" id="sdis">Descartar</button><button class="btn dk" id="ssave">Guardar cambios</button>`;
+  $('#sdis').onclick=()=>{PEND.clear();saveBar();draw()};
+  $('#ssave').onclick=async()=>{const btn=$('#ssave');btn.disabled=true;btn.textContent='Guardando…';const g={};
+    PEND.forEach(c=>{const k=c.table+'|'+c.pk;(g[k]=g[k]||{table:c.table,pkCol:c.pkCol,pk:c.pk,patch:{}}).patch[c.field]=c.value});
+    let err=0;for(const x of Object.values(g)){const patch={...x.patch};if(x.table==='products')patch.updated_at=new Date().toISOString();
+      const {error}=x.table==='settings'?await sb.from('settings').upsert({key:x.pk,value:patch.value}):await sb.from(x.table).update(patch).eq(x.pkCol,x.pk);if(error){err++;console.warn(error)}}
+    PEND.clear();saveBar();toast(err?`Se guardó con ${err} error(es)`:'Cambios guardados. Ya se ven en la tienda.');draw()}}
+window.addEventListener('beforeunload',e=>{if(PEND.size){e.preventDefault();e.returnValue=''}});
+/* orden de tablas: clic en el título de la columna */
+const SORT={};
+function sortBy(tab,list,get){const s=SORT[tab];if(!s)return list;return [...list].sort((a,b)=>{const x=get(a,s.k),y=get(b,s.k);if(x==null||x==='')return 1;if(y==null||y==='')return -1;return (typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'es'))*s.d})}
+const thS=(tab,k,t,c='')=>`<th class="s ${c}" data-st2="${tab}|${k}">${t}${SORT[tab]?.k===k?(SORT[tab].d>0?' ↑':' ↓'):''}</th>`;
+function bindSort(redraw){$('#m').querySelectorAll('[data-st2]').forEach(h=>h.onclick=()=>{const[tab,k]=h.dataset.st2.split('|');const s=SORT[tab];SORT[tab]={k,d:s&&s.k===k?-s.d:1};redraw()})}
+
 function drawProds(){
-  const list=prods.filter(p=>!q||(p.tipo+' '+p.nombre+' '+p.id+' '+p.linea+' '+p.categoria).toLowerCase().includes(q.toLowerCase()));
+  let list=prods.filter(p=>!q||(p.tipo+' '+p.nombre+' '+p.id+' '+p.linea+' '+p.categoria).toLowerCase().includes(q.toLowerCase()));
+  list=sortBy('prods',list,(p,k)=>({nombre:p.tipo+' '+p.nombre,cat:p.linea+' '+p.categoria,lista:p.precio_lista,pre:p.precio_preventa||pre(p.precio_lista),cupo:p.unidades,vend:p.vendidas,pub:p.activo?0:1}[k]));
   const vend=prods.reduce((a,p)=>a+(p.vendidas||0),0), cupo=prods.filter(p=>p.activo).reduce((a,p)=>a+(p.unidades||0),0);
   $('#m').innerHTML=`<div class="stats"><div class="card"><b>${prods.filter(p=>p.activo).length}</b><span>productos publicados</span></div><div class="card"><b>${vend} / ${cupo}</b><span>unidades vendidas en preventa</span></div></div>
   <div class="bar"><input id="q" placeholder="Buscar…" value="${esc(q)}"><span class="sp"></span><button class="btn dk" id="nw">+ Nuevo producto</button></div>
-  <div class="card wrap"><table><thead><tr><th></th><th>Producto</th><th class="hide-m">Línea · Categoría</th><th class="n">Precio de lista</th><th class="n hide-m">Preventa</th><th class="n">Precio pro</th><th class="n">Cupo</th><th class="n">Vendidas</th><th>Publicado</th><th></th></tr></thead><tbody>
+  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('prods','nombre','Producto')}${thS('prods','cat','Línea · Categoría','hide-m')}${thS('prods','lista','Precio de lista','n')}${thS('prods','pre','Preventa','n hide-m')}<th>Colores</th>${thS('prods','cupo','Cupo','n')}${thS('prods','vend','Vendidas','n')}${thS('prods','pub','Publicado')}<th></th></tr></thead><tbody>
   ${list.map(p=>`<tr class="${p.activo?'':'off'}" data-id="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td>
    <td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.linea)} · ${esc(p.categoria)}</td>
    <td class="n"><input class="num n" data-f="precio_lista" value="${p.precio_lista??''}" inputmode="numeric" placeholder="sin precio"></td>
    <td class="n hide-m"><input class="num n" data-f="precio_preventa" value="${p.precio_preventa??''}" inputmode="numeric" placeholder="${p.precio_lista?ars(pre(p.precio_lista)):''}" title="Vacío = automático (lista −45%)"></td>
-   <td class="n"><input class="num n" data-b2b value="${b2b[p.id]??''}" inputmode="numeric" placeholder="consultar"></td>
+   <td><div class="sw">${(p.colores||[]).map(c=>`<i title="${esc(c[0])}" style="background:${esc(c[1])}"></i>`).join('')}</div></td>
    <td class="n"><input class="num n" style="width:70px" data-f="unidades" value="${p.unidades??0}" inputmode="numeric"></td>
    <td class="n"><input class="num n" style="width:70px" data-f="vendidas" value="${p.vendidas??0}" inputmode="numeric"></td>
    <td><input type="checkbox" data-f="activo" ${p.activo?'checked':''} style="width:auto"></td>
    <td><button class="lnk" data-ed>Editar</button></td></tr>`).join('')}</tbody></table></div>
-  <p class="hint">Los cambios en la tabla se guardan solos al salir de cada casilla. La preventa se calcula sola (−45% sobre lista); si escribís un precio en la columna Preventa, ese manda. Dejala vacía para volver al automático.</p>`;
+  <p class="hint">Cambiá todo lo que quieras y tocá <b>Guardar cambios</b> abajo. La preventa se calcula sola (−45% sobre lista); si escribís un precio, ese manda. Los colores se manejan en la pestaña Colores.</p>`;
   $('#q').oninput=e=>{q=e.target.value;const pos=e.target.selectionStart;drawProds();const i=$('#q');i.focus();i.setSelectionRange(pos,pos)};
-  $('#nw').onclick=()=>editProd(null);
+  $('#nw').onclick=()=>editProd(null);bindSort(drawProds);
   $('#m').querySelectorAll('tr[data-id]').forEach(tr=>{
     const id=tr.dataset.id;
     tr.querySelector('[data-ed]').onclick=()=>editProd(prods.find(p=>p.id===id));
-    const bi=tr.querySelector('[data-b2b]');bi.onchange=async()=>{const v=bi.value.replace(/\D/g,'');
-      const {error}=v?await sb.from('product_b2b').upsert({product_id:id,precio:+v}):await sb.from('product_b2b').delete().eq('product_id',id);
-      if(error){toast('No se pudo guardar');return} if(v)b2b[id]=+v;else delete b2b[id]; toast('Precio profesional guardado')};
-    tr.querySelectorAll('[data-f]').forEach(inp=>inp.onchange=async()=>{
+    tr.querySelectorAll('[data-f]').forEach(inp=>inp.onchange=()=>{
       const f=inp.dataset.f; let v=inp.type==='checkbox'?inp.checked:inp.value.replace(/\D/g,'');
       if(f!=='activo')v=v===''?((f==='precio_lista'||f==='precio_preventa')?null:0):+v;
-      const {error}=await sb.from('products').update({[f]:v,updated_at:new Date().toISOString()}).eq('id',id);
-      if(error){toast('No se pudo guardar');return}
-      Object.assign(prods.find(p=>p.id===id),{[f]:v});toast('Guardado');drawProds();
-    });
+      Object.assign(prods.find(p=>p.id===id),{[f]:v});mark(inp,'products','id',id,f,v)});
   });
 }
 function colorRow(c=['','#cccccc']){return `<div class="cl"><input placeholder="Nombre del color" value="${esc(c[0])}"><input type="color" value="${esc(c[1])}"><button type="button" class="lnk" data-rm>Quitar</button></div>`}
@@ -228,28 +246,47 @@ function editProd(p){
 
 /* ---------- catálogo profesional (gestión) ---------- */
 async function drawCatPro(){
-  const [{data:cp},{data:pr}]=await Promise.all([sb.from('catalogo_pro').select('*').order('orden'),sb.from('products').select('id,tipo,nombre,img,precio_lista,colores')]);
+  const [{data:cp},{data:pr}]=await Promise.all([sb.from('catalogo_pro').select('*').order('orden'),sb.from('products').select('id,tipo,nombre,img,precio_lista,colores,categoria')]);
   const P=Object.fromEntries((pr||[]).map(p=>[p.id,p])),dp=ST.desc_pro??0.3;
   const sug=m=>{const c=m?costo(m.fob_usd,m.cbm):null;return c==null?null:Math.ceil(c*(1+ST.markup_venta)*(1+ST.iva)*ST.tc/1000)*1000};
-  const rows=(cp||[]).map(c=>{const m=byCod(c.codigo),p=P[c.codigo];const lista=c.precio_lista||p?.precio_lista||sug(m);const d=c.descuento??dp;const precio=lista?Math.round(lista*(1-d)/1000)*1000:null;const cA=m?costo(m.fob_usd,m.cbm)*ST.tc:null;const marg=precio&&cA?(precio/(1+ST.iva)-cA)/(precio/(1+ST.iva)):null;
-    return {c,m,p,lista,d,precio,marg,name:p?p.tipo+' '+p.nombre:m?.descripcion||c.codigo,foto:p?src(p.img):m?.foto_url,cols:c.colores||(p?.colores||[]).map(x=>x[0]).join(', ')||m?.terminacion||''}});
-  $('#m').insertAdjacentHTML('beforeend',`<h3 style="margin:32px 0 10px">Catálogo profesional</h3>
-  <div class="bar"><label style="margin:0">Descuento general sobre precio de lista</label><input id="dpro" class="num" style="width:80px" value="${Math.round(dp*100)}" inputmode="numeric"> %<span class="sp"></span><span class="hint">Sumá productos desde la pestaña Maestro con "+ Pro".</span></div>
-  <div class="card wrap"><table><thead><tr><th></th><th>Producto</th><th class="n">Lista</th><th class="n">Desc. %</th><th class="n">Precio pro</th><th class="n">Margen</th><th class="n">MOQ</th><th>Colores (separados por coma)</th><th>Visible</th><th></th></tr></thead><tbody>
-  ${rows.map(r=>`<tr class="${r.c.activo?'':'off'}"><td><img src="${esc(r.foto||'')}" alt=""></td><td><b>${esc(r.name)}</b><div class="hint">${esc(r.c.codigo)}${r.p?' · en tienda':''}</div></td>
+  let rows=(cp||[]).map(c=>{const m=byCod(c.codigo),p=P[c.codigo];const lista=c.precio_lista||p?.precio_lista||sug(m);const d=c.descuento??dp;const precio=lista?Math.round(lista*(1-d)/1000)*1000:null;const cA=m?costo(m.fob_usd,m.cbm)*ST.tc:null;const marg=precio&&cA?(precio/(1+ST.iva)-cA)/(precio/(1+ST.iva)):null;
+    return {c,m,p,lista,d,precio,marg,name:p?p.tipo+' '+p.nombre:m?.descripcion||c.codigo,cat:p?.categoria||m?.subcategoria||'',foto:p?src(p.img):m?.foto_url,cols:c.colores||(p?.colores||[]).map(x=>x[0]).join(', ')||m?.terminacion||''}});
+  rows=sortBy('cpro',rows,(r,k)=>({nombre:r.name,cat:r.cat,lista:r.lista,desc:r.d,precio:r.precio,marg:r.marg,moq:r.m?.moq,vis:r.c.activo?0:1}[k]));
+  const old=document.getElementById('cpw');if(old)old.remove();
+  $('#m').insertAdjacentHTML('beforeend',`<div id="cpw"><h3 style="margin:32px 0 10px">Catálogo profesional</h3>
+  <div class="bar"><label style="margin:0">Descuento general sobre precio de lista</label><input id="dpro" class="num" style="width:80px" value="${Math.round(dp*100)}" inputmode="numeric"> %<span class="sp"></span><span class="hint">Sumá productos desde la pestaña Maestro con "+ Pro". Tocá un título para ordenar.</span></div>
+  <div class="card wrap cp"><table><thead><tr><th></th>${thS('cpro','nombre','Producto')}${thS('cpro','cat','Categoría','hide-m')}${thS('cpro','lista','Lista','n')}${thS('cpro','desc','Desc. %','n')}${thS('cpro','precio','Precio pro','n')}${thS('cpro','marg','Margen','n')}${thS('cpro','moq','MOQ','n')}<th>Colores (separados por coma)</th>${thS('cpro','vis','Visible')}<th></th></tr></thead><tbody>
+  ${rows.map(r=>`<tr class="${r.c.activo?'':'off'}"><td><img src="${esc(r.foto||'')}" alt=""></td><td><b>${esc(r.name)}</b><div class="hint">${esc(r.c.codigo)}${r.p?' · en tienda':''}</div></td><td class="hide-m">${esc(r.cat)}</td>
    <td class="n"><input class="num n" data-cl="${esc(r.c.codigo)}" value="${r.c.precio_lista??''}" placeholder="${r.lista?ars(r.lista):'cargar'}" inputmode="numeric"></td>
    <td class="n"><input class="num n" style="width:64px" data-cd="${esc(r.c.codigo)}" value="${r.c.descuento!=null?Math.round(r.c.descuento*100):''}" placeholder="${Math.round(dp*100)}" inputmode="numeric"></td>
    <td class="n"><b>${ars(r.precio)}</b></td><td class="n">${r.marg==null?'—':`<span class="${r.marg<0.15?'neg':'pos'}">${pct(r.marg)}</span>`}</td><td class="n">${r.m?.moq??'—'}</td>
    <td><input data-cc="${esc(r.c.codigo)}" value="${esc(r.c.colores??'')}" placeholder="${esc(r.cols)}"></td>
    <td><input type="checkbox" data-ca="${esc(r.c.codigo)}" ${r.c.activo?'checked':''} style="width:auto"></td><td><button class="lnk" data-cx="${esc(r.c.codigo)}">Quitar</button></td></tr>`).join('')}</tbody></table></div>
-  <p class="hint">Precio pro = lista × (1 − descuento). Si no cargás lista, usa la de la tienda o la sugerida por costo. Margen sin IVA sobre el costo puesto en Argentina; en rojo, menos de 15%.</p>`);
-  const up=async(cod,patch)=>{const {error}=await sb.from('catalogo_pro').update(patch).eq('codigo',cod);toast(error?'No se pudo guardar':'Guardado');if(!error){$('#m').innerHTML='';await drawPro();await drawCatPro()}};
-  $('#dpro').onchange=async e=>{const v=(+e.target.value.replace(',','.'))/100;const {error}=await sb.from('settings').upsert({key:'desc_pro',value:v,nota:'Descuento general profesionales sobre precio de lista'});ST.desc_pro=v;toast(error?'No se pudo guardar':'Guardado');$('#m').innerHTML='';await drawPro();await drawCatPro()};
-  $('#m').querySelectorAll('[data-cl]').forEach(i=>i.onchange=()=>up(i.dataset.cl,{precio_lista:i.value.replace(/\D/g,'')?+i.value.replace(/\D/g,''):null}));
-  $('#m').querySelectorAll('[data-cd]').forEach(i=>i.onchange=()=>up(i.dataset.cd,{descuento:i.value.trim()===''?null:(+i.value.replace(',','.'))/100}));
-  $('#m').querySelectorAll('[data-cc]').forEach(i=>i.onchange=()=>up(i.dataset.cc,{colores:i.value.trim()||null}));
-  $('#m').querySelectorAll('[data-ca]').forEach(i=>i.onchange=()=>up(i.dataset.ca,{activo:i.checked}));
-  $('#m').querySelectorAll('[data-cx]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('catalogo_pro').delete().eq('codigo',b.dataset.cx);toast(error?'No se pudo quitar':'Quitado');$('#m').innerHTML='';await drawPro();await drawCatPro()});
+  <p class="hint">Precio pro = lista × (1 − descuento). Si no cargás lista, usa la de la tienda o la sugerida por costo. Editá lo que quieras y tocá <b>Guardar cambios</b>; los profesionales lo ven al instante.</p></div>`);
+  bindSort(()=>drawCatPro());
+  $('#dpro').onchange=e=>mark(e.target,'settings','key','desc_pro','value',(+e.target.value.replace(',','.'))/100);
+  $('#m').querySelectorAll('[data-cl]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.cl,'precio_lista',i.value.replace(/\D/g,'')?+i.value.replace(/\D/g,''):null));
+  $('#m').querySelectorAll('[data-cd]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.cd,'descuento',i.value.trim()===''?null:(+i.value.replace(',','.'))/100));
+  $('#m').querySelectorAll('[data-cc]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.cc,'colores',i.value.trim()||null));
+  $('#m').querySelectorAll('[data-ca]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.ca,'activo',i.checked));
+  $('#m').querySelectorAll('[data-cx]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('catalogo_pro').delete().eq('codigo',b.dataset.cx);toast(error?'No se pudo quitar':'Quitado del catálogo profesional');drawCatPro()});
+}
+
+/* ---------- colores ---------- */
+let CNEW=[];
+async function drawColores(){
+  if(!prods.length)await loadProds();
+  const pal=new Map();prods.forEach(p=>(p.colores||[]).forEach(c=>{if(c&&c[0]&&!pal.has(c[0]))pal.set(c[0],c[1])}));CNEW.forEach(c=>{if(!pal.has(c[0]))pal.set(c[0],c[1])});
+  const P=[...pal.entries()].sort((a,b)=>a[0].localeCompare(b[0],'es'));
+  const has=(p,n)=>(p.colores||[]).some(c=>c[0]===n);
+  $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Colores</b><span class="sp"></span><input id="cn" placeholder="Nombre del color nuevo" style="max-width:200px"><input id="ch" type="color" value="#8C8A4E" style="width:48px;padding:2px"><button class="btn dk" id="cadd">+ Agregar color</button></div>
+  <p class="hint" style="margin-bottom:12px">Tildá qué colores tiene cada producto. Con "todos" / "ninguno" aplicás un color a todos los productos de una vez. Después tocá <b>Guardar cambios</b>.</p>
+  <div class="card wrap"><table class="cm"><thead><tr><th></th><th>Producto</th>${P.map(([n,h])=>`<th><i style="background:${esc(h)}"></i>${esc(n)}<div><button class="lnk" data-call="${esc(n)}">todos</button> · <button class="lnk" data-cnone="${esc(n)}">ninguno</button></div></th>`).join('')}</tr></thead><tbody>
+  ${prods.map(p=>`<tr data-pid="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td><td><b>${esc(p.tipo)} ${esc(p.nombre)}</b></td>${P.map(([n])=>`<td><input type="checkbox" data-cn="${esc(n)}" ${has(p,n)?'checked':''}></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const setP=(p,n,on)=>{const h=pal.get(n);let c=(p.colores||[]).filter(x=>x[0]!==n);if(on)c.push([n,h]);p.colores=c;mark(document.querySelector(`tr[data-pid="${CSS.escape(p.id)}"] [data-cn="${CSS.escape(n)}"]`),'products','id',p.id,'colores',c)};
+  $('#m').querySelectorAll('[data-cn]').forEach(i=>i.onchange=()=>setP(prods.find(p=>p.id===i.closest('tr').dataset.pid),i.dataset.cn,i.checked));
+  $('#m').querySelectorAll('[data-call],[data-cnone]').forEach(b=>b.onclick=()=>{const n=b.dataset.call||b.dataset.cnone,on=!!b.dataset.call;prods.forEach(p=>{if(has(p,n)!==on)setP(p,n,on)});$('#m').querySelectorAll(`[data-cn="${CSS.escape(n)}"]`).forEach(i=>i.checked=on)});
+  $('#cadd').onclick=()=>{const n=$('#cn').value.trim();if(!n){toast('Escribí el nombre del color');return}CNEW.push([n,$('#ch').value]);drawColores();toast('Color agregado: tildá en qué productos va')};
 }
 
 /* ---------- inicio (tablero) ---------- */
@@ -352,7 +389,7 @@ function drawMaster(){
   $('#m').querySelectorAll('[data-mf]').forEach(s=>s.onchange=()=>{MF[s.dataset.mf]=s.value;drawMaster()});
   $('#m').querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{MF.view=b.dataset.v;drawMaster()});
   $('#m').querySelectorAll('[data-sort]').forEach(h=>h.onclick=()=>{const k=h.dataset.sort;MF.dir=MF.sort===k?-MF.dir:1;MF.sort=k;drawMaster()});
-  $('#m').querySelectorAll('[data-mk]').forEach(i=>i.onchange=async()=>{const v=i.value.trim()===''?null:(+i.value.replace(',','.'))/100;const {error}=await sb.from('master_productos').update({markup:v}).eq('codigo',i.dataset.mk);if(error){toast('No se pudo guardar');return}byCod(i.dataset.mk).markup=v;toast('Margen guardado');drawMaster()});
+  $('#m').querySelectorAll('[data-mk]').forEach(i=>i.onchange=()=>{const v=i.value.trim()===''?null:(+i.value.replace(',','.'))/100;byCod(i.dataset.mk).markup=v;mark(i,'master_productos','codigo',i.dataset.mk,'markup',v)});
   $('#m').querySelectorAll('[data-addpro]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('catalogo_pro').upsert({codigo:b.dataset.addpro,activo:true});toast(error?'No se pudo agregar':'Agregado al catálogo profesional')});
   $('#m').querySelectorAll('[data-oc]').forEach(b=>b.onclick=()=>{const m=byCod(b.dataset.oc);const l=OC.find(x=>x.codigo===m.codigo);if(l)l.q+=(+m.moq||1);else OC.push({codigo:m.codigo,q:+m.moq||1,color:''});saveOC();toast('Agregado a la orden de compra ('+m.codigo+')');drawMaster()});
 }
@@ -371,7 +408,7 @@ async function drawEco(){
   <p class="hint">Precios con IVA; costos y márgenes sin IVA. Margen = (precio sin IVA − costo) ÷ precio sin IVA. En rojo, menos de 15%. "Sugerido" = costo × (1 + markup al público) + IVA.</p>`;
   $('#m').querySelectorAll('[data-ek]').forEach(i=>{const k=i.dataset.ek,f=+i.dataset.f;
     i.oninput=()=>{const v=parseFloat(i.value.replace(',','.'));if(!isNaN(v)){ST[k]=v/f;clearTimeout(drawEco.t);drawEco.t=setTimeout(()=>{const a=document.activeElement?.dataset?.ek;drawEco().then(()=>{if(a){const e=$(`[data-ek="${a}"]`);e.focus();e.setSelectionRange(e.value.length,e.value.length)}})},500)}};
-    i.onchange=async()=>{const v=parseFloat(i.value.replace(',','.'));if(isNaN(v)){toast('Número inválido');return}const {error}=await sb.from('settings').update({value:v/f}).eq('key',k);toast(error?'No se pudo guardar':'Guardado')}});
+    i.onchange=()=>{const v=parseFloat(i.value.replace(',','.'));if(isNaN(v)){toast('Número inválido');return}mark(i,'settings','key',k,'value',v/f)}});
 }
 
 async function drawCompras(){
@@ -452,11 +489,11 @@ async function drawPro(){
   const SL={tc:'Tipo de cambio (ARS por USD)',markup_pro:'Margen profesionales sobre costo (0,40 = 40%)',iva:'IVA (0,21)',cap_cbm:'Capacidad del contenedor (m³)'};
   $('#m').insertAdjacentHTML('beforeend',`<h3 style="margin:28px 0 10px">Contenedor compartido</h3>
   <div class="stats"><div class="card"><b>${pct}%</b><span>lleno · ${(+c0.usado).toFixed(2)} de ${c0.cap} m³ (preventa pagada + reservas pro)</span></div></div>
-  <div class="card wrap"><table><thead><tr><th>Parámetro</th><th class="n">Valor</th></tr></thead><tbody>${(st||[]).map(s=>`<tr><td>${esc(SL[s.key]||s.key)}</td><td class="n"><input class="num n" data-st="${esc(s.key)}" value="${s.value}"></td></tr>`).join('')}</tbody></table></div>
+  <div class="card wrap"><table><thead><tr><th>Parámetro</th><th class="n">Valor</th></tr></thead><tbody>${(st||[]).filter(s=>s.key==='cap_cbm').map(s=>`<tr><td>${esc(SL[s.key]||s.key)}</td><td class="n"><input class="num n" data-st="${esc(s.key)}" value="${s.value}"></td></tr>`).join('')}</tbody></table></div>
   <p class="hint">El precio profesional se calcula solo: costo puesto en Argentina × (1 + margen) + IVA, al tipo de cambio de arriba. Si cargás un "Precio pro" en Productos, ese manda.</p>
   <h3 style="margin:28px 0 10px">Reservas de profesionales</h3>
   ${(pp||[]).length?`<div class="card wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Profesional</th><th class="hide-m">Productos</th><th class="n">m³</th><th class="n">Total</th><th>Estado</th></tr></thead><tbody>${pp.map(o=>`<tr><td>${o.id}</td><td>${new Date(o.created_at).toLocaleDateString('es-AR')}</td><td><b>${esc(o.nombre)}</b><div class="hint">${esc(o.estudio)} · ${esc(o.email)}</div></td><td class="hide-m">${(o.items||[]).map(i=>`${i.q}× ${esc(i.producto)} · ${esc(i.color)}`).join('<br>')}</td><td class="n">${(+o.cbm).toFixed(2)}</td><td class="n">${ars(o.total)}</td><td><select data-pp="${o.id}">${['reservado','confirmado','cancelado'].map(s=>`<option ${s===o.estado?'selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>`:`<div class="card" style="padding:28px;text-align:center;color:var(--soft)">Todavía no hay reservas.</div>`}`);
-  $('#m').querySelectorAll('[data-st]').forEach(i=>i.onchange=async()=>{const v=parseFloat(i.value.replace(',','.'));if(isNaN(v)){toast('Número inválido');return}const {error}=await sb.from('settings').update({value:v}).eq('key',i.dataset.st);toast(error?'No se pudo guardar':'Guardado: los precios pro ya se recalculan')});
+  $('#m').querySelectorAll('[data-st]').forEach(i=>i.onchange=()=>{const v=parseFloat(i.value.replace(',','.'));if(isNaN(v)){toast('Número inválido');return}mark(i,'settings','key',i.dataset.st,'value',v)});
   $('#m').querySelectorAll('[data-pp]').forEach(s=>s.onchange=async()=>{const {error}=await sb.from('pedidos_pro').update({estado:s.value}).eq('id',+s.dataset.pp);toast(error?'No se pudo cambiar':'Estado actualizado')});
   $('#m').querySelectorAll('select[data-pr]').forEach(s=>s.onchange=async()=>{
     s.disabled=true;

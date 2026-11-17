@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const orderId = parseInt(pay.external_reference);
     if (!orderId) return res.status(200).send('sin pedido');
 
-    const [order] = await (await sb(`orders?select=id,estado,total&id=eq.${orderId}`)).json();
+    const [order] = await (await sb(`orders?select=id,estado,total,email,nombre,telefono&id=eq.${orderId}`)).json();
     if (!order) return res.status(200).send('pedido inexistente');
 
     if (pay.status === 'approved') {
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       // Marcar pagado sólo si sigue pendiente (evita sumar ventas dos veces).
       const up = await sb(`orders?id=eq.${orderId}&estado=eq.pendiente`, {
         method: 'PATCH', headers: { Prefer: 'return=representation' },
-        body: JSON.stringify({ estado: 'pagado', mp_payment: String(pay.id) })
+        body: JSON.stringify({ estado: 'pagado', mp_payment: String(pay.id), ...datosPagador(pay, order) })
       });
       const changed = await up.json();
       if (!changed.length) return res.status(200).send('ya procesado');
@@ -53,4 +53,16 @@ export default async function handler(req, res) {
     console.error(e);
     return res.status(500).send('error');
   }
+}
+
+// Completa nombre, mail y teléfono del cliente con los datos que cargó en Mercado Pago (si no los teníamos).
+function datosPagador(pay, order) {
+  const p = pay.payer || {}, ai = (pay.additional_info && pay.additional_info.payer) || {};
+  const nombre = [p.first_name || ai.first_name, p.last_name || ai.last_name].filter(Boolean).join(' ');
+  const tel = (p.phone && (p.phone.area_code || '') + (p.phone.number || '')) || (ai.phone && (ai.phone.area_code || '') + (ai.phone.number || '')) || '';
+  const out = {};
+  if (!order.email && p.email) out.email = p.email;
+  if (!order.nombre && nombre) out.nombre = nombre;
+  if (!order.telefono && tel) out.telefono = tel;
+  return out;
 }
