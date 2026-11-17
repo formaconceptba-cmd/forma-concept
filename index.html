@@ -669,7 +669,7 @@ document.addEventListener('click',e=>{
   if(a.closest('#mn'))closeMenu();
   if(a.dataset.fam!==undefined&&a.closest('.flt')){const x=a.dataset.fam;if(!x)selF.clear();else selF.has(x)?selF.delete(x):selF.add(x);render();return}
   if(a.id==='cartBtn'){closeMenu();openCart();return}
-  if(a.id==='adminBtn'){toast('Ingreso al panel de administración: se conecta en la versión real.');return}
+  if(a.id==='adminBtn'){location.href='/admin';return}
   if(a.dataset.car){carGo(+a.dataset.car);carStart();return}
   if(a.hasAttribute('data-soon')){toast('Esta sección se completa en la versión real.');return}
   if(a.dataset.to){$('#'+a.dataset.to).scrollIntoView({behavior:'smooth'});return}
