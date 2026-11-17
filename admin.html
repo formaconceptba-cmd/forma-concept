@@ -65,6 +65,11 @@ td img{width:72px;height:72px}table.big td img,.cp td img{width:88px;height:88px
 .dirty{background:#FFF6D8!important}.dirty input{border-color:#C9A227}
 .sbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:30;display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.15);padding:10px 12px 10px 18px;border-radius:999px}.sbar[hidden]{display:none}
 .sw{display:flex;gap:4px;flex-wrap:wrap;max-width:120px}.sw i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.colc{min-width:150px}.colc .hint{max-width:180px}
+.cpick{position:fixed;z-index:40;width:340px;max-height:80vh;overflow:auto;padding:14px;display:grid;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.cph{display:flex;justify-content:space-between;align-items:center;gap:10px}.cpl{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cpc{display:flex!important;align-items:center;gap:6px;margin:0!important;text-transform:none!important;letter-spacing:0!important;font-size:13px!important;color:var(--ink)!important;cursor:pointer}.cpc input{width:auto}.cpc i{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.cpn{display:flex;gap:6px}.cpn #cph{width:44px;padding:2px}
 .cm td,.cm th{text-align:center}.cm td:nth-child(2),.cm th:nth-child(2){text-align:left}.cm th i{display:block;width:18px;height:18px;border-radius:50%;margin:0 auto 4px;border:1px solid rgba(0,0,0,.15)}.cm input[type=checkbox]{width:18px;height:18px}
 .kps{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:14px}.kp{padding:12px 14px;display:grid;gap:2px}.kp span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}.kp b{font:500 24px "Outfit",sans-serif;font-variant-numeric:tabular-nums}.kp em{font-style:normal;font-size:12px}.kp small{font-size:11.5px;color:var(--soft)}
 .g2d{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px;margin-bottom:14px}.pad{padding:14px 16px}.pad h4{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
@@ -135,7 +140,7 @@ sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){recovering=true;vi
 /* ---------- estructura ---------- */
 function shell(){
   app.innerHTML=`<header><div class="logo">forma<small>Admin</small></div>
-  <nav style="flex-wrap:wrap"><button data-t="inicio">Inicio</button><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button><button data-t="pro">Profesionales</button><button data-t="colores">Colores</button><button data-t="maestro">Maestro</button><button data-t="eco">Economía</button><button data-t="compras">Compras</button></nav>
+  <nav style="flex-wrap:wrap"><button data-t="inicio">Inicio</button><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button><button data-t="pro">Profesionales</button><button data-t="maestro">Maestro</button><button data-t="eco">Economía</button><button data-t="compras">Compras</button></nav>
   <span class="sp"></span><a class="who hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn hide-m" id="chp">Cambiar contraseña</button><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
   app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
   $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};
@@ -179,14 +184,14 @@ function drawProds(){
    <td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.linea)} · ${esc(p.categoria)}</td>
    <td class="n"><input class="num n money" data-f="precio_lista" value="${money(p.precio_lista)}" inputmode="numeric" placeholder="sin precio"></td>
    <td class="n hide-m"><input class="num n money" data-f="precio_preventa" value="${money(p.precio_preventa||pre(p.precio_lista))}" inputmode="numeric" title="${p.precio_preventa?'Precio fijado a mano. Borralo para volver al automático (lista −45%)':'Automático: lista −45%. Escribí otro precio para fijarlo'}"><div class="hint">${p.precio_preventa?'fijado a mano':'automático'}</div></td>
-   <td><div class="sw">${(p.colores||[]).map(c=>`<i title="${esc(c[0])}" style="background:${esc(c[1])}"></i>`).join('')}</div></td>
+   <td class="colc" data-colp="p|${esc(p.id)}">${swatches(p.colores)}<button class="lnk">Elegir</button></td>
    <td class="n"><input class="num n" style="width:70px" data-f="unidades" value="${p.unidades??0}" inputmode="numeric"></td>
    <td class="n"><input class="num n" style="width:70px" data-f="vendidas" value="${p.vendidas??0}" inputmode="numeric"></td>
    <td><input type="checkbox" data-f="activo" ${p.activo?'checked':''} style="width:auto"></td>
    <td><button class="lnk" data-ed>Editar</button></td></tr>`).join('')}</tbody></table></div>
   <p class="hint">Cambiá todo lo que quieras y tocá <b>Guardar cambios</b> abajo. La preventa se calcula sola (−45% sobre lista); si escribís un precio, ese manda. Los colores se manejan en la pestaña Colores.</p>`;
   $('#q').oninput=e=>{q=e.target.value;const pos=e.target.selectionStart;drawProds();const i=$('#q');i.focus();i.setSelectionRange(pos,pos)};
-  $('#nw').onclick=()=>editProd(null);bindSort(drawProds);
+  $('#nw').onclick=()=>editProd(null);bindSort(drawProds);bindColp();
   $('#m').querySelectorAll('tr[data-id]').forEach(tr=>{
     const id=tr.dataset.id;
     tr.querySelector('[data-ed]').onclick=()=>editProd(prods.find(p=>p.id===id));
@@ -250,9 +255,10 @@ function editProd(p){
 }
 
 /* ---------- catálogo profesional (gestión) ---------- */
+let CPRO=[];
 async function drawCatPro(){
   const [{data:cp},{data:pr}]=await Promise.all([sb.from('catalogo_pro').select('*').order('orden'),sb.from('products').select('id,tipo,nombre,img,precio_lista,colores,categoria')]);
-  const P=Object.fromEntries((pr||[]).map(p=>[p.id,p])),dp=ST.desc_pro??0.3;
+  CPRO=cp||[];if(!prods.length)prods=pr||[];const P=Object.fromEntries((pr||[]).map(p=>[p.id,p])),dp=ST.desc_pro??0.3;
   const sug=m=>{const c=m?costo(m.fob_usd,m.cbm):null;return c==null?null:Math.ceil(c*(1+ST.markup_venta)*(1+ST.iva)*ST.tc/1000)*1000};
   let rows=(cp||[]).map(c=>{const m=byCod(c.codigo),p=P[c.codigo];const lista=c.precio_lista||p?.precio_lista||sug(m);const d=c.descuento??dp;const precio=lista?Math.round(lista*(1-d)/1000)*1000:null;const cA=m?costo(m.fob_usd,m.cbm)*ST.tc:null;const marg=precio&&cA?(precio/(1+ST.iva)-cA)/(precio/(1+ST.iva)):null;
     return {c,m,p,lista,d,precio,marg,name:p?p.tipo+' '+p.nombre:m?.descripcion||c.codigo,cat:p?.categoria||m?.subcategoria||'',foto:p?src(p.img):m?.foto_url,cols:c.colores||(p?.colores||[]).map(x=>x[0]).join(', ')||m?.terminacion||''}});
@@ -265,7 +271,7 @@ async function drawCatPro(){
    <td class="n"><input class="num n money" data-cl="${esc(r.c.codigo)}" value="${money(r.lista)}" inputmode="numeric"><div class="hint">${r.c.precio_lista?'fijado a mano':r.p?'de la tienda':'sugerido por costo'}</div></td>
    <td class="n"><input class="num n" style="width:64px" data-cd="${esc(r.c.codigo)}" value="${Math.round(r.d*100)}" inputmode="numeric"><div class="hint">${r.c.descuento!=null?'propio':'general'}</div></td>
    <td class="n"><b data-rp="${esc(r.c.codigo)}">${ars(r.precio)}</b></td><td class="n" data-rm="${esc(r.c.codigo)}">${r.marg==null?'—':`<span class="${r.marg<0.15?'neg':'pos'}">${pct(r.marg)}</span>`}</td><td class="n">${r.m?.moq??'—'}</td>
-   <td><input data-cc="${esc(r.c.codigo)}" value="${esc(r.c.colores??'')}" placeholder="${esc(r.cols)}"></td>
+   <td class="colc" data-colp="c|${esc(r.c.codigo)}">${swatches(r.c.colores!=null?namesToCols(r.c.colores):[])}${r.c.colores==null?`<div class="hint">sin colores propios</div>`:''}<button class="lnk">Elegir</button></td>
    <td><input type="checkbox" data-ca="${esc(r.c.codigo)}" ${r.c.activo?'checked':''} style="width:auto"></td><td><button class="lnk" data-cx="${esc(r.c.codigo)}">Quitar</button></td></tr>`).join('')}</tbody></table></div>
   <p class="hint">Precio pro = lista × (1 − descuento). Si no cargás lista, usa la de la tienda o la sugerida por costo. Editá lo que quieras y tocá <b>Guardar cambios</b>; los profesionales lo ven al instante.</p></div>`);
   bindSort(()=>drawCatPro());
@@ -275,12 +281,40 @@ async function drawCatPro(){
     document.querySelector(`[data-rp="${CSS.escape(cod)}"]`).textContent=ars(pr);document.querySelector(`[data-rm="${CSS.escape(cod)}"]`).innerHTML=mg==null?'—':`<span class="${mg<0.15?'neg':'pos'}">${pct(mg)}</span>`};
   $('#m').querySelectorAll('[data-cl]').forEach(i=>i.onchange=()=>{const c=i.dataset.cl,d=i.value.replace(/\D/g,''),v=d?+d:null;RW[c].lista=v||RW[c].base;i.value=money(RW[c].lista);mark(i,'catalogo_pro','codigo',c,'precio_lista',v);recalc(c)});
   $('#m').querySelectorAll('[data-cd]').forEach(i=>i.onchange=()=>{const c=i.dataset.cd,t=i.value.trim(),v=t===''?null:(+t.replace(',','.'))/100;RW[c].d=v??(ST.desc_pro??0.3);i.value=Math.round(RW[c].d*100);mark(i,'catalogo_pro','codigo',c,'descuento',v);recalc(c)});
-  $('#m').querySelectorAll('[data-cc]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.cc,'colores',i.value.trim()||null));
+  bindColp();
   $('#m').querySelectorAll('[data-ca]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.ca,'activo',i.checked));
   $('#m').querySelectorAll('[data-cx]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('catalogo_pro').delete().eq('codigo',b.dataset.cx);toast(error?'No se pudo quitar':'Quitado del catálogo profesional');drawCatPro()});
 }
 
-/* ---------- colores ---------- */
+/* ---------- selector de colores por producto (tienda y catálogo pro, independientes) ---------- */
+let PALX=[];
+function palette(){const m=new Map();prods.forEach(p=>(p.colores||[]).forEach(c=>{if(c&&c[0]&&!m.has(c[0]))m.set(c[0],c[1])}));PALX.forEach(c=>{if(!m.has(c[0]))m.set(c[0],c[1])});
+  CPRO.forEach(c=>String(c.colores||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(n=>{if(!m.has(n))m.set(n,'#cfc8bd')}));return m}
+const namesToCols=t=>{const m=palette();return String(t||'').split(',').map(s=>s.trim()).filter(Boolean).map(n=>[n,m.get(n)||'#cfc8bd'])};
+const swatches=cols=>`<div class="sw">${(cols||[]).map(c=>`<i title="${esc(c[0])}" style="background:${esc(c[1])}"></i>`).join('')}</div><div class="hint">${(cols||[]).map(c=>esc(c[0])).join(', ')||'—'}</div>`;
+function bindColp(){$('#m').querySelectorAll('[data-colp] .lnk').forEach(b=>b.onclick=e=>{e.stopPropagation();openPicker(b.closest('[data-colp]'))})}
+function openPicker(td){
+  document.getElementById('cpick')?.remove();
+  const [kind,id]=td.dataset.colp.split('|');
+  const get=()=>kind==='p'?(prods.find(p=>p.id===id).colores||[]):namesToCols((CPRO.find(c=>c.codigo===id)||{}).colores);
+  let cur=get().map(c=>[...c]);
+  const box=document.createElement('div');box.id='cpick';box.className='cpick card';
+  const paint=()=>{const pal=palette();cur.forEach(c=>{if(!pal.has(c[0]))pal.set(c[0],c[1])});
+    box.innerHTML=`<div class="cph"><b>Colores · ${kind==='p'?'tienda':'catálogo profesional'}</b><button class="lnk" data-x>Cerrar</button></div>
+    <div class="cpl">${[...pal.entries()].sort((a,b)=>a[0].localeCompare(b[0],'es')).map(([n,h])=>`<label class="cpc"><input type="checkbox" data-n="${esc(n)}" ${cur.some(c=>c[0]===n)?'checked':''}><i style="background:${esc(h)}"></i>${esc(n)}</label>`).join('')}</div>
+    <div class="cpn"><input id="cpn" placeholder="Escribí un color nuevo"><input id="cph" type="color" value="#8C8A4E"><button class="btn" data-add>Agregar</button></div>
+    <div class="cph"><span class="hint">Se aplica a este producto. Tocá "Guardar cambios" abajo para publicarlo.</span><button class="btn dk" data-x>Listo</button></div>`;
+    box.querySelectorAll('[data-n]').forEach(i=>i.onchange=()=>{const n=i.dataset.n;cur=cur.filter(c=>c[0]!==n);if(i.checked)cur.push([n,pal.get(n)]);apply()});
+    box.querySelector('[data-add]').onclick=()=>{const n=box.querySelector('#cpn').value.trim();if(!n)return;const h=box.querySelector('#cph').value;PALX.push([n,h]);if(!cur.some(c=>c[0]===n))cur.push([n,h]);apply();paint()};
+    box.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>box.remove())};
+  const apply=()=>{if(kind==='p'){const p=prods.find(p=>p.id===id);p.colores=cur;mark(td,'products','id',id,'colores',cur)}
+    else{const c=CPRO.find(c=>c.codigo===id);const t=cur.map(c=>c[0]).join(', ')||null;if(c)c.colores=t;mark(td,'catalogo_pro','codigo',id,'colores',t)}
+    td.innerHTML=swatches(cur)+'<button class="lnk">Elegir</button>';td.querySelector('.lnk').onclick=e=>{e.stopPropagation();openPicker(td)}};
+  paint();document.body.appendChild(box);
+  const r=td.getBoundingClientRect();box.style.top=Math.min(window.innerHeight-box.offsetHeight-12,Math.max(12,r.top))+'px';box.style.left=Math.max(12,Math.min(window.innerWidth-box.offsetWidth-12,r.left-box.offsetWidth-8))+'px';
+}
+
+/* ---------- colores (pestaña anterior, ya no se usa) ---------- */
 let CNEW=[];
 async function drawColores(){
   if(!prods.length)await loadProds();
