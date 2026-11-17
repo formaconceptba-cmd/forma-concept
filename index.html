@@ -57,6 +57,7 @@ body.menu-on header{background:var(--bg)!important;color:var(--ink)!important;bo
 .mn a:hover{color:var(--soft)}
 .mn span.s{display:block;font-size:15px;padding:3px 0;color:var(--soft)}
 .mn span.s small{font-size:10px;margin-left:6px}
+@media (max-width:720px){.mn{grid-template-columns:1fr 1fr!important;gap:30px 20px!important;padding:24px var(--g) 32px!important;max-height:calc(100svh - 52px);overflow-y:auto}.mn div{min-width:0}.mn a,.mn span.s{font-size:15px!important;padding:7px 0!important;line-height:1.3;overflow-wrap:anywhere}.mn b{margin-bottom:8px}}
 .msh{position:fixed;inset:52px 0 0;z-index:28;background:rgba(0,0,0,.12);opacity:0;visibility:hidden;transition:opacity .35s}
 body.menu-on .msh{opacity:1;visibility:visible}
 /* filtro de colecciones (se pueden elegir varias) */
@@ -76,9 +77,9 @@ main.out{opacity:0}
 /* INICIO: secciones de foto a pantalla completa */
 .full{cursor:pointer}
 @media (hover:hover) and (pointer:fine){
-html.cur,html.cur *{cursor:none!important}
+html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.cur [onclick],html.cur .full,html.cur .c,html.cur .c *{cursor:none!important}
 #cur{position:fixed;left:0;top:0;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#fff;mix-blend-mode:difference;pointer-events:none;z-index:99999;transition:width .2s,height .2s,margin .2s,opacity .2s;opacity:0}
-#cur.on{opacity:1}#cur.big{width:16px;height:16px;margin:-8px 0 0 -8px}
+#cur.on.big{opacity:1}#cur.big{width:16px;height:16px;margin:-8px 0 0 -8px}
 }
 .full{position:relative;height:100svh;min-height:520px;overflow:hidden;color:#fff;display:flex;align-items:flex-end}
 .full img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -227,6 +228,16 @@ body.home .prostrip{margin-top:52px}
 .phist{margin-top:16px;font-size:13px;text-transform:none;letter-spacing:0}.phist summary{cursor:pointer;color:var(--soft);margin-bottom:8px}.phist .mr-i{padding:6px 0;border-bottom:1px solid var(--line)}
 .pbox p,.pcat .mut,.ptab td,.pkv b,.lgd,.pc small,.phist{text-transform:none!important;letter-spacing:0!important}.pbox p,.pcat .mut{font-size:14px!important;line-height:1.55!important}.pkv b{overflow-wrap:anywhere}
 @media (max-width:900px){.phome{grid-template-columns:1fr}}
+a.fs-p{display:block;color:inherit}a.fs-p .fim img{transition:transform 1.2s var(--ease)}a.fs-p:hover .fim img{transform:scale(1.03)}
+.fsx-i{padding-top:16vh}.fsx-i p{text-transform:none!important}
+.fsx-f{width:72%;margin:0 auto 14vh}.fsx-f.l{width:46%;margin-left:var(--g)}.fsx-f.r{width:46%;margin-right:var(--g);margin-left:auto}.fsx-f img{display:block;width:100%;height:auto}
+.fsx-next{display:grid;justify-items:center;gap:14px;padding:6vh var(--g) 18vh;color:inherit;text-align:center}.fsx-next b{font-size:clamp(30px,4.5vw,64px)!important;font-weight:400!important;line-height:1.05!important;letter-spacing:.01em!important}.fsx-next img{width:min(420px,70%);aspect-ratio:16/10;object-fit:cover}
+.nacl{padding-top:52px}.nac-h{display:grid;grid-template-columns:1.6fr 1fr;gap:var(--g);padding:24px var(--g) 64px;align-items:end}
+.nac-im{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:10px;height:min(72svh,640px)}.nac-im img{width:100%;height:100%;object-fit:cover}.nac-im img:first-child{grid-row:1/3}
+.nac-t{display:grid;gap:14px;align-content:end}.nac-t .k{font-size:12px;color:var(--soft);letter-spacing:.1em}.nac-t h1{font-size:clamp(34px,4vw,60px)!important;font-weight:400!important;line-height:1!important;letter-spacing:-.01em!important;text-transform:none!important}.nac-t p{font-size:15px;line-height:1.6;text-transform:none;letter-spacing:0;max-width:440px}
+.nac-empty{padding:20px 0 60px;font-size:15px;text-transform:none;letter-spacing:0}.nac-empty a{text-decoration:underline}
+.disp{position:absolute;top:10px;right:10px;z-index:2;font-size:10px;letter-spacing:.08em;padding:4px 8px;background:#fff}.disp.d-stock{background:#2F6B4F;color:#fff}.disp.d-pedido{background:var(--ink);color:#fff}.disp.d-sin_stock{background:#DDD9D2;color:var(--soft)}
+@media (max-width:720px){.nac-h{grid-template-columns:1fr}.nac-im{height:60svh}.fsx-f,.fsx-f.l,.fsx-f.r{width:auto;margin:0 var(--g) 8vh}}
 .pcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:32px 20px}
 .qty{display:flex;align-items:center;gap:10px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin:8px 0}.qty span{flex:1;color:var(--soft)}.qty button{width:34px;height:34px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:16px}.qty b{min-width:22px;text-align:center;font-weight:500}
 .ptabs{display:flex;gap:6px;margin-top:16px}.ptabs button{border:1px solid var(--line);background:none;padding:9px 16px;font:inherit;font-size:12px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.ptabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -372,11 +383,13 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 .rv-i{position:fixed;inset:0;pointer-events:none}
 .rv-i img{width:100%;height:100%;object-fit:cover;object-position:50% 80%;display:block}
 .rv-i::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.35),rgba(0,0,0,0) 50%)}
-.rv-t{position:absolute;left:var(--g);bottom:32px;width:min(290px,calc(100% - 2*var(--g)));background:var(--bg);color:var(--ink);padding:16px 18px 18px;text-transform:uppercase;font-family:"Inter Tight",sans-serif}
+.rv-t{position:absolute;left:var(--g);bottom:32px;width:min(290px,calc(100% - 2*var(--g)));background:rgba(20,20,20,.8);color:#fff;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);padding:16px 18px 18px;text-transform:uppercase;font-family:"Inter Tight",sans-serif}
 .rv-t span{display:block;font-size:10px!important;letter-spacing:.14em!important;font-weight:500!important}
-.rv-t h2{margin:6px 0 12px;font:300 clamp(36px,3.8vw,56px)/.9 "Inter Tight",sans-serif!important;letter-spacing:-.03em!important;text-transform:uppercase!important;color:#6E1F2B!important;font-variant-numeric:tabular-nums}
+.rv-t h2{margin:6px 0 12px;font:300 clamp(36px,3.8vw,56px)/.9 "Inter Tight",sans-serif!important;letter-spacing:-.03em!important;text-transform:uppercase!important;color:#D07A89!important;font-variant-numeric:tabular-nums}
 .rv-t h2 .rv-n{font:inherit!important;letter-spacing:inherit!important;color:inherit!important;text-transform:none!important}
-.rv-b{height:10px;background:rgba(110,31,43,.14);overflow:hidden}.rv-b i{display:block;height:100%;width:0;background:#6E1F2B}
+.rv-b{height:10px;background:rgba(255,255,255,.16);overflow:hidden}.rv-b i{display:block;height:100%;width:0;background:#D07A89}
+.rv-nac{display:block;width:min(420px,calc(100% - 2*var(--g)));color:#fff}.rv-nac h2{color:#fff!important;font-size:clamp(30px,3vw,44px)!important;margin:8px 0 10px!important}.rv-nac p{font-size:13px;text-transform:none;letter-spacing:0;line-height:1.5;margin:0 0 14px;color:rgba(255,255,255,.85)}.rv-nac .rv-go{font-size:11px;letter-spacing:.12em;font-weight:500;border-bottom:1px solid #fff;padding-bottom:3px}
+.rv2 .rv-i img{object-position:50% 50%}
 .rv+.sec{position:relative;background:var(--bg)}
 @media (max-width:720px){.rv-t{bottom:20px;padding:14px 16px 16px}.rv-t h2{font-size:40px!important}}
 </style>
@@ -384,14 +397,14 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 <header>
   <nav><button class="mbtn" id="menuBtn" aria-expanded="false" aria-controls="mn"><i></i>Menú</button><a class="hide-m" href="#tienda/Sillas" data-r="Sillas">Sillas</a><a class="hide-m" href="#tienda/Butacas" data-r="Butacas">Sillones</a><a class="hide-m" href="#tienda/Mesas" data-r="Mesas">Mesas</a><a class="hide-m" href="#tienda/Mesas bajas" data-r="Mesas bajas">Mesas bajas</a><a class="hide-m" href="#tienda/Bancos" data-r="Bancos">Bancos</a><a class="hide-m" href="#tienda" data-r="tienda">Ver todo</a></nav>
   <a class="mark" href="#inicio" aria-label="FORMA Concept, inicio"><span class="fcl"><b>forma</b></span></a>
-  <nav class="r"><a class="hide-m" href="#frm" data-r="frm">FRM Studio</a><a class="hide-m" href="#proyectos" data-r="proyectos">Proyectos</a><a class="prolink" href="#pro-catalogo">Catálogo PRO</a><button class="ico" id="adminBtn" aria-label="Ingreso administrador"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button><button class="ico" id="cartBtn" aria-label="Abrir carrito"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><i id="cartN">0</i></button></nav>
+  <nav class="r"><a class="hide-m" href="#frm" data-r="frm">FRM Studio</a><a class="hide-m" href="#proyectos" data-r="proyectos">Profesionales</a><a class="prolink" href="#pro-catalogo">Catálogo PRO</a><button class="ico" id="adminBtn" aria-label="Ingreso administrador"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button><button class="ico" id="cartBtn" aria-label="Abrir carrito"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><i id="cartN">0</i></button></nav>
 </header>
 <div class="ld" id="ld" role="status" aria-label="Cargando"><canvas id="ldc" width="260" height="260"></canvas><span class="fcl"><b>forma</b></span></div>
 <div class="msh" id="msh"></div>
 <nav class="mn" id="mn" aria-label="Menú">
   <div><b>Tienda</b><a href="#tienda">Ver todo</a><a href="#tienda/Sillas">Sillas</a><a href="#tienda/Butacas">Sillones</a><a href="#tienda/Mesas">Mesas</a><a href="#tienda/Mesas bajas">Mesas bajas</a><a href="#tienda/Bancos">Bancos</a></div>
-  <div><b>Colecciones</b><a href="#tienda/Fresno">Fresno</a><a href="#tienda/Acero">Acero</a><a href="#tienda/Laca">Laca</a><span class="s">Nacional<small>Próximamente</small></span></div>
-  <div><b>FORMA</b><a href="#frm">FRM Studio</a><a href="#proyectos">FORMA Proyectos</a><a href="#contacto">Contacto</a></div>
+  <div><b>Colecciones</b><a href="#tienda/Fresno">Fresno</a><a href="#tienda/Acero">Acero</a><a href="#tienda/Laca">Laca</a><a href="#nacional">Nacional</a></div>
+  <div><b>FORMA</b><a href="#frm">FRM Studio</a><a href="#proyectos">Profesionales</a><a href="#contacto">Contacto</a></div>
   <div><b>Ayuda</b><a href="https://wa.me/541139443055" target="_blank" rel="noopener">WhatsApp</a><a href="mailto:formaconcept.ba@gmail.com">Mail</a><a href="https://instagram.com/forma.concept" target="_blank" rel="noopener">Instagram</a></div>
 </nav>
 <main id="app"></main>
@@ -400,7 +413,7 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
     <div><span class="k">Contacto</span><a href="https://wa.me/541139443055" target="_blank" rel="noopener">WhatsApp +54 11 3944 3055</a><a href="mailto:formaconcept.ba@gmail.com">formaconcept.ba@gmail.com</a><a href="https://instagram.com/forma.concept" target="_blank" rel="noopener">Instagram @forma.concept</a><span>Buenos Aires, Argentina</span></div>
     <div><span class="k">Tienda</span><a href="#tienda">Ver todo</a><a href="#tienda/Sillas">Sillas</a><a href="#tienda/Butacas">Sillones</a><a href="#tienda/Mesas">Mesas</a><a href="#tienda/Mesas bajas">Mesas bajas</a><a href="#tienda/Bancos">Bancos</a></div>
     <div><span class="k">Ayuda</span><button data-soon>Envíos</button><button data-soon>Medios de pago</button><button data-soon>Cómo funciona la preventa</button><button data-soon>Cambios y devoluciones</button><button data-soon>Preguntas frecuentes</button></div>
-    <div><span class="k">FORMA</span><a href="#frm">FRM Studio</a><a href="#proyectos">FORMA Proyectos</a></div>
+    <div><span class="k">FORMA</span><a href="#frm">FRM Studio</a><a href="#proyectos">Profesionales</a><a href="#nacional">Productos nacionales</a></div>
     <div><span class="k">Legales</span><a href="#terminos">Términos y condiciones</a><a href="#privacidad">Política de privacidad</a><a href="#arrepentimiento">Botón de arrepentimiento</a><a href="https://www.argentina.gob.ar/produccion/defensadelconsumidor/formulario" target="_blank" rel="noopener">Defensa de las y los consumidores. Para reclamos ingrese aquí</a></div>
   </div>
   <div class="wm" aria-hidden="true">forma concept</div>
@@ -456,7 +469,7 @@ async function loadDB(){
   try{
     const r=await fetch(SB_URL+'/rest/v1/products?select=*&activo=eq.true&order=orden',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
     if(!r.ok)return; const rows=await r.json(); if(!rows.length)return;
-    const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores||[],feat:x.destacado?1:0}));
+    const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,disp:x.disponibilidad||'',cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores||[],feat:x.destacado?1:0}));
     P.splice(0,P.length,...list);
     if(!animating)render();
   }catch(e){console.warn('DB',e)}
@@ -490,7 +503,7 @@ function full(img,h,txt,btn,href,cls=''){
 const STD=[['std_06','Comedor con techo de bovedilla'],['std_02','Cocina en madera'],['std_11','Living con ventanal'],['std_05','Cocina con isla'],['prj_cocina-acero','Cocina con revestimiento de acero'],['std_hero','Cocina con isla y techo de bovedilla']];
 let carT=null,carI=0;
 function carGo(i){const c=$('#car');if(!c)return;carI=(i+STD.length)%STD.length;c.querySelectorAll('img').forEach((m,j)=>m.classList.toggle('on',j===carI));c.querySelectorAll('.dots button').forEach((b,j)=>b.classList.toggle('on',j===carI))}
-function carStart(){clearInterval(carT);const c=$('#car');if(!c||REDUCED)return;carT=setInterval(()=>{if(!c.matches(':hover'))carGo(carI+1)},4500)}
+function carStart(){clearInterval(carT);const c=$('#car');if(!c||REDUCED)return;carT=setInterval(()=>{if(!c.matches(':hover'))carGo(carI+1)},3000)}
 const CATS=[['Sillas','MC-282','#tienda/Sillas',1],['Sillones','C537','#tienda/Butacas',1],['Mesas','1021T1.35','#tienda/Mesas',1],['Mesas bajas','102E1.0','#tienda/Mesas bajas',1],['Bancos','WS-035','#tienda/Bancos',1]];
 const chev=d=>`<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="${d?'M5 2l5 5-5 5':'M9 2L4 7l5 5'}"/></svg>`;
 function cats(){return `<section class="cs"><button class="ar pv" data-cs="-1" aria-label="Anterior" disabled>${chev(0)}</button><div class="tr" id="cst">${CATS.map(c=>`<a class="${c[3]?'w':''}" href="${c[2]}"><img src="img/${c[1]}.jpg" alt="" loading="lazy"><b>${c[0]}</b></a>`).join('')}</div><button class="ar nx" data-cs="1" aria-label="Siguiente">${chev(1)}</button></section>`}
@@ -508,11 +521,12 @@ document.addEventListener('submit',e=>{if(e.target.id!=='cpForm')return;e.preven
   $('#cpRes').innerHTML=o?o.map(x=>`<div class="o"><span>${x.t}<small>${x.s}</small></span><span>${x.c?ars(x.c):'Gratis'}</span></div>`).join('')+'<div class="nt">Valores de ejemplo.</div>':'<div class="nt">Escribí un código postal de 4 números.</div>'});
 function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
-  return `${full('ctx_pause','Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver Fresno','#tienda/Fresno')}
+  return `${full('ctx_pause','Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda')}
   ${cats()}
   <section class="rv" aria-hidden="true"><div class="rv-i"><img src="img/hv_varilla.jpg" alt=""></div><div class="rv-t"><span>Preventa exclusiva</span><h2><b class="rv-n" data-to="45">0</b>% OFF</h2><div class="rv-b"><i></i></div></div></section>
   <section class="sec"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
-  <div class="two">${full('hv_acanalada60','Colección Acero','','Ver Acero','#tienda/Acero')}${full('ctx_reunir','New in','','Ver lo nuevo','#tienda')}</div>
+  <div class="two">${full('hv_acanalada60','Colección Acero','','Ver Acero','#tienda/Acero')}${full('ctx_reunir','¿Sos profesional o querés comercializar nuestros productos?','','Panel para profesionales','#proyectos')}</div>
+  <section class="rv rv2"><div class="rv-i"><img src="img/nac_1.jpg" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
    <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="img/${s[0]}.jpg" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
 }
@@ -674,11 +688,34 @@ setInterval(()=>{const im=document.getElementById('tintImg');if(!im)return;tintI
 
 /* ---------- FRM Studio (página, tipo estudiolak) ---------- */
 const FSP=[['std_06','Comedor con techo de bovedilla','Interiorismo'],['std_02','Cocina en madera','Interiorismo'],['std_05','Cocina con isla','Interiorismo'],['prj_cocina-acero','Cocina con revestimiento de acero','Interiorismo'],['std_14','Baño con bacha de acero','Diseño a medida'],['std_15','Edificio de viviendas','Arquitectura']];
+/* Proyectos de FRM Studio: se editan desde el panel (tabla frm_proyectos). Si la base no responde, quedan los de arriba. */
+let FRMP=FSP.map((s,i)=>({slug:'p'+i,titulo:s[1],rubro:s[2],portada:s[0],imagenes:[s[0]],texto:''}));
+async function frmLoad(){try{const r=await fetch(SB_URL+'/rest/v1/frm_proyectos?select=*&activo=eq.true&order=orden',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});if(!r.ok)return;const d=await r.json();if(d.length){FRMP=d;const h=location.hash;if(!animating&&(h.startsWith('#frm')))render()}}catch(e){}}
+function viewFrmProject(slug){
+  const i=FRMP.findIndex(x=>x.slug===slug),p=FRMP[i];if(!p)return viewStudio();
+  const nx=FRMP[(i+1)%FRMP.length],imgs=(p.imagenes||[]).filter(Boolean);
+  return `<div class="fs fsx">
+  <section class="fs-hero"><img src="${src(p.portada)}" alt="${esc(p.titulo)}"><div class="t"><p>${esc(p.titulo)}</p><a class="ob" href="#frm">← Proyectos</a></div></section>
+  <section class="fs-sec fsx-i"><span class="k">(${esc(p.rubro||'Proyecto')})</span><div>${p.lugar?`<p>${esc(p.lugar)}</p>`:''}</div><div>${String(p.texto||'').split(/\n+/).map(t=>`<p>${esc(t)}</p>`).join('')}</div></section>
+  ${imgs.map((im,k)=>`<figure class="fsx-f ${k%3===1?'l':k%3===2?'r':''}"><img src="${src(im)}" alt="${esc(p.titulo)}, imagen ${k+1}" loading="lazy"></figure>`).join('')}
+  ${nx&&nx!==p?`<a class="fsx-next" href="#frm/${esc(nx.slug)}"><span class="k">(Siguiente proyecto)</span><b>${esc(nx.titulo)}</b><img src="${src(nx.portada)}" alt="" loading="lazy"></a>`:''}
+  <section class="fs-cta"><p>¿Tenés un proyecto en mente?</p><a class="ob" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto con FRM Studio')}" target="_blank" rel="noopener">Contanos tu proyecto</a></section></div>`;
+}
+const DISP={stock:'En stock',pedido:'A pedido',sin_stock:'Sin stock'};
+function viewNacional(){
+  const L=P.filter(p=>p.fam==='Nacional');
+  return `<div class="nacl">
+  <section class="nac-h"><div class="nac-im">${['nac_1','nac_2','nac_3'].map(n=>`<img src="img/${n}.jpg" alt="" loading="lazy">`).join('')}</div>
+   <div class="nac-t"><span class="k">Hecho en Argentina</span><h1>Productos nacionales</h1><p>Piezas únicas fabricadas en Buenos Aires por talleres con los que trabajamos hace años. Algunas están en stock para entrega inmediata y otras se hacen a pedido, en la medida y terminación que elijas.</p></div></section>
+  <section class="sec"><h3><span>${L.length?L.length+' piezas':'Piezas'}</span><a href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por productos nacionales a pedido')}" target="_blank" rel="noopener">Consultar a medida</a></h3>
+   ${L.length?`<div class="grid">${L.map(p=>card(p).replace('<div class="ph">',`<div class="ph">${p.disp?`<span class="disp d-${p.disp}">${DISP[p.disp]||''}</span>`:''}`)).join('')}</div>`
+   :`<p class="nac-empty">Estamos sumando las primeras piezas. Si buscás algo en particular, <a href="https://wa.me/541139443055" target="_blank" rel="noopener">escribinos</a> y lo hacemos a pedido.</p>`}</section></div>`;
+}
 function viewStudio(){
   return `<div class="fs">
   <section class="fs-hero"><img src="img/std_hero.jpg" alt="Cocina con isla y techo de bovedilla, proyecto de FRM Studio"><div class="t"><p>En FRM Studio proyectamos arquitectura e interiores pensando en quienes los van a habitar. Cada pieza de FORMA Concept sale de esa misma mirada.</p><button class="ob" data-to="fsp">Ver proyectos</button></div></section>
   <h2 class="fs-big" id="fsp">(Proyectos)</h2>
-  ${FSP.map(s=>`<figure class="fs-p"><div class="fim"><img src="img/${s[0]}.jpg" alt="${s[1]}, proyecto de FRM Studio" loading="lazy"></div><figcaption><span>${s[1]}</span><span>${s[2]}</span></figcaption></figure>`).join('')}
+  ${FRMP.map(s=>`<a class="fs-p" href="#frm/${esc(s.slug)}"><div class="fim"><img src="${src(s.portada)}" alt="${esc(s.titulo)}, proyecto de FRM Studio" loading="lazy"></div><figcaption><span>${esc(s.titulo)}</span><span>${esc(s.rubro||'')}</span></figcaption></a>`).join('')}
   <h2 class="fs-big">(Estudio)</h2>
   <section class="fs-sec"><span class="k">(Qué hacemos)</span>
     <div><p>Diseñamos espacios completos: la arquitectura, los interiores y el mobiliario, como un solo proyecto.</p></div>
@@ -772,7 +809,7 @@ let animating=false;
 function render(){
   const h=decodeURIComponent((location.hash||'#inicio').slice(1));
   let html,home=false;
-  if(isPro()&&!['pro','frm','proyectos','terminos','privacidad','arrepentimiento'].includes(h)){
+  if(isPro()&&!['pro','frm','proyectos','nacional','terminos','privacidad','arrepentimiento'].includes(h)&&!h.startsWith('frm/')){
     if(h.startsWith('tienda')){PCATF=decodeURIComponent(h.split('/')[1]||'');PTAB='cat';html=viewProCat()}
     else if(h==='pro-catalogo'){PCATF='';PTAB='cat';html=viewProCat()}
     else if(h==='pro-pedido'){PTAB='res';html=viewProCat()}
@@ -784,6 +821,8 @@ function render(){
     html=viewShop(s)}
   else if(h==='proyectos'){html=viewProjects()}
   else if(h==='frm'){html=viewStudio()}
+  else if(h.startsWith('frm/')){html=viewFrmProject(h.slice(4))}
+  else if(h==='nacional'){html=viewNacional()}
   else if(['terminos','privacidad','arrepentimiento'].includes(h)){html=viewLegal(h)}
   else if(h==='pro'){html=viewPro()}
   else if(h==='pro-catalogo'){html=isPro()?viewProCat():viewPro()}
@@ -948,7 +987,7 @@ addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
 /* Profesionales: el catálogo, el contenedor y las reservas se actualizan solos */
 async function proRefresh(){if(!isPro()||document.hidden)return;const {data}=await sbInit().rpc('pro_catalogo');PROCAT=data||PROCAT;await Promise.all([contLoad(),misLoad()]);if((location.hash==='#pro-catalogo')&&!document.activeElement?.closest?.('.pcat select'))render()}
 document.addEventListener('visibilitychange',proRefresh);setInterval(proRefresh,60000);
-save(); render(); loadDB().then(proLoad); track('visita');
+save(); render(); loadDB().then(proLoad); frmLoad(); track('visita');
 (()=>{if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
 const c=document.createElement('div');c.id='cur';document.body.appendChild(c);document.documentElement.classList.add('cur');
 addEventListener('mousemove',e=>{c.style.transform=`translate(${e.clientX}px,${e.clientY}px)`;c.classList.add('on');

@@ -65,6 +65,7 @@ td img{width:72px;height:72px}table.big td img,.cp td img{width:88px;height:88px
 .dirty{background:#FFF6D8!important}.dirty input{border-color:#C9A227}
 .sbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:30;display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.15);padding:10px 12px 10px 18px;border-radius:999px}.sbar[hidden]{display:none}
 .sw{display:flex;gap:4px;flex-wrap:wrap;max-width:120px}.sw i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}.fg-i{display:grid;gap:4px;font-size:12px}.fg-i img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;background:var(--box)}
 .colc{min-width:150px}.colc .hint{max-width:180px}
 .cpick{position:fixed;z-index:40;width:340px;max-height:80vh;overflow:auto;padding:14px;display:grid;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
 .cph{display:flex;justify-content:space-between;align-items:center;gap:10px}.cpl{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -140,7 +141,7 @@ sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){recovering=true;vi
 /* ---------- estructura ---------- */
 function shell(){
   app.innerHTML=`<header><div class="logo">forma<small>Admin</small></div>
-  <nav style="flex-wrap:wrap"><button data-t="inicio">Inicio</button><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button><button data-t="pro">Profesionales</button><button data-t="maestro">Maestro</button><button data-t="eco">Economía</button><button data-t="compras">Compras</button></nav>
+  <nav style="flex-wrap:wrap"><button data-t="inicio">Inicio</button><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button><button data-t="pro">Profesionales</button><button data-t="frm">FRM Studio</button><button data-t="maestro">Maestro</button><button data-t="eco">Economía</button><button data-t="compras">Compras</button></nav>
   <span class="sp"></span><a class="who hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn hide-m" id="chp">Cambiar contraseña</button><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
   app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
   $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};
@@ -149,7 +150,7 @@ function shell(){
 }
 async function draw(){
   app.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
-  if(tab==='inicio'){await drawInicio()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders()}
+  if(tab==='inicio'){await drawInicio()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders()}
 }
 
 /* ---------- productos ---------- */
@@ -175,11 +176,11 @@ function bindSort(redraw){$('#m').querySelectorAll('[data-st2]').forEach(h=>h.on
 
 function drawProds(){
   let list=prods.filter(p=>!q||(p.tipo+' '+p.nombre+' '+p.id+' '+p.linea+' '+p.categoria).toLowerCase().includes(q.toLowerCase()));
-  list=sortBy('prods',list,(p,k)=>({nombre:p.tipo+' '+p.nombre,cat:p.linea+' '+p.categoria,lista:p.precio_lista,pre:p.precio_preventa||pre(p.precio_lista),cupo:p.unidades,vend:p.vendidas,pub:p.activo?0:1}[k]));
+  list=sortBy('prods',list,(p,k)=>({nombre:p.tipo+' '+p.nombre,cat:p.linea+' '+p.categoria,lista:p.precio_lista,pre:p.precio_preventa||pre(p.precio_lista),cupo:p.unidades,vend:p.vendidas,pub:p.activo?0:1,disp:p.disponibilidad||''}[k]));
   const vend=prods.reduce((a,p)=>a+(p.vendidas||0),0), cupo=prods.filter(p=>p.activo).reduce((a,p)=>a+(p.unidades||0),0);
   $('#m').innerHTML=`<div class="stats"><div class="card"><b>${prods.filter(p=>p.activo).length}</b><span>productos publicados</span></div><div class="card"><b>${vend} / ${cupo}</b><span>unidades vendidas en preventa</span></div></div>
   <div class="bar"><input id="q" placeholder="Buscar…" value="${esc(q)}"><span class="sp"></span><button class="btn dk" id="nw">+ Nuevo producto</button></div>
-  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('prods','nombre','Producto')}${thS('prods','cat','Línea · Categoría','hide-m')}${thS('prods','lista','Precio de lista','n')}${thS('prods','pre','Preventa','n hide-m')}<th>Colores</th>${thS('prods','cupo','Cupo','n')}${thS('prods','vend','Vendidas','n')}${thS('prods','pub','Publicado')}<th></th></tr></thead><tbody>
+  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('prods','nombre','Producto')}${thS('prods','cat','Línea · Categoría','hide-m')}${thS('prods','lista','Precio de lista','n')}${thS('prods','pre','Preventa','n hide-m')}<th>Colores</th>${thS('prods','cupo','Cupo','n')}${thS('prods','vend','Vendidas','n')}${thS('prods','disp','Disponibilidad')}${thS('prods','pub','Publicado')}<th></th></tr></thead><tbody>
   ${list.map(p=>`<tr class="${p.activo?'':'off'}" data-id="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td>
    <td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.linea)} · ${esc(p.categoria)}</td>
    <td class="n"><input class="num n money" data-f="precio_lista" value="${money(p.precio_lista)}" inputmode="numeric" placeholder="sin precio"></td>
@@ -187,6 +188,7 @@ function drawProds(){
    <td class="colc" data-colp="p|${esc(p.id)}">${swatches(p.colores)}<button class="lnk">Elegir</button></td>
    <td class="n"><input class="num n" style="width:70px" data-f="unidades" value="${p.unidades??0}" inputmode="numeric"></td>
    <td class="n"><input class="num n" style="width:70px" data-f="vendidas" value="${p.vendidas??0}" inputmode="numeric"></td>
+   <td><select data-f="disponibilidad" style="width:auto">${[["","—"],["stock","En stock"],["pedido","A pedido"],["sin_stock","Sin stock"]].map(([v,t])=>`<option value="${v}" ${(p.disponibilidad||"")===v?"selected":""}>${t}</option>`).join("")}</select></td>
    <td><input type="checkbox" data-f="activo" ${p.activo?'checked':''} style="width:auto"></td>
    <td><button class="lnk" data-ed>Editar</button></td></tr>`).join('')}</tbody></table></div>
   <p class="hint">Cambiá todo lo que quieras y tocá <b>Guardar cambios</b> abajo. La preventa se calcula sola (−45% sobre lista); si escribís un precio, ese manda. Los colores se manejan en la pestaña Colores.</p>`;
@@ -196,8 +198,8 @@ function drawProds(){
     const id=tr.dataset.id;
     tr.querySelector('[data-ed]').onclick=()=>editProd(prods.find(p=>p.id===id));
     tr.querySelectorAll('[data-f]').forEach(inp=>inp.onchange=()=>{
-      const f=inp.dataset.f; let v=inp.type==='checkbox'?inp.checked:inp.value.replace(/\D/g,'');
-      if(f!=='activo')v=v===''?((f==='precio_lista'||f==='precio_preventa')?null:0):+v;
+      const f=inp.dataset.f; let v=inp.type==='checkbox'?inp.checked:f==='disponibilidad'?(inp.value||null):inp.value.replace(/\D/g,'');
+      if(f!=='activo'&&f!=='disponibilidad')v=v===''?((f==='precio_lista'||f==='precio_preventa')?null:0):+v;
       const p=prods.find(p=>p.id===id);Object.assign(p,{[f]:v});mark(inp,'products','id',id,f,v);
       if(inp.classList.contains('money'))inp.value=money(v);
       if(f==='precio_preventa'&&v==null)inp.value=money(pre(p.precio_lista));
@@ -209,7 +211,7 @@ const money=v=>v==null||v===''||isNaN(+v)?'':'$'+(+v).toLocaleString('es-AR');
 function colorRow(c=['','#cccccc']){return `<div class="cl"><input placeholder="Nombre del color" value="${esc(c[0])}"><input type="color" value="${esc(c[1])}"><button type="button" class="lnk" data-rm>Quitar</button></div>`}
 function editProd(p){
   const isNew=!p; p=p||{id:'',img:'',img2:'',tipo:'',nombre:'',linea:'Acero',categoria:'Sillas',bajada:'',material:'',terminacion:'',ancho:'',prof:'',alto:'',redonda:false,precio_lista:'',unidades:10,vendidas:0,armado:false,colores:[],destacado:false,activo:false,orden:(prods.at(-1)?.orden||0)+1};
-  const lineas=[...new Set(['Acero','Fresno','Laca',...prods.map(x=>x.linea)])], cats=[...new Set(['Sillas','Butacas','Mesas','Mesas bajas','Bancos',...prods.map(x=>x.categoria)])];
+  const lineas=[...new Set(['Acero','Fresno','Laca','Nacional',...prods.map(x=>x.linea)])], cats=[...new Set(['Sillas','Butacas','Mesas','Mesas bajas','Bancos',...prods.map(x=>x.categoria)])];
   const d=document.createElement('dialog');
   d.innerHTML=`<form method="dialog" id="pf"><div class="dh"><h2>${isNew?'Nuevo producto':esc(p.tipo+' '+p.nombre)}</h2><button type="button" class="btn" data-x>Cerrar</button></div><div class="db">
   <div class="g2"><div><label>Tipo (Silla, Mesa…)</label><input name="tipo" value="${esc(p.tipo)}" required></div><div><label>Nombre</label><input name="nombre" value="${esc(p.nombre)}" required></div></div>
@@ -284,6 +286,57 @@ async function drawCatPro(){
   bindColp();
   $('#m').querySelectorAll('[data-ca]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.ca,'activo',i.checked));
   $('#m').querySelectorAll('[data-cx]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('catalogo_pro').delete().eq('codigo',b.dataset.cx);toast(error?'No se pudo quitar':'Quitado del catálogo profesional');drawCatPro()});
+}
+
+/* ---------- FRM Studio: proyectos ---------- */
+let FRM=[];
+async function drawFrm(){
+  const {data,error}=await sb.from('frm_proyectos').select('*').order('orden');if(error){toast('Error al leer proyectos');return}FRM=data||[];
+  $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">FRM Studio · Proyectos</b><span class="sp"></span><a class="btn" href="/#frm" target="_blank">Ver la página ↗</a><button class="btn dk" id="fnew">+ Nuevo proyecto</button></div>
+  <p class="hint" style="margin-bottom:12px">Cada proyecto aparece en la página de FRM Studio con su foto de portada. Al tocarla se abre el proyecto con su texto y sus fotos. Usá las flechas para cambiar el orden.</p>
+  <div class="card wrap"><table class="big"><thead><tr><th></th><th>Proyecto</th><th class="hide-m">Texto</th><th class="n">Fotos</th><th>Visible</th><th>Orden</th><th></th></tr></thead><tbody>
+  ${FRM.map((p,i)=>`<tr class="${p.activo?'':'off'}"><td><img src="${esc(src(p.portada))}" alt="" style="object-fit:cover"></td><td><b>${esc(p.titulo)}</b><div class="hint">${esc(p.rubro||'')}${p.lugar?' · '+esc(p.lugar):''}</div></td>
+   <td class="hide-m"><div class="hint" style="max-width:380px">${esc((p.texto||'').slice(0,140))}${(p.texto||'').length>140?'…':''}</div></td><td class="n">${(p.imagenes||[]).length}</td>
+   <td><input type="checkbox" data-fa="${p.id}" ${p.activo?'checked':''} style="width:auto"></td>
+   <td style="white-space:nowrap"><button class="btn" data-fo="${i},-1" ${i?'':'disabled'}>↑</button> <button class="btn" data-fo="${i},1" ${i<FRM.length-1?'':'disabled'}>↓</button></td>
+   <td><button class="lnk" data-fe="${p.id}">Editar</button></td></tr>`).join('')}</tbody></table></div>`;
+  $('#fnew').onclick=()=>editFrm(null);
+  $('#m').querySelectorAll('[data-fe]').forEach(b=>b.onclick=()=>editFrm(FRM.find(p=>p.id===+b.dataset.fe)));
+  $('#m').querySelectorAll('[data-fa]').forEach(i=>i.onchange=async()=>{const {error}=await sb.from('frm_proyectos').update({activo:i.checked}).eq('id',+i.dataset.fa);toast(error?'No se pudo guardar':i.checked?'Visible en la página':'Oculto')});
+  $('#m').querySelectorAll('[data-fo]').forEach(b=>b.onclick=async()=>{const[i,d]=b.dataset.fo.split(',').map(Number);const a=FRM[i],c=FRM[i+d];if(!c)return;
+    await Promise.all([sb.from('frm_proyectos').update({orden:i+d}).eq('id',a.id),sb.from('frm_proyectos').update({orden:i}).eq('id',c.id)]);drawFrm()});
+}
+async function subirFoto(file,carpeta){
+  const path=`frm/${carpeta}/${Date.now()}-${Math.random().toString(36).slice(2,6)}.${(file.name.split('.').pop()||'jpg').toLowerCase()}`;
+  const {error}=await sb.storage.from('fotos').upload(path,file,{upsert:true,contentType:file.type});if(error)throw error;
+  return sb.storage.from('fotos').getPublicUrl(path).data.publicUrl;
+}
+function editFrm(p){
+  const isNew=!p;p=p?{...p,imagenes:[...(p.imagenes||[])]}:{titulo:'',rubro:'Interiorismo',lugar:'',texto:'',portada:'',imagenes:[],activo:true,orden:FRM.length+1};
+  const d=document.createElement('dialog');document.body.appendChild(d);
+  const gal=()=>p.imagenes.map((im,i)=>`<div class="fg-i"><img src="${esc(src(im))}" alt=""><div><button type="button" class="lnk" data-gl="${i},-1">←</button> <button type="button" class="lnk" data-gl="${i},1">→</button> · <button type="button" class="lnk" data-gp="${i}">Portada</button> · <button type="button" class="lnk" data-gx="${i}">Quitar</button></div></div>`).join('');
+  d.innerHTML=`<form method="dialog" id="ff"><div class="dh"><h2>${isNew?'Nuevo proyecto':'Editar proyecto'}</h2><button type="button" class="lnk" data-c>Cerrar</button></div><div class="db">
+   <div class="g2"><div><label>Título</label><input name="titulo" value="${esc(p.titulo)}" required></div><div><label>Rubro</label><input name="rubro" list="frr" value="${esc(p.rubro||'')}"><datalist id="frr"><option value="Interiorismo"><option value="Arquitectura"><option value="Diseño a medida"><option value="Reciclaje"></datalist></div></div>
+   <label>Lugar y año (opcional)</label><input name="lugar" value="${esc(p.lugar||'')}" placeholder="Ej. Palermo, 2025">
+   <label>Texto del proyecto</label><textarea name="texto" style="min-height:120px">${esc(p.texto||'')}</textarea>
+   <label>Portada (la foto que se ve en la lista)</label><div class="ph"><div><img id="fpo" src="${esc(src(p.portada))}" alt=""><input type="file" accept="image/*" id="fpf"></div></div>
+   <label>Fotos del proyecto (se muestran en este orden)</label><div class="fg" id="fgal">${gal()}</div><input type="file" accept="image/*" multiple id="fgf" style="margin-top:8px"><div class="hint">Podés elegir varias fotos a la vez.</div>
+  </div><div class="df">${isNew?'':'<button type="button" class="btn" id="fdel" style="margin-right:auto;color:var(--bad)">Borrar proyecto</button>'}<button type="button" class="btn" data-c>Cancelar</button><button class="btn dk" id="fsave">Guardar</button></div></form>`;
+  const f=d.querySelector('#ff'),carp=()=>(f.titulo.value||'proyecto').toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,40)||'proyecto';
+  const bindGal=()=>{d.querySelector('#fgal').innerHTML=gal();
+    d.querySelectorAll('[data-gl]').forEach(b=>b.onclick=()=>{const[i,s]=b.dataset.gl.split(',').map(Number);const j=i+s;if(j<0||j>=p.imagenes.length)return;[p.imagenes[i],p.imagenes[j]]=[p.imagenes[j],p.imagenes[i]];bindGal()});
+    d.querySelectorAll('[data-gp]').forEach(b=>b.onclick=()=>{p.portada=p.imagenes[+b.dataset.gp];d.querySelector('#fpo').src=src(p.portada);toast('Portada elegida')});
+    d.querySelectorAll('[data-gx]').forEach(b=>b.onclick=()=>{p.imagenes.splice(+b.dataset.gx,1);bindGal()})};
+  bindGal();
+  d.querySelector('#fpf').onchange=async e=>{const fl=e.target.files[0];if(!fl)return;toast('Subiendo foto…');try{p.portada=await subirFoto(fl,carp());d.querySelector('#fpo').src=p.portada;toast('Portada subida')}catch(er){toast('No se pudo subir la foto')}};
+  d.querySelector('#fgf').onchange=async e=>{const fs=[...e.target.files];if(!fs.length)return;toast(`Subiendo ${fs.length} foto${fs.length>1?'s':''}…`);try{for(const fl of fs)p.imagenes.push(await subirFoto(fl,carp()));if(!p.portada)p.portada=p.imagenes[0];bindGal();toast('Fotos subidas')}catch(er){toast('No se pudo subir alguna foto')}e.target.value=''};
+  d.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{d.close();d.remove()});
+  const del=d.querySelector('#fdel');if(del)del.onclick=async()=>{if(del.dataset.ok!=='1'){del.dataset.ok='1';del.textContent='Tocá de nuevo para borrar';return}const {error}=await sb.from('frm_proyectos').delete().eq('id',p.id);toast(error?'No se pudo borrar':'Proyecto borrado');d.close();d.remove();drawFrm()};
+  f.onsubmit=async e=>{e.preventDefault();const row={titulo:f.titulo.value.trim(),rubro:f.rubro.value.trim()||null,lugar:f.lugar.value.trim()||null,texto:f.texto.value.trim()||null,portada:p.portada||p.imagenes[0]||null,imagenes:p.imagenes,activo:p.activo,orden:p.orden};
+    if(!row.titulo){toast('Poné un título');return}
+    let error;if(isNew){row.slug=carp()+'-'+Date.now().toString(36).slice(-4);({error}=await sb.from('frm_proyectos').insert(row))}else({error}=await sb.from('frm_proyectos').update(row).eq('id',p.id));
+    if(error){toast('No se pudo guardar: '+error.message);return}toast('Proyecto guardado. Ya se ve en la página.');d.close();d.remove();drawFrm()};
+  d.showModal();
 }
 
 /* ---------- selector de colores por producto (tienda y catálogo pro, independientes) ---------- */
