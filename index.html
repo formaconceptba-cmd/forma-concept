@@ -489,10 +489,12 @@ const P=[
  {id:'MES-MAD-208-BAI',img:'102E1.0',t:'Mesa ratona',n:'REFLEJO',fam:'Laca',cat:'Mesas bajas',lead:'Base laqueada mate y tapa de vidrio templado teñido.',mat:'MDF y vidrio templado',fin:'Laqueado mate',d:[100,100,35],round:1,price:1770000,units:12,armado:false,colors:[['Bordó','#6B2630']],feat:1}
 ];
 // list = precio de lista · one = un pago (−15%) · price = preventa (−45% sobre lista, redondeado a $1.000)
-const norm=p=>{p.name=p.t+' '+p.n; p.list=p.price; if(p.price){p.one=p.list*(1-OFF_1P); p.price=p.pre||Math.ceil(p.list*(1-PRE)/1000)*1000} return p};
+const norm=p=>{p.name=p.t+' '+p.n; p.list=p.price; if(p.price){p.one=p.list*(1-OFF_1P); p.price=p.pre||Math.ceil(p.list*(1-(p.pp??PRE))/1000)*1000} return p};
 const off=p=>Math.round((1-p.price/p.list)*100);
 P.forEach(norm);
 /* Base de datos (Supabase): si responde, reemplaza la lista de arriba por la real. Si falla, queda la de arriba. */
+let SF={};const FX=(k,d)=>SF[k]||d;
+async function sfLoad(){try{const r=await fetch(SB_URL+'/rest/v1/sitio_fotos?select=clave,url',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});if(!r.ok)return;const d=await r.json();SF=Object.fromEntries(d.filter(x=>x.url).map(x=>[x.clave,x.url]));if(d.length&&!animating)render()}catch(e){}}
 const SB_URL='https://znzbwtewxpcpqtmjbmdw.supabase.co', SB_KEY='sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
 /* Seguimiento propio de visitas (sin cookies de terceros): visita, producto visto, carrito, checkout, compra. */
 const VID=(()=>{try{let v=localStorage.getItem('fc_vid');if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('fc_vid',v)}return v}catch(e){return 'x'}})();
@@ -506,7 +508,7 @@ async function loadDB(){
   try{
     const r=await fetch(SB_URL+'/rest/v1/products?select=*&activo=eq.true&order=orden',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
     if(!r.ok)return; const rows=await r.json(); if(!rows.length)return;
-    const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,disp:x.disponibilidad||'',cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores||[],feat:x.destacado?1:0}));
+    const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,disp:x.disponibilidad||'',cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,pp:x.pct_preventa,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores||[],feat:x.destacado?1:0}));
     P.splice(0,P.length,...list);
     if(!animating)render();
   }catch(e){console.warn('DB',e)}
@@ -535,7 +537,7 @@ function card(p){
 }
 /* toda la foto es un link, no solo el botón */
 function full(img,h,txt,btn,href,cls=''){
-  return `<a class="full ${cls}" href="${href}"><img src="img/${img}.jpg" alt="" loading="lazy"><div class="t"><h2>${h}</h2><div>${txt?`<p>${txt}</p>`:''}<span class="ob">${btn}</span></div></div></a>`;
+  return `<a class="full ${cls}" href="${href}"><img src="${src(img)}" alt="" loading="lazy"><div class="t"><h2>${h}</h2><div>${txt?`<p>${txt}</p>`:''}<span class="ob">${btn}</span></div></div></a>`;
 }
 const STD=[['std_06','Comedor con techo de bovedilla'],['std_02','Cocina en madera'],['std_11','Living con ventanal'],['std_05','Cocina con isla'],['prj_cocina-acero','Cocina con revestimiento de acero'],['std_hero','Cocina con isla y techo de bovedilla']];
 let carT=null,carI=0;
@@ -543,7 +545,7 @@ function carGo(i){const c=$('#car');if(!c)return;carI=(i+STD.length)%STD.length;
 function carStart(){clearInterval(carT);const c=$('#car');if(!c||REDUCED)return;carT=setInterval(()=>{if(!c.matches(':hover'))carGo(carI+1)},3000)}
 const CATS=[['Sillas','MC-282','#tienda/Sillas',1],['Sillones','C537','#tienda/Butacas',1],['Mesas','1021T1.35','#tienda/Mesas',1],['Mesas bajas','102E1.0','#tienda/Mesas bajas',1],['Bancos','WS-035','#tienda/Bancos',1]];
 const chev=d=>`<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><path d="${d?'M5 2l5 5-5 5':'M9 2L4 7l5 5'}"/></svg>`;
-function cats(){return `<section class="cs"><button class="ar pv" data-cs="-1" aria-label="Anterior" disabled>${chev(0)}</button><div class="tr" id="cst">${CATS.map(c=>`<a class="${c[3]?'w':''}" href="${c[2]}"><img src="img/${c[1]}.jpg" alt="" loading="lazy"><b>${c[0]}</b></a>`).join('')}</div><button class="ar nx" data-cs="1" aria-label="Siguiente">${chev(1)}</button></section>`}
+function cats(){return `<section class="cs"><button class="ar pv" data-cs="-1" aria-label="Anterior" disabled>${chev(0)}</button><div class="tr" id="cst">${CATS.map(c=>`<a class="${c[3]?'w':''}" href="${c[2]}"><img src="${src(FX('cat_'+c[0],c[1]))}" alt="" loading="lazy"><b>${c[0]}</b></a>`).join('')}</div><button class="ar nx" data-cs="1" aria-label="Siguiente">${chev(1)}</button></section>`}
 function csUpd(){const t=$('#cst');if(!t)return;$('.cs .pv').disabled=t.scrollLeft<4;$('.cs .nx').disabled=t.scrollLeft+t.clientWidth>=t.scrollWidth-4}
 document.addEventListener('scroll',e=>{if(e.target.id==='cst')csUpd()},true);
 /* calcular envío (valores de ejemplo hasta conectar el operador logístico) */
@@ -552,15 +554,15 @@ document.addEventListener('submit',e=>{if(e.target.id==='ckForm'){e.preventDefau
   $('#cpRes').innerHTML=o?o.map(x=>`<div class="o"><span>${x.t}<small>${x.s}</small></span><span>${x.txt}</span></div>`).join(''):'<div class="nt">Escribí un código postal de 4 números.</div>'});
 function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
-  return `${full('ctx_pause','Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda')}
+  return `${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda')}
   ${cats()}
-  <section class="rv"><div class="rv-i"><img src="img/hv_varilla.jpg" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo<br>en tu casa</h2><b class="rv-go">Abrir la cámara →</b></a></section>
+  <section class="rv"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo<br>en tu casa</h2><b class="rv-go">Abrir la cámara →</b></a></section>
   <section class="pvs" aria-label="Preventa exclusiva con descuentos de hasta 45%"><div class="pvs-t"><span>Preventa exclusiva con descuentos de hasta</span><b><b class="rv-n" data-to="45">0</b>%</b></div><div class="pvs-b"><i></i></div></section>
   <section class="sec"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
-  <div class="two">${full('hv_acanalada60','Colección Acero','','Ver Acero','#tienda/Acero')}${full('ctx_reunir','¿Sos profesional o querés comercializar nuestros productos?','','Panel para profesionales','#proyectos')}</div>
-  <section class="rv rv2"><div class="rv-i"><img src="img/nac_1.jpg" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
+  <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${full(FX('inicio_profesionales','ctx_reunir'),'¿Sos profesional o querés comercializar nuestros productos?','','Panel para profesionales','#proyectos')}</div>
+  <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
-   <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="img/${s[0]}.jpg" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
+   <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="${src(FX('estudio_'+(i+1),s[0]))}" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
 }
 const EMPRESA={razon:'DEL GRUPPO S.R.L.',cuit:'30-71294990-9',dom:'Domicilio legal: Av. Belgrano 148, piso 7, Ciudad Autónoma de Buenos Aires',mail:'formaconcept.ba@gmail.com',wa:'+54 11 3944 3055'};
 function viewLegal(k){
@@ -684,7 +686,7 @@ function viewProjects(){
    <p style="color:var(--soft);max-width:400px;margin-bottom:28px">Desarrollos, hoteles, oficinas y gastronomía. Armamos la selección de piezas para cada obra y la coordinamos de punta a punta.</p>
    <a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 40px" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto')}" target="_blank" rel="noopener">Contanos tu proyecto</a>
    <a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 40px;margin-left:8px;background:none;color:var(--ink);border:1px solid var(--ink)" href="#pro">Catálogo profesional</a></div>
-   <img src="img/prj_obra-fachada.jpg" alt="Obra de FORMA Proyectos"></section>
+   <img src="${src(FX('profesionales_1','prj_obra-fachada'))}" alt="Obra de FORMA Proyectos"></section>
 
   <section class="pj-step"><div class="pj-n"><span>01</span><h3>Estándar <i>|</i> Por pedido</h3></div>
     <div class="pj-body">
@@ -710,7 +712,7 @@ function viewProjects(){
         <p>Piezas diseñadas y producidas desde cero para tu proyecto, en la cantidad que necesites. Cada diseño se desarrolla con un proceso creativo y técnico propio, con resultados únicos. Te acompañamos desde la idea y el diseño hasta la definición técnica, la elección de materiales y la producción final.</p>
         ${pjCond(['Plazo de entrega: 4–5 meses desde la aprobación del diseño y la confirmación del pedido.','Pedido mínimo: a consultar según la complejidad del proyecto.','Cotización: bajo consulta previa.'])}
       </div></div>
-    <figure class="pj-photo"><img src="img/std_14.jpg" alt="Bacha de acero y espejo diseñados a medida" loading="lazy"></figure>
+    <figure class="pj-photo"><img src="${src(FX('profesionales_2','std_14'))}" alt="Bacha de acero y espejo diseñados a medida" loading="lazy"></figure>
   </div></section>`;
 }
 const TINTS=[['Terracota','none'],['Oliva','hue-rotate(55deg) saturate(.75)'],['Azul petróleo','hue-rotate(165deg) saturate(.6)'],['Grafito','grayscale(1) contrast(1.35)']];
@@ -771,7 +773,7 @@ const DISP={stock:'En stock',pedido:'A pedido',sin_stock:'Sin stock'};
 function viewNacional(){
   const L=P.filter(p=>p.fam==='Nacional');
   return `<div class="nacl">
-  <section class="nac-h"><div class="nac-im">${['nac_1','nac_2','nac_3'].map(n=>`<img src="img/${n}.jpg" alt="" loading="lazy">`).join('')}</div>
+  <section class="nac-h"><div class="nac-im">${['nac_1','nac_2','nac_3'].map((n,i)=>`<img src="${src(FX('nacional_'+(i+1),n))}" alt="" loading="lazy">`).join('')}</div>
    <div class="nac-t"><span class="k">Hecho en Argentina</span><h1>Productos nacionales</h1><p>Piezas únicas fabricadas en Buenos Aires por talleres con los que trabajamos hace años. Algunas están en stock para entrega inmediata y otras se hacen a pedido, en la medida y terminación que elijas.</p></div></section>
   <section class="sec"><h3><span>${L.length?L.length+' piezas':'Piezas'}</span><a href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por productos nacionales a pedido')}" target="_blank" rel="noopener">Consultar a medida</a></h3>
    ${L.length?`<div class="grid">${L.map(p=>card(p).replace('<div class="ph">',`<div class="ph">${p.disp?`<span class="disp d-${p.disp}">${DISP[p.disp]||''}</span>`:''}`)).join('')}</div>`
@@ -779,7 +781,7 @@ function viewNacional(){
 }
 function viewStudio(){
   return `<div class="fs">
-  <section class="fs-hero"><img src="img/std_hero.jpg" alt="Cocina con isla y techo de bovedilla, proyecto de FRM Studio"><div class="t"><p>En FRM Studio proyectamos arquitectura e interiores pensando en quienes los van a habitar. Cada pieza de FORMA Concept sale de esa misma mirada.</p><button class="ob" data-to="fsp">Ver proyectos</button></div></section>
+  <section class="fs-hero"><img src="${src(FX('frm_portada','std_hero'))}" alt="Cocina con isla y techo de bovedilla, proyecto de FRM Studio"><div class="t"><p>En FRM Studio proyectamos arquitectura e interiores pensando en quienes los van a habitar. Cada pieza de FORMA Concept sale de esa misma mirada.</p><button class="ob" data-to="fsp">Ver proyectos</button></div></section>
   <h2 class="fs-big" id="fsp">(Proyectos)</h2>
   ${FRMP.map(s=>`<a class="fs-p" href="#frm/${esc(s.slug)}"><div class="fim"><img src="${src(s.portada)}" alt="${esc(s.titulo)}, proyecto de FRM Studio" loading="lazy"></div><figcaption><span>${esc(s.titulo)}</span><span>${esc(s.rubro||'')}</span></figcaption></a>`).join('')}
   <h2 class="fs-big">(Estudio)</h2>
@@ -900,7 +902,7 @@ function viewCheckout(){
    <button class="lnk" data-opencart>Editar carrito</button>
    <div class="env-r"><div><span>Productos</span><span>${ars(sub)}</span></div><div><span>Envío</span><span>${!z?'Calculalo con tu CP':ENV==='interior'?'A cotizar':env?ars(env):'Gratis'}</span></div><div class="env-t"><span>Total</span><span>${ars(tot)}</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(tot-tot/1.21))}</span></div></div>
    <button class="buy" id="payMP" ${z?'':'disabled'}>${z?'Pagar con Mercado Pago':'Calculá tu envío para seguir'}</button><small class="safe">🔒 Pago seguro con Mercado Pago</small></aside></div>
-  <section class="ck2-pk"><img src="img/pack.jpg" alt="Embalaje de un producto FORMA Concept" loading="lazy"><div><span class="k">Cómo te llega</span><h2>Embalado para que llegue perfecto</h2>
+  <section class="ck2-pk"><img src="${src(FX('embalaje','pack'))}" alt="Embalaje de un producto FORMA Concept" loading="lazy"><div><span class="k">Cómo te llega</span><h2>Embalado para que llegue perfecto</h2>
    <ul><li>Caja de cartón reforzado con esquineros y protección en cada cara.</li><li>Cada pieza viaja envuelta por separado, con su etiqueta y código.</li><li>Si necesita armado, incluye herrajes e instrucciones. En CABA y GBA te lo podemos dejar armado.</li><li>Te avisamos por WhatsApp el día de entrega y la franja horaria.</li></ul></div></section></section>`;
 }
 function drawEnvio(){
@@ -1101,7 +1103,7 @@ addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
 /* Profesionales: el catálogo, el contenedor y las reservas se actualizan solos */
 async function proRefresh(){if(!isPro()||document.hidden)return;const {data}=await sbInit().rpc('pro_catalogo');PROCAT=data||PROCAT;await Promise.all([contLoad(),misLoad()]);if((location.hash==='#pro-catalogo')&&!document.activeElement?.closest?.('.pcat select'))render()}
 document.addEventListener('visibilitychange',proRefresh);setInterval(proRefresh,60000);
-save(); render(); loadDB().then(proLoad); frmLoad(); track('visita');
+save(); render(); loadDB().then(proLoad); frmLoad(); sfLoad(); track('visita');
 (()=>{if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
 const c=document.createElement('div');c.id='cur';document.body.appendChild(c);document.documentElement.classList.add('cur');
 addEventListener('mousemove',e=>{c.style.transform=`translate(${e.clientX}px,${e.clientY}px)`;c.classList.add('on');

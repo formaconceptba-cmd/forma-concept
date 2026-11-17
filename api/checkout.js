@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 
     // Precios y stock salen de la base, nunca del navegador.
     const ids = [...new Set(lines.map(l => l.id))];
-    const pr = await sb(`products?select=id,tipo,nombre,precio_lista,precio_preventa,unidades,vendidas,activo&id=in.(${ids.map(encodeURIComponent).join(',')})`);
+    const pr = await sb(`products?select=id,tipo,nombre,precio_lista,precio_preventa,pct_preventa,unidades,vendidas,activo&id=in.(${ids.map(encodeURIComponent).join(',')})`);
     const prods = Object.fromEntries((await pr.json()).map(p => [p.id, p]));
     const items = [];
     for (const l of lines) {
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
       if (!p || !p.activo || !p.precio_lista) return res.status(400).json({ error: 'Un producto ya no está disponible.' });
       const libre = (p.unidades || 0) - (p.vendidas || 0) - lines.filter(x => x.id === l.id && x !== l).reduce((a, x) => a + x.q, 0);
       if (l.q > libre) return res.status(409).json({ error: `No queda stock suficiente de ${p.tipo} ${p.nombre}.` });
-      items.push({ p, q: l.q, color: l.color, precio: p.precio_preventa || Math.ceil(p.precio_lista * (1 - PRE) / 1000) * 1000 });
+      items.push({ p, q: l.q, color: l.color, precio: p.precio_preventa || Math.ceil(p.precio_lista * (1 - (p.pct_preventa ?? PRE)) / 1000) * 1000 });
     }
     const ENVIOS = { gratis: 'Envío gratis (día a coordinar)', express: 'Envío express 24 h', retiro: 'Retiro en Buenos Aires', interior: 'Envío al interior (a cotizar)' };
     const cpN = parseInt(body.cp, 10), zona = cpN >= 1000 && cpN <= 9999 ? (cpN < 1500 ? 'caba' : cpN < 1900 ? 'gba' : 'int') : null;

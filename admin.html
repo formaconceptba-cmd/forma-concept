@@ -66,6 +66,7 @@ td img{width:72px;height:72px}table.big td img,.cp td img{width:88px;height:88px
 .sbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:30;display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.15);padding:10px 12px 10px 18px;border-radius:999px}.sbar[hidden]{display:none}
 .sw{display:flex;gap:4px;flex-wrap:wrap;max-width:120px}.sw i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
 .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}.fg-i{display:grid;gap:4px;font-size:12px}.fg-i img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;background:var(--box)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}.fslot{padding:10px;display:grid;gap:6px;align-content:start}.fslot img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;background:var(--box)}.fslot.chg{border-color:var(--ok)}.fsb{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.fsb label{margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:#fff;cursor:pointer}
 .colc{min-width:150px}.colc .hint{max-width:180px}
 .cpick{position:fixed;z-index:40;width:340px;max-height:80vh;overflow:auto;padding:14px;display:grid;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
 .cph{display:flex;justify-content:space-between;align-items:center;gap:10px}.cpl{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -141,7 +142,7 @@ sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){recovering=true;vi
 /* ---------- estructura ---------- */
 function shell(){
   app.innerHTML=`<header><div class="logo">forma<small>Admin</small></div>
-  <nav style="flex-wrap:wrap"><button data-t="inicio">Inicio</button><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="arr">Arrepentimientos</button><button data-t="pro">Profesionales</button><button data-t="frm">FRM Studio</button><button data-t="maestro">Maestro</button><button data-t="eco">Economía</button><button data-t="compras">Compras</button></nav>
+  <nav style="flex-wrap:wrap"><button data-t="inicio">Inicio</button><button data-t="productos">Productos</button><button data-t="pedidos">Pedidos</button><button data-t="pro">Profesionales</button><button data-t="frm">FRM Studio</button><button data-t="fotos">Fotos</button><button data-t="maestro">Maestro</button><button data-t="eco">Economía</button><button data-t="compras">Compras</button></nav>
   <span class="sp"></span><a class="who hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn hide-m" id="chp">Cambiar contraseña</button><button class="btn" id="out">Salir</button></header><main id="m"></main>`;
   app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
   $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};
@@ -150,7 +151,7 @@ function shell(){
 }
 async function draw(){
   app.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
-  if(tab==='inicio'){await drawInicio()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders()}
+  if(tab==='inicio'){await drawInicio()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
 }
 
 /* ---------- productos ---------- */
@@ -176,15 +177,16 @@ function bindSort(redraw){$('#m').querySelectorAll('[data-st2]').forEach(h=>h.on
 
 function drawProds(){
   let list=prods.filter(p=>!q||(p.tipo+' '+p.nombre+' '+p.id+' '+p.linea+' '+p.categoria).toLowerCase().includes(q.toLowerCase()));
-  list=sortBy('prods',list,(p,k)=>({nombre:p.tipo+' '+p.nombre,cat:p.linea+' '+p.categoria,lista:p.precio_lista,pre:p.precio_preventa||pre(p.precio_lista),cupo:p.unidades,vend:p.vendidas,pub:p.activo?0:1,disp:p.disponibilidad||''}[k]));
+  list=sortBy('prods',list,(p,k)=>({nombre:p.tipo+' '+p.nombre,cat:p.linea+' '+p.categoria,lista:p.precio_lista,pre:preP(p),pct:pctP(p),cupo:p.unidades,vend:p.vendidas,pub:p.activo?0:1,disp:p.disponibilidad||''}[k]));
   const vend=prods.reduce((a,p)=>a+(p.vendidas||0),0), cupo=prods.filter(p=>p.activo).reduce((a,p)=>a+(p.unidades||0),0);
   $('#m').innerHTML=`<div class="stats"><div class="card"><b>${prods.filter(p=>p.activo).length}</b><span>productos publicados</span></div><div class="card"><b>${vend} / ${cupo}</b><span>unidades vendidas en preventa</span></div></div>
   <div class="bar"><input id="q" placeholder="Buscar…" value="${esc(q)}"><span class="sp"></span><button class="btn dk" id="nw">+ Nuevo producto</button></div>
-  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('prods','nombre','Producto')}${thS('prods','cat','Línea · Categoría','hide-m')}${thS('prods','lista','Precio de lista','n')}${thS('prods','pre','Preventa','n hide-m')}<th>Colores</th>${thS('prods','cupo','Cupo','n')}${thS('prods','vend','Vendidas','n')}${thS('prods','disp','Disponibilidad')}${thS('prods','pub','Publicado')}<th></th></tr></thead><tbody>
+  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('prods','nombre','Producto')}${thS('prods','cat','Línea · Categoría','hide-m')}${thS('prods','lista','Precio de lista','n')}${thS('prods','pre','Preventa','n hide-m')}${thS('prods','pct','% preventa','n hide-m')}<th>Colores</th>${thS('prods','cupo','Cupo','n')}${thS('prods','vend','Vendidas','n')}${thS('prods','disp','Disponibilidad')}${thS('prods','pub','Publicado')}<th></th></tr></thead><tbody>
   ${list.map(p=>`<tr class="${p.activo?'':'off'}" data-id="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td>
    <td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.linea)} · ${esc(p.categoria)}</td>
    <td class="n"><input class="num n money" data-f="precio_lista" value="${money(p.precio_lista)}" inputmode="numeric" placeholder="sin precio"></td>
-   <td class="n hide-m"><input class="num n money" data-f="precio_preventa" value="${money(p.precio_preventa||pre(p.precio_lista))}" inputmode="numeric" title="${p.precio_preventa?'Precio fijado a mano. Borralo para volver al automático (lista −45%)':'Automático: lista −45%. Escribí otro precio para fijarlo'}"><div class="hint">${p.precio_preventa?'fijado a mano':'automático'}</div></td>
+   <td class="n hide-m"><input class="num n money" data-f="precio_preventa" value="${money(preP(p))}" inputmode="numeric" title="Escribí un precio para fijarlo a mano. Borralo para que lo calcule el %"><div class="hint" data-ph>${p.precio_preventa?'fijado a mano':'por %'}</div></td>
+   <td class="n hide-m"><input class="num n" style="width:64px" data-pct value="${pctP(p)}" inputmode="numeric"><div class="hint">% off</div></td>
    <td class="colc" data-colp="p|${esc(p.id)}">${swatches(p.colores)}<button class="lnk">Elegir</button></td>
    <td class="n"><input class="num n" style="width:70px" data-f="unidades" value="${p.unidades??0}" inputmode="numeric"></td>
    <td class="n"><input class="num n" style="width:70px" data-f="vendidas" value="${p.vendidas??0}" inputmode="numeric"></td>
@@ -202,11 +204,14 @@ function drawProds(){
       if(f!=='activo'&&f!=='disponibilidad')v=v===''?((f==='precio_lista'||f==='precio_preventa')?null:0):+v;
       const p=prods.find(p=>p.id===id);Object.assign(p,{[f]:v});mark(inp,'products','id',id,f,v);
       if(inp.classList.contains('money'))inp.value=money(v);
-      if(f==='precio_preventa'&&v==null)inp.value=money(pre(p.precio_lista));
-      if(f==='precio_lista'&&!p.precio_preventa){const pi=tr.querySelector('[data-f="precio_preventa"]');if(pi)pi.value=money(pre(v))}
+      const pi=tr.querySelector('[data-f="precio_preventa"]'),pc=tr.querySelector('[data-pct]'),ph=tr.querySelector('[data-ph]');
+      if(f==='precio_preventa'||f==='precio_lista'){if(pi)pi.value=money(preP(p));if(pc)pc.value=pctP(p);if(ph)ph.textContent=p.precio_preventa?'fijado a mano':'por %'}
       if(f==='activo')tr.classList.toggle('off',!v)});
+    const pcI=tr.querySelector('[data-pct]');if(pcI)pcI.onchange=()=>{const t=pcI.value.replace(/[^0-9.,]/g,'').replace(',','.');if(t===''){return}const v=Math.max(0,Math.min(90,+t))/100;const p=prods.find(p=>p.id===id);p.pct_preventa=v;p.precio_preventa=null;mark(pcI,'products','id',id,'pct_preventa',v);mark(pcI,'products','id',id,'precio_preventa',null);const pi=tr.querySelector('[data-f="precio_preventa"]');if(pi)pi.value=money(preP(p));const ph=tr.querySelector('[data-ph]');if(ph)ph.textContent='por %';pcI.value=Math.round(v*100)};
   });
 }
+const preP=p=>p.precio_preventa||(p.precio_lista?Math.ceil(p.precio_lista*(1-(p.pct_preventa??PRE))/1000)*1000:null);
+const pctP=p=>p.precio_lista&&preP(p)?Math.round((1-preP(p)/p.precio_lista)*100):Math.round((p.pct_preventa??PRE)*100);
 const money=v=>v==null||v===''||isNaN(+v)?'':'$'+(+v).toLocaleString('es-AR');
 function colorRow(c=['','#cccccc']){return `<div class="cl"><input placeholder="Nombre del color" value="${esc(c[0])}"><input type="color" value="${esc(c[1])}"><button type="button" class="lnk" data-rm>Quitar</button></div>`}
 function editProd(p){
@@ -337,6 +342,27 @@ function editFrm(p){
     let error;if(isNew){row.slug=carp()+'-'+Date.now().toString(36).slice(-4);({error}=await sb.from('frm_proyectos').insert(row))}else({error}=await sb.from('frm_proyectos').update(row).eq('id',p.id));
     if(error){toast('No se pudo guardar: '+error.message);return}toast('Proyecto guardado. Ya se ve en la página.');d.close();d.remove();drawFrm()};
   d.showModal();
+}
+
+/* ---------- fotos fijas de la página ---------- */
+const SLOTS=[
+ ['Inicio',[['inicio_portada','Portada (Colección Fresno)','ctx_pause'],['banda_probalo','Banda "Probalo en tu casa"','hv_varilla'],['inicio_acero','Cuadro Colección Acero','hv_acanalada60'],['inicio_profesionales','Cuadro "¿Sos profesional…?"','ctx_reunir'],['banda_nacional','Banda Productos nacionales','nac_1']]],
+ ['Categorías del inicio',[['cat_Sillas','Sillas','MC-282'],['cat_Sillones','Sillones','C537'],['cat_Mesas','Mesas','1021T1.35'],['cat_Mesas bajas','Mesas bajas','102E1.0'],['cat_Bancos','Bancos','WS-035']]],
+ ['FRM Studio en el inicio (carrusel)',[['estudio_1','Foto 1','std_06'],['estudio_2','Foto 2','std_02'],['estudio_3','Foto 3','std_11'],['estudio_4','Foto 4','std_05'],['estudio_5','Foto 5','prj_cocina-acero'],['estudio_6','Foto 6','std_hero']]],
+ ['Página FRM Studio',[['frm_portada','Portada','std_hero']]],
+ ['Página Productos nacionales',[['nacional_1','Foto grande','nac_1'],['nacional_2','Foto 2','nac_2'],['nacional_3','Foto 3','nac_3']]],
+ ['Página Profesionales',[['profesionales_1','Foto principal','prj_obra-fachada'],['profesionales_2','Foto de proyecto a medida','std_14']]],
+ ['Pago',[['embalaje','Foto del embalaje ("Cómo te llega")','pack']]]];
+async function drawFotos(){
+  const {data,error}=await sb.from('sitio_fotos').select('*');if(error){toast('Error al leer las fotos');return}
+  const cur=Object.fromEntries((data||[]).map(x=>[x.clave,x.url]));
+  $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Fotos de la página</b><span class="sp"></span><a class="btn" href="/" target="_blank">Ver la tienda ↗</a></div>
+  <p class="hint" style="margin-bottom:16px">Acá cambiás las fotos fijas de la tienda (las de productos se cambian en Productos y las de proyectos en FRM Studio). Tocá "Cambiar foto", elegí una imagen y queda publicada al instante. "Volver a la original" deshace el cambio.</p>
+  ${SLOTS.map(([g,L])=>`<h3 style="margin:24px 0 10px">${g}</h3><div class="fgrid">${L.map(([k,l,d])=>`<div class="card fslot ${cur[k]?'chg':''}"><img src="${esc(src(cur[k]||d))}" alt=""><b>${esc(l)}</b><div class="hint">${cur[k]?'Foto cambiada':'Foto original'}</div>
+   <div class="fsb"><label class="btn dk">Cambiar foto<input type="file" accept="image/*" data-fk="${esc(k)}" hidden></label>${cur[k]?`<button class="lnk" data-fr="${esc(k)}">Volver a la original</button>`:''}</div></div>`).join('')}</div>`).join('')}`;
+  $('#m').querySelectorAll('[data-fk]').forEach(i=>i.onchange=async e=>{const f=e.target.files[0];if(!f)return;toast('Subiendo foto…');
+    try{const url=await subirFoto(f,'sitio');const {error}=await sb.from('sitio_fotos').upsert({clave:i.dataset.fk,url});if(error)throw error;toast('Foto cambiada. Ya se ve en la tienda.');drawFotos()}catch(er){toast('No se pudo subir la foto')}});
+  $('#m').querySelectorAll('[data-fr]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('sitio_fotos').delete().eq('clave',b.dataset.fr);toast(error?'No se pudo':'Volvió la foto original');drawFotos()});
 }
 
 /* ---------- selector de colores por producto (tienda y catálogo pro, independientes) ---------- */
@@ -492,7 +518,7 @@ function drawMaster(){
 async function drawEco(){
   if(!prods.length)await loadProds();
   const SL=[['tc','Tipo de cambio (ARS por USD)',1],['envio_express','Envío express al cliente (ARS)',1],['flete_cont','Flete del contenedor (USD)',1],['cap_cbm','Capacidad del contenedor (m³)',1],['gastos_fijos_cont','Despacho, terminal, transporte y verificación (USD)',1],['resguardo','Resguardo / depósito (USD)',1],['seguro','Seguro (% s/FOB)',100],['honorarios','Honorarios despachante (% s/FOB)',100],['arancel','Arancel (% s/CIF)',100],['imprevistos','Imprevistos (% s/costo)',100],['iva','IVA (%)',100],['markup_pro','Margen profesionales (% s/costo)',100],['markup_venta','Markup sugerido al público (% s/costo)',100]];
-  const rows=prods.map(p=>{const m=byCod(p.id);const c=m?costo(m.fob_usd,m.cbm):null;const cA=c==null?null:c*ST.tc;const pv=p.precio_preventa||pre(p.precio_lista);const net=pv?pv/(1+ST.iva):null;const pp=m?ppro(m):null;
+  const rows=prods.map(p=>{const m=byCod(p.id);const c=m?costo(m.fob_usd,m.cbm):null;const cA=c==null?null:c*ST.tc;const pv=preP(p);const net=pv?pv/(1+ST.iva):null;const pp=m?ppro(m):null;
     return {p,m,c,cA,pv,mpv:cA&&net?(net-cA)/net:null,gpv:cA&&net?net-cA:null,pp,mpp:cA&&pp?(pp/(1+ST.iva)-cA)/(pp/(1+ST.iva)):null,lista:p.precio_lista,sug:c==null?null:Math.ceil(c*(1+ST.markup_venta)*(1+ST.iva)*ST.tc/1000)*1000}});
   const pc=x=>x==null?'—':`<span class="${x<0.15?'neg':'pos'}">${pct(x)}</span>`;
   $('#m').innerHTML=`<h3 style="margin:0 0 10px">Parámetros</h3><div class="ecog">${SL.map(([k,l,f])=>`<div class="card"><label>${l}</label><input data-ek="${k}" data-f="${f}" value="${ST[k]!=null?+(ST[k]*f).toFixed(4):''}" inputmode="decimal"></div>`).join('')}</div>
@@ -555,7 +581,7 @@ async function drawArr(){
   const {data,error}=await sb.from('arrepentimientos').select('*').order('created_at',{ascending:false});
   if(error){toast('Error al leer arrepentimientos');return}
   const EA=['nuevo','contactado','resuelto'];
-  $('#m').innerHTML=`<div class="stats"><div class="card"><b>${data.filter(a=>a.estado==='nuevo').length}</b><span>sin responder (tenés 24 h)</span></div></div>
+  (document.getElementById('arrw')||$('#m')).innerHTML=`<div class="stats"><div class="card"><b>${data.filter(a=>a.estado==='nuevo').length}</b><span>sin responder (tenés 24 h)</span></div></div>
   ${data.length?`<div class="card wrap"><table><thead><tr><th>Código</th><th>Fecha</th><th>Cliente</th><th class="hide-m">Pedido / comentario</th><th>Estado</th></tr></thead><tbody>
   ${data.map(a=>`<tr><td>${esc(a.codigo)}</td><td>${new Date(a.created_at).toLocaleString('es-AR')}</td><td><b>${esc(a.nombre)}</b><div class="hint">${esc(a.email)} · ${esc(a.telefono)}</div></td>
    <td class="hide-m">${esc(a.pedido)}<div class="hint">${esc(a.motivo)}</div></td>
