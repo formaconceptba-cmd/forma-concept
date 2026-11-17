@@ -721,7 +721,7 @@ function viewFrmProject(slug){
   <section class="fs-cta"><p>¿Tenés un proyecto en mente?</p><a class="ob" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto con FRM Studio')}" target="_blank" rel="noopener">Contanos tu proyecto</a></section></div>`;
 }
 /* Probalo en tu casa: foto del espacio + producto encima (arrastrar, tamaño, girar). */
-let AR={id:null,room:null,x:50,y:62,s:38,flip:false};
+let AR={id:null,room:null,x:50,y:66,s:24,flip:false};
 function viewAR(){
   const L=P.filter(p=>p.img);if(!AR.id&&L[0])AR.id=L[0].id;
   return `<section class="ar"><div class="ar-h"><span class="k">Nuevo</span><h1>Probalo en tu casa</h1><p>Elegí un producto, sacá o subí una foto del lugar donde lo querés poner y movelo con el dedo o el mouse hasta que quede donde va.</p></div>
