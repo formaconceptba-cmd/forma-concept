@@ -177,8 +177,8 @@ function drawProds(){
   <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('prods','nombre','Producto')}${thS('prods','cat','Línea · Categoría','hide-m')}${thS('prods','lista','Precio de lista','n')}${thS('prods','pre','Preventa','n hide-m')}<th>Colores</th>${thS('prods','cupo','Cupo','n')}${thS('prods','vend','Vendidas','n')}${thS('prods','pub','Publicado')}<th></th></tr></thead><tbody>
   ${list.map(p=>`<tr class="${p.activo?'':'off'}" data-id="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td>
    <td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.linea)} · ${esc(p.categoria)}</td>
-   <td class="n"><input class="num n" data-f="precio_lista" value="${p.precio_lista??''}" inputmode="numeric" placeholder="sin precio"></td>
-   <td class="n hide-m"><input class="num n" data-f="precio_preventa" value="${p.precio_preventa??''}" inputmode="numeric" placeholder="${p.precio_lista?ars(pre(p.precio_lista)):''}" title="Vacío = automático (lista −45%)"></td>
+   <td class="n"><input class="num n money" data-f="precio_lista" value="${money(p.precio_lista)}" inputmode="numeric" placeholder="sin precio"></td>
+   <td class="n hide-m"><input class="num n money" data-f="precio_preventa" value="${money(p.precio_preventa||pre(p.precio_lista))}" inputmode="numeric" title="${p.precio_preventa?'Precio fijado a mano. Borralo para volver al automático (lista −45%)':'Automático: lista −45%. Escribí otro precio para fijarlo'}"><div class="hint">${p.precio_preventa?'fijado a mano':'automático'}</div></td>
    <td><div class="sw">${(p.colores||[]).map(c=>`<i title="${esc(c[0])}" style="background:${esc(c[1])}"></i>`).join('')}</div></td>
    <td class="n"><input class="num n" style="width:70px" data-f="unidades" value="${p.unidades??0}" inputmode="numeric"></td>
    <td class="n"><input class="num n" style="width:70px" data-f="vendidas" value="${p.vendidas??0}" inputmode="numeric"></td>
@@ -193,9 +193,14 @@ function drawProds(){
     tr.querySelectorAll('[data-f]').forEach(inp=>inp.onchange=()=>{
       const f=inp.dataset.f; let v=inp.type==='checkbox'?inp.checked:inp.value.replace(/\D/g,'');
       if(f!=='activo')v=v===''?((f==='precio_lista'||f==='precio_preventa')?null:0):+v;
-      Object.assign(prods.find(p=>p.id===id),{[f]:v});mark(inp,'products','id',id,f,v)});
+      const p=prods.find(p=>p.id===id);Object.assign(p,{[f]:v});mark(inp,'products','id',id,f,v);
+      if(inp.classList.contains('money'))inp.value=money(v);
+      if(f==='precio_preventa'&&v==null)inp.value=money(pre(p.precio_lista));
+      if(f==='precio_lista'&&!p.precio_preventa){const pi=tr.querySelector('[data-f="precio_preventa"]');if(pi)pi.value=money(pre(v))}
+      if(f==='activo')tr.classList.toggle('off',!v)});
   });
 }
+const money=v=>v==null||v===''||isNaN(+v)?'':'$'+(+v).toLocaleString('es-AR');
 function colorRow(c=['','#cccccc']){return `<div class="cl"><input placeholder="Nombre del color" value="${esc(c[0])}"><input type="color" value="${esc(c[1])}"><button type="button" class="lnk" data-rm>Quitar</button></div>`}
 function editProd(p){
   const isNew=!p; p=p||{id:'',img:'',img2:'',tipo:'',nombre:'',linea:'Acero',categoria:'Sillas',bajada:'',material:'',terminacion:'',ancho:'',prof:'',alto:'',redonda:false,precio_lista:'',unidades:10,vendidas:0,armado:false,colores:[],destacado:false,activo:false,orden:(prods.at(-1)?.orden||0)+1};
@@ -257,16 +262,19 @@ async function drawCatPro(){
   <div class="bar"><label style="margin:0">Descuento general sobre precio de lista</label><input id="dpro" class="num" style="width:80px" value="${Math.round(dp*100)}" inputmode="numeric"> %<span class="sp"></span><span class="hint">Sumá productos desde la pestaña Maestro con "+ Pro". Tocá un título para ordenar.</span></div>
   <div class="card wrap cp"><table><thead><tr><th></th>${thS('cpro','nombre','Producto')}${thS('cpro','cat','Categoría','hide-m')}${thS('cpro','lista','Lista','n')}${thS('cpro','desc','Desc. %','n')}${thS('cpro','precio','Precio pro','n')}${thS('cpro','marg','Margen','n')}${thS('cpro','moq','MOQ','n')}<th>Colores (separados por coma)</th>${thS('cpro','vis','Visible')}<th></th></tr></thead><tbody>
   ${rows.map(r=>`<tr class="${r.c.activo?'':'off'}"><td><img src="${esc(r.foto||'')}" alt=""></td><td><b>${esc(r.name)}</b><div class="hint">${esc(r.c.codigo)}${r.p?' · en tienda':''}</div></td><td class="hide-m">${esc(r.cat)}</td>
-   <td class="n"><input class="num n" data-cl="${esc(r.c.codigo)}" value="${r.c.precio_lista??''}" placeholder="${r.lista?ars(r.lista):'cargar'}" inputmode="numeric"></td>
-   <td class="n"><input class="num n" style="width:64px" data-cd="${esc(r.c.codigo)}" value="${r.c.descuento!=null?Math.round(r.c.descuento*100):''}" placeholder="${Math.round(dp*100)}" inputmode="numeric"></td>
-   <td class="n"><b>${ars(r.precio)}</b></td><td class="n">${r.marg==null?'—':`<span class="${r.marg<0.15?'neg':'pos'}">${pct(r.marg)}</span>`}</td><td class="n">${r.m?.moq??'—'}</td>
+   <td class="n"><input class="num n money" data-cl="${esc(r.c.codigo)}" value="${money(r.lista)}" inputmode="numeric"><div class="hint">${r.c.precio_lista?'fijado a mano':r.p?'de la tienda':'sugerido por costo'}</div></td>
+   <td class="n"><input class="num n" style="width:64px" data-cd="${esc(r.c.codigo)}" value="${Math.round(r.d*100)}" inputmode="numeric"><div class="hint">${r.c.descuento!=null?'propio':'general'}</div></td>
+   <td class="n"><b data-rp="${esc(r.c.codigo)}">${ars(r.precio)}</b></td><td class="n" data-rm="${esc(r.c.codigo)}">${r.marg==null?'—':`<span class="${r.marg<0.15?'neg':'pos'}">${pct(r.marg)}</span>`}</td><td class="n">${r.m?.moq??'—'}</td>
    <td><input data-cc="${esc(r.c.codigo)}" value="${esc(r.c.colores??'')}" placeholder="${esc(r.cols)}"></td>
    <td><input type="checkbox" data-ca="${esc(r.c.codigo)}" ${r.c.activo?'checked':''} style="width:auto"></td><td><button class="lnk" data-cx="${esc(r.c.codigo)}">Quitar</button></td></tr>`).join('')}</tbody></table></div>
   <p class="hint">Precio pro = lista × (1 − descuento). Si no cargás lista, usa la de la tienda o la sugerida por costo. Editá lo que quieras y tocá <b>Guardar cambios</b>; los profesionales lo ven al instante.</p></div>`);
   bindSort(()=>drawCatPro());
-  $('#dpro').onchange=e=>mark(e.target,'settings','key','desc_pro','value',(+e.target.value.replace(',','.'))/100);
-  $('#m').querySelectorAll('[data-cl]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.cl,'precio_lista',i.value.replace(/\D/g,'')?+i.value.replace(/\D/g,''):null));
-  $('#m').querySelectorAll('[data-cd]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.cd,'descuento',i.value.trim()===''?null:(+i.value.replace(',','.'))/100));
+  $('#dpro').onchange=e=>{const v=(+e.target.value.replace(',','.'))/100;mark(e.target,'settings','key','desc_pro','value',v);ST.desc_pro=v;rows.forEach(r=>{if(r.c.descuento==null){RW[r.c.codigo].d=v;const i=document.querySelector(`[data-cd="${CSS.escape(r.c.codigo)}"]`);if(i)i.value=Math.round(v*100);recalc(r.c.codigo)}})};
+  const RW=Object.fromEntries(rows.map(r=>[r.c.codigo,{lista:r.lista,d:r.d,base:r.p?.precio_lista||sug(r.m),cA:r.m?costo(r.m.fob_usd,r.m.cbm)*ST.tc:null}]));
+  const recalc=cod=>{const x=RW[cod],pr=x.lista?Math.round(x.lista*(1-x.d)/1000)*1000:null,mg=pr&&x.cA?(pr/(1+ST.iva)-x.cA)/(pr/(1+ST.iva)):null;
+    document.querySelector(`[data-rp="${CSS.escape(cod)}"]`).textContent=ars(pr);document.querySelector(`[data-rm="${CSS.escape(cod)}"]`).innerHTML=mg==null?'—':`<span class="${mg<0.15?'neg':'pos'}">${pct(mg)}</span>`};
+  $('#m').querySelectorAll('[data-cl]').forEach(i=>i.onchange=()=>{const c=i.dataset.cl,d=i.value.replace(/\D/g,''),v=d?+d:null;RW[c].lista=v||RW[c].base;i.value=money(RW[c].lista);mark(i,'catalogo_pro','codigo',c,'precio_lista',v);recalc(c)});
+  $('#m').querySelectorAll('[data-cd]').forEach(i=>i.onchange=()=>{const c=i.dataset.cd,t=i.value.trim(),v=t===''?null:(+t.replace(',','.'))/100;RW[c].d=v??(ST.desc_pro??0.3);i.value=Math.round(RW[c].d*100);mark(i,'catalogo_pro','codigo',c,'descuento',v);recalc(c)});
   $('#m').querySelectorAll('[data-cc]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.cc,'colores',i.value.trim()||null));
   $('#m').querySelectorAll('[data-ca]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.ca,'activo',i.checked));
   $('#m').querySelectorAll('[data-cx]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('catalogo_pro').delete().eq('codigo',b.dataset.cx);toast(error?'No se pudo quitar':'Quitado del catálogo profesional');drawCatPro()});
