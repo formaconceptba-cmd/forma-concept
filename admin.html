@@ -67,6 +67,7 @@ td img{width:72px;height:72px}table.big td img,.cp td img{width:88px;height:88px
 .sw{display:flex;gap:4px;flex-wrap:wrap;max-width:120px}.sw i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
 .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}.fg-i{display:grid;gap:4px;font-size:12px}.fg-i img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;background:var(--box)}
 .snav{display:flex;gap:6px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:61px;z-index:4}.snav[hidden]{display:none}.snav button{border:0;background:none;padding:7px 12px;border-radius:999px;cursor:pointer;color:var(--soft);font-size:13px}.snav button.on{background:var(--box);color:var(--ink)}
+.fslot.upl img{opacity:.55}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}.fslot{padding:10px;display:grid;gap:6px;align-content:start}.fslot img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;background:var(--box)}.fslot.chg{border-color:var(--ok)}.fsb{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.fsb label{margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:#fff;cursor:pointer}
 .colc{min-width:150px}.colc .hint{max-width:180px}
 .cpick{position:fixed;z-index:40;width:340px;max-height:80vh;overflow:auto;padding:14px;display:grid;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
@@ -313,9 +314,17 @@ async function drawFrm(){
   $('#m').querySelectorAll('[data-fo]').forEach(b=>b.onclick=async()=>{const[i,d]=b.dataset.fo.split(',').map(Number);const a=FRM[i],c=FRM[i+d];if(!c)return;
     await Promise.all([sb.from('frm_proyectos').update({orden:i+d}).eq('id',a.id),sb.from('frm_proyectos').update({orden:i}).eq('id',c.id)]);drawFrm()});
 }
+/* achica la foto (máx. 2400 px) y la pasa a JPG antes de subirla */
+async function achicar(file){
+  let bmp;try{bmp=await createImageBitmap(file)}catch(e){throw new Error(/heic|heif/i.test(file.type+file.name)?'Ese formato (HEIC, de iPhone) no se puede abrir acá. Exportala como JPG y volvé a probar.':'No pudimos abrir esa imagen. Probá con un JPG o PNG.')}
+  const s=Math.min(1,2400/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);
+  c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.86));if(!b)throw new Error('No pudimos procesar la imagen.');
+  return new File([b],'foto.jpg',{type:'image/jpeg'});
+}
 async function subirFoto(file,carpeta){
-  const path=`frm/${carpeta}/${Date.now()}-${Math.random().toString(36).slice(2,6)}.${(file.name.split('.').pop()||'jpg').toLowerCase()}`;
-  const {error}=await sb.storage.from('fotos').upload(path,file,{upsert:true,contentType:file.type});if(error)throw error;
+  file=await achicar(file);
+  const path=`frm/${carpeta}/${Date.now()}-${Math.random().toString(36).slice(2,6)}.jpg`;
+  const {error}=await sb.storage.from('fotos').upload(path,file,{upsert:true,contentType:'image/jpeg'});if(error)throw new Error(error.message||'No se pudo subir');
   return sb.storage.from('fotos').getPublicUrl(path).data.publicUrl;
 }
 function editFrm(p){
@@ -362,8 +371,14 @@ async function drawFotos(){
   <p class="hint" style="margin-bottom:16px">Acá cambiás las fotos fijas de la tienda (las de productos se cambian en Productos y las de proyectos en FRM Studio). Tocá "Cambiar foto", elegí una imagen y queda publicada al instante. "Volver a la original" deshace el cambio.</p>
   ${SLOTS.map(([g,L])=>`<h3 style="margin:24px 0 10px">${g}</h3><div class="fgrid">${L.map(([k,l,d])=>`<div class="card fslot ${cur[k]?'chg':''}"><img src="${esc(src(cur[k]||d))}" alt=""><b>${esc(l)}</b><div class="hint">${cur[k]?'Foto cambiada':'Foto original'}</div>
    <div class="fsb"><label class="btn dk">Cambiar foto<input type="file" accept="image/*" data-fk="${esc(k)}" hidden></label>${cur[k]?`<button class="lnk" data-fr="${esc(k)}">Volver a la original</button>`:''}</div></div>`).join('')}</div>`).join('')}`;
-  $('#m').querySelectorAll('[data-fk]').forEach(i=>i.onchange=async e=>{const f=e.target.files[0];if(!f)return;toast('Subiendo foto…');
-    try{const url=await subirFoto(f,'sitio');const {error}=await sb.from('sitio_fotos').upsert({clave:i.dataset.fk,url});if(error)throw error;toast('Foto cambiada. Ya se ve en la tienda.');drawFotos()}catch(er){toast('No se pudo subir la foto')}});
+  $('#m').querySelectorAll('[data-fk]').forEach(i=>i.onchange=async e=>{const f=e.target.files[0];if(!f)return;
+    const card=i.closest('.fslot'),img=card.querySelector('img'),st=card.querySelector('.hint'),orig=img.src;
+    img.src=URL.createObjectURL(f);st.textContent='Subiendo…';st.style.color='';card.classList.add('upl');
+    try{const url=await subirFoto(f,'sitio');const {error}=await sb.from('sitio_fotos').upsert({clave:i.dataset.fk,url});if(error)throw new Error(error.message);
+      img.src=url;st.textContent='✓ Guardada y publicada en la tienda';st.style.color='var(--ok)';card.classList.remove('upl');card.classList.add('chg');toast('Foto cambiada. Ya se ve en la tienda.');
+      if(!card.querySelector('[data-fr]')){card.querySelector('.fsb').insertAdjacentHTML('beforeend',`<button class="lnk" data-fr="${esc(i.dataset.fk)}">Volver a la original</button>`);card.querySelector('[data-fr]').onclick=async()=>{await sb.from('sitio_fotos').delete().eq('clave',i.dataset.fk);toast('Volvió la foto original');drawFotos()}}}
+    catch(er){img.src=orig;card.classList.remove('upl');st.textContent='No se pudo: '+(er.message||er);st.style.color='var(--bad)';toast('No se pudo subir: '+(er.message||er))}
+    e.target.value=''});
   $('#m').querySelectorAll('[data-fr]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('sitio_fotos').delete().eq('clave',b.dataset.fr);toast(error?'No se pudo':'Volvió la foto original');drawFotos()});
 }
 

@@ -121,7 +121,7 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .cs a{position:relative;flex:0 0 calc(50% - 7px);aspect-ratio:2.15;overflow:hidden;scroll-snap-align:start;background:var(--box);display:grid;place-items:center}
 .cs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
 .cs a:hover img{transform:scale(1.03)}
-.cs a.w img{object-fit:contain;padding:1% 0 10%;transform:scale(1.12);mix-blend-mode:multiply}.cs a.w:hover img{transform:scale(1.16)}
+.cs a.w img{object-fit:contain;padding:1% 0 10%;transform:scale(.8);mix-blend-mode:multiply}.cs a.w:hover img{transform:scale(.83)}
 .cs a:not(.w)::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.16)}
 .cs b{position:relative;z-index:1;color:#fff;font-size:26px!important;font-weight:400!important;letter-spacing:.04em!important}
 .cs a.w b{color:var(--ink);align-self:end;padding-bottom:16px;font-size:22px!important}
@@ -443,7 +443,7 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 .rv-b{height:10px;background:rgba(255,255,255,.16);overflow:hidden}.rv-b i{display:block;height:100%;width:0;background:#D07A89}
 .rv-nac{display:block;width:min(420px,calc(100% - 2*var(--g)));color:#fff}.rv-nac h2{color:#fff!important;font-size:clamp(30px,3vw,44px)!important;margin:8px 0 10px!important}.rv-nac p{font-size:13px!important;text-transform:none!important;letter-spacing:0!important;line-height:1.5;margin:0 0 14px;color:rgba(255,255,255,.85)}.rv-nac .rv-go{font-size:11px;letter-spacing:.12em;font-weight:500;border-bottom:1px solid #fff;padding-bottom:3px}
 .rv2 .rv-i img{object-position:50% 88%}
-.rv1{border-top:14px solid var(--bg)}
+body.home #app>.full:first-child{border-bottom:12px solid var(--bg)}
 .rv .pvs{position:absolute;top:0;left:0;right:0;z-index:2;background:rgba(20,20,20,.8);color:#fff;padding:24px 0 0;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}.rv .pvs-t{color:#fff}.rv .pvs-t b{color:#D07A89}.rv .pvs-b{background:rgba(255,255,255,.14)}.rv .pvs-b i{background:#B5495B}
 .rv+.sec{position:relative;background:var(--bg)}
 @media (max-width:720px){.rv-t{bottom:20px;padding:14px 16px 16px}.rv-t h2{font-size:40px!important}}
