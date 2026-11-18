@@ -101,7 +101,7 @@ const ars=n=>n==null?'—':'$'+Math.round(n).toLocaleString('es-AR');
 const pre=l=>l?Math.ceil(l*(1-PRE)/1000)*1000:null;
 const src=n=>!n?'':/^https?:/.test(n)?n:'img/'+n+'.jpg';
 function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2600)}
-let CUENTAS='mayorista', PEDF='publico';
+let CUENTAS='mayorista', PEDF='publico', PRODF='';
 let tab='inicio', prods=[], orders=[], user=null, q='';
 
 /* ---------- ingreso ---------- */
@@ -152,7 +152,7 @@ function shell(){
   draw();
 }
 async function draw(){
-  drawNav();PEDF=tab==='ppedidos'?'profesional':'publico';if(tab==='ppedidos'){await loadOrders();drawOrders();return}if(tab==='pprecios'){await drawProfPrecios();return}if(tab==='pcuentas'){CUENTAS='profesional';await drawPro();return}if(tab==='pro')CUENTAS='mayorista';
+  drawNav();PRODF=tab==='nacionales'?'nacional':'';if(tab==='nacionales'){await loadProds();drawProds();return}PEDF=tab==='ppedidos'?'profesional':'publico';if(tab==='ppedidos'){await loadOrders();drawOrders();return}if(tab==='pprecios'){await drawProfPrecios();return}if(tab==='pcuentas'){CUENTAS='profesional';await drawPro();return}if(tab==='pro')CUENTAS='mayorista';
   if(tab==='inicio'){await drawInicio();await drawSubs()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
 }
 
@@ -178,11 +178,11 @@ const thS=(tab,k,t,c='')=>`<th class="s ${c}" data-st2="${tab}|${k}">${t}${SORT[
 function bindSort(redraw){$('#m').querySelectorAll('[data-st2]').forEach(h=>h.onclick=()=>{const[tab,k]=h.dataset.st2.split('|');const s=SORT[tab];SORT[tab]={k,d:s&&s.k===k?-s.d:1};redraw()})}
 
 function drawProds(){
-  let list=prods.filter(p=>!q||(p.tipo+' '+p.nombre+' '+p.id+' '+p.linea+' '+p.categoria).toLowerCase().includes(q.toLowerCase()));
+  let list=prods.filter(p=>(PRODF==='nacional')===(p.linea==='Nacional')).filter(p=>!q||(p.tipo+' '+p.nombre+' '+p.id+' '+p.linea+' '+p.categoria).toLowerCase().includes(q.toLowerCase()));
   list=sortBy('prods',list,(p,k)=>({nombre:p.tipo+' '+p.nombre,cat:p.linea+' '+p.categoria,lista:p.precio_lista,pre:preP(p),pct:pctP(p),cupo:p.unidades,vend:p.vendidas,pub:p.activo?0:1,disp:p.disponibilidad||''}[k]));
   const vend=prods.reduce((a,p)=>a+(p.vendidas||0),0), cupo=prods.filter(p=>p.activo).reduce((a,p)=>a+(p.unidades||0),0);
   $('#m').innerHTML=`<div class="stats"><div class="card"><b>${prods.filter(p=>p.activo).length}</b><span>productos publicados</span></div><div class="card"><b>${vend} / ${cupo}</b><span>unidades vendidas en preventa</span></div></div>
-  <div class="bar"><input id="q" placeholder="Buscar…" value="${esc(q)}"><span class="sp"></span><button class="btn dk" id="nw">+ Nuevo producto</button></div>
+  <div class="bar"><input id="q" placeholder="Buscar…" value="${esc(q)}"><span class="sp"></span>${PRODF==="nacional"?`<span class="hint">Productos de fabricación nacional: se ven en la página Productos nacionales. Marcá su disponibilidad (en stock, a pedido, sin stock).</span>`:""}<button class="btn dk" id="nw">${PRODF==="nacional"?"+ Nuevo producto nacional":"+ Nuevo producto"}</button></div>
   <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('prods','nombre','Producto')}${thS('prods','cat','Línea · Categoría','hide-m')}${thS('prods','lista','Precio de lista','n')}${thS('prods','pre','Preventa','n hide-m')}${thS('prods','pct','% preventa','n hide-m')}<th>Colores</th>${thS('prods','cupo','Cupo','n')}${thS('prods','vend','Vendidas','n')}${thS('prods','disp','Disponibilidad')}${thS('prods','pub','Publicado')}<th></th></tr></thead><tbody>
   ${list.map(p=>`<tr class="${p.activo?'':'off'}" data-id="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td>
    <td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.linea)} · ${esc(p.categoria)}</td>
@@ -217,7 +217,7 @@ const pctP=p=>p.precio_lista&&preP(p)?Math.round((1-preP(p)/p.precio_lista)*100)
 const money=v=>v==null||v===''||isNaN(+v)?'':'$'+(+v).toLocaleString('es-AR');
 function colorRow(c=['','#cccccc']){return `<div class="cl"><input placeholder="Nombre del color" value="${esc(c[0])}"><input type="color" value="${esc(c[1])}"><button type="button" class="lnk" data-rm>Quitar</button></div>`}
 function editProd(p){
-  const isNew=!p; p=p||{id:'',img:'',img2:'',tipo:'',nombre:'',linea:'Acero',categoria:'Sillas',bajada:'',material:'',terminacion:'',ancho:'',prof:'',alto:'',redonda:false,precio_lista:'',unidades:10,vendidas:0,armado:false,colores:[],destacado:false,activo:false,orden:(prods.at(-1)?.orden||0)+1};
+  const isNew=!p; p=p||{id:'',img:'',img2:'',tipo:'',nombre:'',linea:PRODF==='nacional'?'Nacional':'Acero',categoria:'Sillas',bajada:'',material:'',terminacion:'',ancho:'',prof:'',alto:'',redonda:false,precio_lista:'',unidades:10,vendidas:0,armado:false,colores:[],destacado:false,activo:false,orden:(prods.at(-1)?.orden||0)+1};
   const lineas=[...new Set(['Acero','Fresno','Laca','Nacional',...prods.map(x=>x.linea)])], cats=[...new Set(['Sillas','Butacas','Mesas','Mesas bajas','Bancos',...prods.map(x=>x.categoria)])];
   const d=document.createElement('dialog');
   d.innerHTML=`<form method="dialog" id="pf"><div class="dh"><h2>${isNew?'Nuevo producto':esc(p.tipo+' '+p.nombre)}</h2><button type="button" class="btn" data-x>Cerrar</button></div><div class="db">
@@ -393,7 +393,7 @@ async function drawProfPrecios(){
 }
 /* ---------- menú del panel por secciones ---------- */
 const GRUPOS=[['inicio','Inicio',[['inicio','Resumen']]],
- ['b2c','Tienda',[['productos','Productos'],['pedidos','Pedidos y arrepentimientos']]],
+ ['b2c','Tienda',[['productos','Productos'],['nacionales','Productos nacionales'],['pedidos','Pedidos y arrepentimientos']]],
  ['prof','Profesionales',[['pprecios','Precios y mínimos'],['pcuentas','Cuentas'],['ppedidos','Pedidos']]],
  ['may','Mayoristas',[['pro','Cuentas, contenedor y catálogo']]],
  ['cont','Contenido',[['frm','FRM Studio'],['fotos','Fotos de la página']]],

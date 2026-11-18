@@ -118,7 +118,7 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .cs{position:relative;padding:14px 0;background:var(--bg)}
 .cs .tr{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-behavior:smooth}
 .cs .tr::-webkit-scrollbar{display:none}
-.cs a{position:relative;flex:0 0 calc(50% - 7px);aspect-ratio:1.93;overflow:hidden;scroll-snap-align:start;background:var(--box);display:grid;place-items:center}
+.cs a{position:relative;flex:0 0 calc(50% - 7px);aspect-ratio:2.6;overflow:hidden;scroll-snap-align:start;background:var(--box);display:grid;place-items:center}
 .cs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
 .cs a:hover img{transform:scale(1.03)}
 .cs a.w img{object-fit:contain;padding:5% 0 15%;mix-blend-mode:multiply}
@@ -134,6 +134,7 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 
 .sec{padding:72px var(--g) 24px}
 .sec h3{font:400 13px/1 var(--f);margin-bottom:20px;display:flex;justify-content:space-between}
+.sec.ctr h3{justify-content:center;position:relative}.sec.ctr h3 a{position:absolute;right:0}
 .sec h3 a{color:var(--soft)}
 
 /* TIENDA estilo grilla limpia */
@@ -440,13 +441,14 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 .rv-t h2 .rv-n{font:inherit!important;letter-spacing:inherit!important;color:inherit!important;text-transform:none!important}
 .rv-b{height:10px;background:rgba(255,255,255,.16);overflow:hidden}.rv-b i{display:block;height:100%;width:0;background:#D07A89}
 .rv-nac{display:block;width:min(420px,calc(100% - 2*var(--g)));color:#fff}.rv-nac h2{color:#fff!important;font-size:clamp(30px,3vw,44px)!important;margin:8px 0 10px!important}.rv-nac p{font-size:13px!important;text-transform:none!important;letter-spacing:0!important;line-height:1.5;margin:0 0 14px;color:rgba(255,255,255,.85)}.rv-nac .rv-go{font-size:11px;letter-spacing:.12em;font-weight:500;border-bottom:1px solid #fff;padding-bottom:3px}
-.rv2 .rv-i img{object-position:50% 50%}
+.rv2 .rv-i img{object-position:50% 88%}
+.rv .pvs{position:absolute;top:0;left:0;right:0;z-index:2;background:rgba(20,20,20,.8);color:#fff;padding:24px 0 0;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}.rv .pvs-t{color:#fff}.rv .pvs-t b{color:#D07A89}.rv .pvs-b{background:rgba(255,255,255,.14)}.rv .pvs-b i{background:#B5495B}
 .rv+.sec{position:relative;background:var(--bg)}
 @media (max-width:720px){.rv-t{bottom:20px;padding:14px 16px 16px}.rv-t h2{font-size:40px!important}}
 </style>
 
 <header>
-  <nav><button class="mbtn" id="menuBtn" aria-expanded="false" aria-controls="mn"><i></i>Menú</button><a class="hide-m" href="#tienda/Sillas" data-r="Sillas">Sillas</a><a class="hide-m" href="#tienda/Butacas" data-r="Butacas">Sillones</a><a class="hide-m" href="#tienda/Mesas" data-r="Mesas">Mesas</a><a class="hide-m" href="#tienda/Mesas bajas" data-r="Mesas bajas">Mesas bajas</a><a class="hide-m" href="#tienda/Bancos" data-r="Bancos">Bancos</a><a class="hide-m" href="#tienda" data-r="tienda">Ver todo</a></nav>
+  <nav><button class="mbtn" id="menuBtn" aria-expanded="false" aria-controls="mn"><i></i>Menú</button><a class="hide-m" href="#tienda/Sillas" data-r="Sillas">Sillas</a><a class="hide-m" href="#tienda/Butacas" data-r="Butacas">Sillones</a><a class="hide-m" href="#tienda/Mesas" data-r="Mesas">Mesas</a><a class="hide-m" href="#tienda/Mesas bajas" data-r="Mesas bajas">Mesas bajas</a><a class="hide-m" href="#tienda/Bancos" data-r="Bancos">Bancos</a><a class="hide-m" href="#tienda" data-r="tienda">Ver todo</a><a class="hide-m" href="#nacional" data-r="nacional">Nacional</a></nav>
   <a class="mark" href="#inicio" aria-label="FORMA Concept, inicio"><span class="fcl"><b>forma</b></span></a>
   <nav class="r"><a class="hide-m" href="#frm" data-r="frm">FRM Studio</a><a class="hide-m" href="#proyectos" data-r="proyectos">Profesionales</a><a class="prolink" href="#pro-catalogo">Catálogo PRO</a><button class="ico" id="adminBtn" aria-label="Ingreso administrador"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></button><button class="ico" id="cartBtn" aria-label="Abrir carrito"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><i id="cartN">0</i></button></nav>
 </header>
@@ -574,10 +576,9 @@ document.addEventListener('submit',e=>{if(e.target.id==='ckForm'){e.preventDefau
 function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
   return `${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda')}
-  <section class="pvs" aria-label="Preventa exclusiva con descuentos de hasta 45%"><div class="pvs-t"><span>Preventa exclusiva con descuentos de hasta</span><b><b class="rv-n" data-to="45">0</b>%</b></div><div class="pvs-b"><i></i></div></section>
-  <section class="rv"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo<br>en tu casa</h2><b class="rv-go">Abrir la cámara →</b></a></section>
+  <section class="rv"><div class="pvs" aria-label="Preventa exclusiva con descuentos de hasta 45%"><div class="pvs-t"><span>Preventa exclusiva con descuentos de hasta</span><b><b class="rv-n" data-to="45">0</b>%</b></div><div class="pvs-b"><i></i></div></div><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo<br>en tu casa</h2><b class="rv-go">Abrir la cámara →</b></a></section>
   ${cats()}
-  <section class="sec"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
+  <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${proTile()}</div>
   <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
@@ -1171,6 +1172,8 @@ setTimeout(()=>{try{if(localStorage.getItem('fc_nl')||localStorage.getItem('fc_n
   const d=document.createElement('div');d.id='nlp';d.className='nlp';d.setAttribute('role','dialog');d.setAttribute('aria-label','Suscribite');
   d.innerHTML='<button class="nlp-x" aria-label="Cerrar">×</button><b>¿Te avisamos de la próxima preventa?</b><p>Los cupos son limitados. Dejanos tu mail y te escribimos antes que a nadie.</p><form id="nlpF"><input type="email" id="nlpE" placeholder="Tu email" aria-label="Tu email" required><button type="submit">Avisame</button></form>';
   document.body.appendChild(d);d.querySelector('.nlp-x').onclick=ev=>{ev.stopPropagation();try{localStorage.setItem('fc_nl_x','1')}catch(_){}d.remove()}},40000);
+/* aviso de que la página sigue: a los 2 s baja un poco y vuelve, como un resorte (una vez) */
+setTimeout(()=>{if(scrollY>5||REDUCED||document.body.classList.contains('menu-on')||(location.hash&&location.hash!=='#inicio'))return;scrollTo({top:90,behavior:'smooth'});setTimeout(()=>{if(scrollY<=95)scrollTo({top:0,behavior:'smooth'})},480)},2200);
 save(); render(); loadDB().then(proLoad); frmLoad(); sfLoad(); track('visita');
 (()=>{if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
 const c=document.createElement('div');c.id='cur';document.body.appendChild(c);document.documentElement.classList.add('cur');
