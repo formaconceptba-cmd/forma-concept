@@ -586,6 +586,7 @@ function viewHome(){
   <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${proTile()}</div>
   <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
+  ${(()=>{const N=P.filter(p=>p.fam==='Nacional'&&p.img);return N.length?`<section class="sec ctr"><h3><span>Productos nacionales</span><a href="#nacional">Ver todos</a></h3><div class="grid">${N.slice(0,8).map(card).join('')}</div></section>`:''})()}
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
    <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="${src(FX('estudio_'+(i+1),s[0]))}" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
 }
