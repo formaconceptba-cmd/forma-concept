@@ -898,7 +898,7 @@ function viewProduct(p){
     <form class="cpf" id="cpForm"><span class="lb">Calculá tu envío</span><div><input id="cp" inputmode="numeric" maxlength="4" placeholder="Tu código postal" aria-label="Código postal"><button type="submit">Calcular</button></div><div class="cpr" id="cpRes"></div></form>
     ${p.price?`<div class="qty"><span>Cantidad</span><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">${isProf()?(p.min||1):1}</b><button data-qd="1" aria-label="Uno más">+</button></div>`:''}
     <button class="buy" data-add="${p.id}" ${p.disp==='sin_stock'?'disabled':''}>${p.disp==='sin_stock'?'Sin stock':p.price?'Agregar al carrito':'Consultanos'}</button>
-    <div class="tb"><span>Descripción</span><span>${esc(p.lead)}</span></div>
+    ${p.lead?`<div class="tb"><span>Descripción</span><span>${esc(p.lead)}</span></div>`:""}
     ${p.d.every(x=>x>0)?`<div class="tb"><span>Medidas</span><span>${dims(p)}</span></div>`:''}
     ${p.mat?`<div class="tb"><span>Material</span><span>${esc(p.mat)}</span></div>`:''}
     ${p.fin?`<div class="tb"><span>Terminación</span><span>${esc(p.fin)}</span></div>`:''}
