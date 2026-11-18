@@ -508,13 +508,16 @@ const P=[
  {id:'MES-MAD-208-BAI',img:'102E1.0',t:'Mesa ratona',n:'REFLEJO',fam:'Laca',cat:'Mesas bajas',lead:'Base laqueada mate y tapa de vidrio templado teñido.',mat:'MDF y vidrio templado',fin:'Laqueado mate',d:[100,100,35],round:1,price:1770000,units:12,armado:false,colors:[['Bordó','#6B2630']],feat:1}
 ];
 // list = precio de lista · one = un pago (−15%) · price = preventa (−45% sobre lista, redondeado a $1.000)
-const norm=p=>{p.name=p.t+' '+p.n; p.list=p.price; if(p.price){p.one=p.list*(1-OFF_1P); p.price=p.pre||Math.ceil(p.list*(1-(p.pp??PRE))/1000)*1000} return p};
+const norm=p=>{p.name=p.t+' '+p.n; p.list=p.price; if(p.price){p.one=p.list*(1-OFF_1P); p.price=p.fam==='Nacional'?p.list:(p.pre||Math.ceil(p.list*(1-(p.pp??PRE))/1000)*1000)} return p};
 const off=p=>Math.round((1-p.price/p.list)*100);
 P.forEach(norm);
 /* Base de datos (Supabase): si responde, reemplaza la lista de arriba por la real. Si falla, queda la de arriba. */
 const ENTREGA='Marzo 2027';
-let SF={};const FX=(k,d)=>SF[k]||d;
-async function sfLoad(){try{const r=await fetch(SB_URL+'/rest/v1/sitio_fotos?select=clave,url',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});if(!r.ok)return;const d=await r.json();SF=Object.fromEntries(d.filter(x=>x.url).map(x=>[x.clave,x.url]));if(d.length&&!animating)render()}catch(e){}}
+let SF={},SP={};const FX=(k,d)=>SF[k]||d;
+const FDEF={inicio_portada:'ctx_pause',banda_probalo:'hv_varilla',inicio_acero:'hv_acanalada60',banda_nacional:'nac_1',frm_portada:'std_hero',nacional_1:'nac_1',nacional_2:'nac_2',nacional_3:'nac_3',profesionales_1:'prj_obra-fachada',profesionales_2:'std_14',embalaje:'pack',estudio_1:'std_06',estudio_2:'std_02',estudio_3:'std_11',estudio_4:'std_05',estudio_5:'prj_cocina-acero',estudio_6:'std_hero','cat_Sillas':'MC-282','cat_Sillones':'C537','cat_Mesas':'1021T1.35','cat_Mesas bajas':'102E1.0','cat_Bancos':'WS-035'};
+/* encuadre elegido en el panel: se aplica a la foto donde aparezca */
+function applyPos(){const ks=Object.keys(SP);if(!ks.length)return;const imgs=[...document.querySelectorAll('img')];ks.forEach(k=>{const u=src(FX(k,FDEF[k]||''));imgs.forEach(i=>{if(i.getAttribute('src')===u)i.style.objectPosition=SP[k]})})}
+async function sfLoad(){try{const r=await fetch(SB_URL+'/rest/v1/sitio_fotos?select=clave,url,pos',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});if(!r.ok)return;const d=await r.json();SF=Object.fromEntries(d.filter(x=>x.url).map(x=>[x.clave,x.url]));SP=Object.fromEntries(d.filter(x=>x.pos).map(x=>[x.clave,x.pos]));if(d.length&&!animating)render()}catch(e){}}
 const SB_URL='https://znzbwtewxpcpqtmjbmdw.supabase.co', SB_KEY='sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
 /* Seguimiento propio de visitas (sin cookies de terceros): visita, producto visto, carrito, checkout, compra. */
 const VID=(()=>{try{let v=localStorage.getItem('fc_vid');if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('fc_vid',v)}return v}catch(e){return 'x'}})();
@@ -528,7 +531,7 @@ async function loadDB(){
   try{
     const r=await fetch(SB_URL+'/rest/v1/products?select=*&activo=eq.true&order=orden',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
     if(!r.ok)return; const rows=await r.json(); if(!rows.length)return;
-    const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,disp:x.disponibilidad||'',cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,pp:x.pct_preventa,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores||[],feat:x.destacado?1:0}));
+    const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,disp:x.disponibilidad||'',cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,pp:x.pct_preventa,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores&&x.colores.length?x.colores:[['Único','#D8D2C8']],noColor:!(x.colores&&x.colores.length),feat:x.destacado?1:0}));
     P.splice(0,P.length,...list);
     if(!animating)render();
   }catch(e){console.warn('DB',e)}
@@ -552,8 +555,8 @@ const save=()=>{try{localStorage.setItem('fc_cart_c',JSON.stringify(cart))}catch
 
 /* ---------- piezas ---------- */
 function card(p){
-  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.price?`<span class="circ">${false?'PRO':'−'+off(p)+'%'}</span>`:''}<img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="${src(p.img2)}" alt="" loading="lazy">`:''}</div>
-  <div class="n"><span>${esc(title(p))}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></div></a>`;
+  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.fam==="Nacional"&&p.disp?`<span class="disp d-${p.disp}">${DISP[p.disp]||""}</span>`:p.price&&off(p)>0?`<span class="circ">−${off(p)}%</span>`:""}<img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="${src(p.img2)}" alt="" loading="lazy">`:''}</div>
+  <div class="n"><span>${esc(title(p))}</span><span class="pz">${p.price?`${p.list>p.price?`<s>${ars(p.list)}</s>`:""}<b>${ars(p.price)}</b>`:"Consultar"}</span></div></a>`;
 }
 /* toda la foto es un link, no solo el botón */
 function proTile(){const S=P.filter(p=>p.cat==='Butacas'&&p.img);const L=S.length?S:P.filter(p=>p.img).slice(0,4);
@@ -831,7 +834,7 @@ function viewNacional(){
   <section class="nac-h"><div class="nac-im">${['nac_1','nac_2','nac_3'].map((n,i)=>`<img src="${src(FX('nacional_'+(i+1),n))}" alt="" loading="lazy">`).join('')}</div>
    <div class="nac-t"><span class="k">Hecho en Argentina</span><h1>Productos nacionales</h1><p>Piezas únicas fabricadas en Buenos Aires por talleres con los que trabajamos hace años. Algunas están en stock para entrega inmediata y otras se hacen a pedido, en la medida y terminación que elijas.</p></div></section>
   <section class="sec"><h3><span>${L.length?L.length+' piezas':'Piezas'}</span><a href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por productos nacionales a pedido')}" target="_blank" rel="noopener">Consultar a medida</a></h3>
-   ${L.length?`<div class="grid">${L.map(p=>card(p).replace('<div class="ph">',`<div class="ph">${p.disp?`<span class="disp d-${p.disp}">${DISP[p.disp]||''}</span>`:''}`)).join('')}</div>`
+   ${L.length?`<div class="grid">${L.map(card).join('')}</div>`
    :`<p class="nac-empty">Estamos sumando las primeras piezas. Si buscás algo en particular, <a href="https://wa.me/541139443055" target="_blank" rel="noopener">escribinos</a> y lo hacemos a pedido.</p>`}</section></div>`;
 }
 function viewStudio(){
@@ -862,7 +865,7 @@ let selF=new Set();
 function viewShop(f){
   const items=P.filter(p=>(f==='Todos'||p.cat===f)&&(!selF.size||selF.has(p.fam))).sort((a,b)=>(!a.price)-(!b.price));
   const body=view==='grid'?`<div class="grid">${items.map(card).join('')}</div>`
-   :`<div class="list">${items.map(p=>`<a class="row c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph"><img src="${src(p.img)}" alt="" loading="lazy"></div><span>${esc(title(p))}</span><span>Colección ${p.fam}</span><span>${dims(p)}</span><span class="pz">${p.price?`<s>${ars(p.list)}</s><b>${ars(p.price)}</b>`:'Consultar'}</span></a>`).join('')}</div>`;
+   :`<div class="list">${items.map(p=>`<a class="row c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph"><img src="${src(p.img)}" alt="" loading="lazy"></div><span>${esc(title(p))}</span><span>Colección ${p.fam}</span><span>${dims(p)}</span><span class="pz">${p.price?`${p.list>p.price?`<s>${ars(p.list)}</s>`:""}<b>${ars(p.price)}</b>`:"Consultar"}</span></a>`).join('')}</div>`;
   return `<div class="flt"><div><span class="lb2">Colección</span>${FAMS.map(x=>`<button data-fam="${x}" class="${selF.has(x)?'on':''}" aria-pressed="${selF.has(x)}">${x}</button>`).join('')}${selF.size?'<button data-fam="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>
    <div class="vw"><a href="#" data-view="grid" class="${view==='grid'?'on':''}">Grilla</a><a href="#" data-view="list" class="${view==='list'?'on':''}">Lista</a></div></div>${selF.has('Nacional')?'<p class="nac">Colección Nacional: próximamente. Piezas únicas, hechas en Argentina.</p>':''}${items.length||selF.has('Nacional')?body:'<p class="nac">No hay piezas con esa combinación.</p>'}`;
 }
@@ -883,29 +886,29 @@ function viewProduct(p){
    <div class="info">
     <a class="back" href="#tienda" data-back>← Atrás</a>
     <h1>${esc(title(p))}</h1>
-    ${p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>
-     <div class="price">${ars(p.price)} <span class="tag">${isProf()?'Precio profesional −'+off(p)+'%':'Preventa −'+off(p)+'%'}</span></div>
-     <ul class="pay"><li><b>${isProf()?"Precio profesional":"Precio de preventa"} · un solo pago</b><span>${ars(p.price)}</span></li>
-      <li><b>Entrega estimada</b><span>${ENTREGA}</span></li>
+    ${p.price?`${p.list>p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>`:""}
+     <div class="price">${ars(p.price)} <span class="tag">${p.fam==='Nacional'?(DISP[p.disp]||'Fabricación nacional'):isProf()?'Precio profesional −'+off(p)+'%':'Preventa −'+off(p)+'%'}</span></div>
+     <ul class="pay"><li><b>${p.fam==='Nacional'?'Precio':isProf()?'Precio profesional':'Precio de preventa'} · un solo pago</b><span>${ars(p.price)}</span></li>
+      <li><b>Entrega</b><span>${p.fam==='Nacional'?({stock:'Inmediata',pedido:'A pedido, a coordinar',sin_stock:'Sin stock por ahora'}[p.disp]||'A coordinar'):'Estimada '+ENTREGA}</span></li>
       ${isProf()&&p.min>1?`<li><b>Compra mínima profesional</b><span>${p.min} unidades</span></li>`:""}
       <li><b>Tarjeta, débito, dinero en cuenta o efectivo</b><span>Mercado Pago</span></li></ul>`:'<div class="cuo">Precio a confirmar</div>'}
-    <div class="lb">Color</div>
+    ${p.noColor?'':`<div class="lb">Color</div>
     <div class="sw">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i?'':'on'}" style="background:${c[1]}" aria-label="${esc(c[0])}"></button>`).join('')}</div>
-    <div class="swn" id="swn">${esc(p.colors[0][0])}</div>
+    <div class="swn" id="swn">${esc(p.colors[0][0])}</div>`}
     <form class="cpf" id="cpForm"><span class="lb">Calculá tu envío</span><div><input id="cp" inputmode="numeric" maxlength="4" placeholder="Tu código postal" aria-label="Código postal"><button type="submit">Calcular</button></div><div class="cpr" id="cpRes"></div></form>
     ${p.price?`<div class="qty"><span>Cantidad</span><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">${isProf()?(p.min||1):1}</b><button data-qd="1" aria-label="Uno más">+</button></div>`:''}
-    <button class="buy" data-add="${p.id}">${p.price?'Agregar al carrito':'Consultanos'}</button>
+    <button class="buy" data-add="${p.id}" ${p.disp==='sin_stock'?'disabled':''}>${p.disp==='sin_stock'?'Sin stock':p.price?'Agregar al carrito':'Consultanos'}</button>
     <div class="tb"><span>Descripción</span><span>${esc(p.lead)}</span></div>
-    <div class="tb"><span>Medidas</span><span>${dims(p)}</span></div>
-    <div class="tb"><span>Material</span><span>${esc(p.mat)}</span></div>
-    <div class="tb"><span>Terminación</span><span>${esc(p.fin)}</span></div>
+    ${p.d.every(x=>x>0)?`<div class="tb"><span>Medidas</span><span>${dims(p)}</span></div>`:''}
+    ${p.mat?`<div class="tb"><span>Material</span><span>${esc(p.mat)}</span></div>`:''}
+    ${p.fin?`<div class="tb"><span>Terminación</span><span>${esc(p.fin)}</span></div>`:''}
     <div class="tb"><span>Colección</span><span>${p.fam}</span></div>
-    <div class="tb"><span>Tiempo de entrega</span><span>Preventa: llega con el próximo contenedor (fecha a confirmar)${p.armado?'. Viene para armar, con manual.':''}</span></div>
+    <div class="tb"><span>Tiempo de entrega</span><span>${p.fam==='Nacional'?({stock:'En stock: entrega inmediata.',pedido:'Se fabrica a pedido. Te confirmamos el plazo al comprar.',sin_stock:'Sin stock por ahora. Escribinos y te avisamos cuando haya.'}[p.disp]||'A coordinar.'):'Preventa: llega en '+ENTREGA.toLowerCase()+'.'}${p.armado?' Viene para armar, con manual.':''}</span></div>
    </div>
    <div class="pics">
     <div class="ph" id="pmain"><img src="${src(p.img)}" alt="${esc(title(p))}"></div>
     ${p.img2?`<div class="ph"><img class="cov" src="${src(p.img2)}" alt="${esc(title(p))} en un ambiente" loading="lazy"></div>`:''}
-    <div class="ph">${drawing(p)}</div>
+    ${p.d.every(x=>x>0)?`<div class="ph">${drawing(p)}</div>`:''}
    </div>
   </div>
   ${more.length?`<section class="more"><h3>También te puede gustar</h3><div class="grid">${more.map(card).join('')}</div></section>`:''}`;
@@ -1002,6 +1005,7 @@ function render(){
   document.body.classList.toggle('home',home);
   app.innerHTML=html;
   if(h==='en-tu-casa')arInit();else if(arStream)arStop();
+  applyPos();
   document.querySelectorAll('header [data-r]').forEach(a=>a.classList.toggle('on',h==='tienda'&&a.dataset.r==='tienda'||h==='tienda/'+a.dataset.r||h===a.dataset.r));
   carI=0; carStart();
   const pdp=$('#pdp'); if(pdp&&!animating) requestAnimationFrame(()=>pdp.classList.remove('pre'));

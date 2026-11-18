@@ -68,6 +68,7 @@ td img{width:72px;height:72px}table.big td img,.cp td img{width:88px;height:88px
 .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}.fg-i{display:grid;gap:4px;font-size:12px}.fg-i img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;background:var(--box)}
 .snav{display:flex;gap:6px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:61px;z-index:4}.snav[hidden]{display:none}.snav button{border:0;background:none;padding:7px 12px;border-radius:999px;cursor:pointer;color:var(--soft);font-size:13px}.snav button.on{background:var(--box);color:var(--ink)}
 .fslot.upl img{opacity:.55}
+.fpk{position:relative;cursor:crosshair}.fpk img{object-fit:contain!important;background:#e4e2dd}.fpk i{position:absolute;width:16px;height:16px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #141414,0 0 0 4px rgba(255,255,255,.35);transform:translate(-50%,-50%);pointer-events:none}.fph{display:block;font-size:11.5px}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}.fslot{padding:10px;display:grid;gap:6px;align-content:start}.fslot img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;background:var(--box)}.fslot.chg{border-color:var(--ok)}.fsb{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.fsb label{margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:#fff;cursor:pointer}
 .colc{min-width:150px}.colc .hint{max-width:180px}
 .cpick{position:fixed;z-index:40;width:340px;max-height:80vh;overflow:auto;padding:14px;display:grid;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
@@ -367,10 +368,17 @@ const SLOTS=[
 async function drawFotos(){
   const {data,error}=await sb.from('sitio_fotos').select('*');if(error){toast('Error al leer las fotos');return}
   const cur=Object.fromEntries((data||[]).map(x=>[x.clave,x.url]));
+  const pos=Object.fromEntries((data||[]).filter(x=>x.pos).map(x=>[x.clave,x.pos]));
   $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Fotos de la página</b><span class="sp"></span><a class="btn" href="/" target="_blank">Ver la tienda ↗</a></div>
   <p class="hint" style="margin-bottom:16px">Acá cambiás las fotos fijas de la tienda (las de productos se cambian en Productos y las de proyectos en FRM Studio). Tocá "Cambiar foto", elegí una imagen y queda publicada al instante. "Volver a la original" deshace el cambio.</p>
-  ${SLOTS.map(([g,L])=>`<h3 style="margin:24px 0 10px">${g}</h3><div class="fgrid">${L.map(([k,l,d])=>`<div class="card fslot ${cur[k]?'chg':''}"><img src="${esc(src(cur[k]||d))}" alt=""><b>${esc(l)}</b><div class="hint">${cur[k]?'Foto cambiada':'Foto original'}</div>
+  ${SLOTS.map(([g,L])=>`<h3 style="margin:24px 0 10px">${g}</h3><div class="fgrid">${L.map(([k,l,d])=>`<div class="card fslot ${cur[k]?'chg':''}"><div class="fpk" data-pk="${esc(k)}" title="Tocá para elegir el centro de la foto"><img src="${esc(src(cur[k]||d))}" alt=""><i style="left:${(pos[k]||'50% 50%').split(' ')[0]};top:${(pos[k]||'50% 50%').split(' ')[1]}"></i></div><span class="hint fph">${pos[k]?'Encuadre propio · '+pos[k]:'Tocá la foto para elegir el centro'}</span><b>${esc(l)}</b><div class="hint">${cur[k]?'Foto cambiada':'Foto original'}</div>
    <div class="fsb"><label class="btn dk">Cambiar foto<input type="file" accept="image/*" data-fk="${esc(k)}" hidden></label>${cur[k]?`<button class="lnk" data-fr="${esc(k)}">Volver a la original</button>`:''}</div></div>`).join('')}</div>`).join('')}`;
+  const geo=(b)=>{const r=b.getBoundingClientRect(),img=b.querySelector('img'),iw=img.naturalWidth||1,ih=img.naturalHeight||1,s=Math.min(r.width/iw,r.height/ih),dw=iw*s,dh=ih*s;return {r,dw,dh,ox:(r.width-dw)/2,oy:(r.height-dh)/2}};
+  const place=(b,p)=>{const g=geo(b),[x,y]=(p||'50% 50%').split(' ').map(v=>parseFloat(v)),m=b.querySelector('i');m.style.left=(g.ox+g.dw*x/100)/g.r.width*100+'%';m.style.top=(g.oy+g.dh*y/100)/g.r.height*100+'%'};
+  $('#m').querySelectorAll('[data-pk]').forEach(b=>{const img=b.querySelector('img');const p0=pos[b.dataset.pk];if(img.complete)place(b,p0);else img.onload=()=>place(b,p0);
+    b.onclick=async e=>{const g=geo(b);let x=(e.clientX-g.r.left-g.ox)/g.dw*100,y=(e.clientY-g.r.top-g.oy)/g.dh*100;x=Math.round(Math.max(0,Math.min(100,x)));y=Math.round(Math.max(0,Math.min(100,y)));
+      const p=x+'% '+y+'%';place(b,p);const h=b.parentElement.querySelector('.fph');h.textContent='Guardando…';
+      const {error}=await sb.from('sitio_fotos').upsert({clave:b.dataset.pk,pos:p});h.textContent=error?'No se pudo guardar: '+error.message:'✓ Encuadre guardado ('+p+'). Ya se ve en la tienda.';h.style.color=error?'var(--bad)':'var(--ok)'}});
   $('#m').querySelectorAll('[data-fk]').forEach(i=>i.onchange=async e=>{const f=e.target.files[0];if(!f)return;
     const card=i.closest('.fslot'),img=card.querySelector('img'),st=card.querySelector('.hint'),orig=img.src;
     img.src=URL.createObjectURL(f);st.textContent='Subiendo…';st.style.color='';card.classList.add('upl');
