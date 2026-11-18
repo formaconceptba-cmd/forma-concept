@@ -121,7 +121,7 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .cs a{position:relative;flex:0 0 calc(50% - 7px);aspect-ratio:2.15;overflow:hidden;scroll-snap-align:start;background:var(--box);display:grid;place-items:center}
 .cs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
 .cs a:hover img{transform:scale(1.03)}
-.cs a.w img{object-fit:contain;padding:3% 0 13%;mix-blend-mode:multiply}
+.cs a.w img{object-fit:contain;padding:1% 0 10%;transform:scale(1.12);mix-blend-mode:multiply}
 .cs a:not(.w)::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.16)}
 .cs b{position:relative;z-index:1;color:#fff;font-size:26px!important;font-weight:400!important;letter-spacing:.04em!important}
 .cs a.w b{color:var(--ink);align-self:end;padding-bottom:16px;font-size:22px!important}
@@ -257,7 +257,7 @@ a.fs-p{display:block;color:inherit}a.fs-p .fim img{transition:transform 1.2s var
 .env-o b{display:block;font-size:12px;font-weight:500}.env-o small{display:block;color:var(--soft);font-size:11.5px;line-height:1.4;text-transform:none;letter-spacing:0;margin-top:3px}.env-o em{font-style:normal;font-size:12px}
 .env-r{display:grid!important;gap:6px;margin-top:6px}.env-r div{display:flex;justify-content:space-between;margin:0!important}.env-t{font-size:14px;border-top:1px solid var(--line);padding-top:8px}
 .env-p{font-size:11.5px;color:var(--soft);text-transform:none;letter-spacing:0;line-height:1.45;margin:4px 0}.env-b{font-size:12px;color:var(--soft);background:none;border:0;cursor:pointer;text-decoration:underline;padding:6px 0}
-.ar{padding:110px var(--g) 80px}.ar-h{max-width:620px;display:grid;gap:10px;margin-bottom:28px}.ar-h .k{font-size:12px;color:var(--soft);letter-spacing:.1em}
+.arp{padding:110px var(--g) 80px}.ar-h{max-width:620px;display:grid;gap:10px;margin-bottom:28px}.ar-h .k{font-size:12px;color:var(--soft);letter-spacing:.1em}
 .ar-h h1{font-size:clamp(32px,4vw,56px)!important;font-weight:400!important;line-height:1!important;text-transform:none!important;letter-spacing:-.01em!important}.ar-h p{font-size:15px!important;line-height:1.55!important;text-transform:none!important;letter-spacing:0!important}
 .ar-g{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
 .ar-st{position:relative;background:var(--box);min-height:60svh;overflow:hidden;touch-action:none;display:grid;place-items:center}.ar-room{display:block;width:100%;height:auto;max-height:78svh;object-fit:contain}
@@ -795,7 +795,7 @@ let AR={id:null,room:null,cam:false,x:50,y:66,s:24,flip:false},arStream=null;
 function arStop(){if(arStream){arStream.getTracks().forEach(t=>t.stop());arStream=null}AR.cam=false}
 function viewAR(){
   const L=P.filter(p=>p.img);if(!AR.id&&L[0])AR.id=L[0].id;const on=AR.cam||AR.room,pr=byId(AR.id);
-  return `<section class="ar"><div class="ar-h"><span class="k">Nuevo</span><h1>Probalo en tu casa</h1><p>Abrí la cámara, apuntá al lugar donde lo querés poner, elegí el producto y movelo con el dedo hasta que quede donde va.</p></div>
+  return `<section class="arp"><div class="ar-h"><span class="k">Nuevo</span><h1>Probalo en tu casa</h1><p>Abrí la cámara, apuntá al lugar donde lo querés poner, elegí el producto y movelo con el dedo hasta que quede donde va.</p></div>
   <div class="ar-g"><div class="ar-st" id="arSt">
     ${AR.cam?`<video id="arV" autoplay playsinline muted></video>`:AR.room?`<img class="ar-room" src="${AR.room}" alt="Tu espacio">`:`<div class="ar-empty"><b>1 · Abrí la cámara</b><span>Te va a pedir permiso para usar la cámara. La imagen no se guarda ni se envía a ningún lado.</span><button class="buy" id="arCam">Abrir la cámara</button><label class="lnk">o subí una foto<input type="file" accept="image/*" id="arIn" hidden></label><button class="lnk" id="arDemo">o probá con una foto de ejemplo</button></div>`}
     ${on?`<img class="ar-p" id="arP" src="${src((pr||{}).img)}" alt="" draggable="false" style="left:${AR.x}%;top:${AR.y}%;width:${AR.s}%;transform:translate(-50%,-50%) scaleX(${AR.flip?-1:1})">
