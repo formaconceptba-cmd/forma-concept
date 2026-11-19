@@ -127,9 +127,10 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .cs a.w b{color:var(--ink);align-self:end;padding-bottom:16px;font-size:15px!important;letter-spacing:.04em}
 .sil{overflow:hidden;padding:44px 0 8px;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
 .sil-t{display:flex;width:max-content;animation:silm 46s linear infinite}
-.sil img{height:120px;width:auto;margin:0 34px;filter:brightness(0);opacity:.42;animation:sild 1.4s var(--ease) both;animation-delay:var(--d)}
+.sil img{height:120px;width:auto;margin:0 34px;filter:brightness(0);opacity:.62;animation:sild 1.4s var(--ease) both;animation-delay:var(--d)}
 @keyframes silm{to{transform:translateX(-50%)}}
-@keyframes sild{0%{clip-path:inset(0 100% 0 0);opacity:0}100%{clip-path:inset(0 0 0 0);opacity:.42}}
+@keyframes sild{0%{clip-path:inset(0 100% 0 0);opacity:0}100%{clip-path:inset(0 0 0 0);opacity:.62}}
+.sil:not(.on) img{animation-play-state:paused}
 @media(max-width:700px){.sil{padding:30px 0 0}.sil img{height:78px;margin:0 20px}}
 @media(prefers-reduced-motion:reduce){.sil-t,.sil img{animation:none}}
 .cs .ar{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:34px;height:56px;background:none;color:#9A988F;display:grid;place-items:center;cursor:pointer;transition:opacity .3s}
@@ -1014,7 +1015,7 @@ function render(){
   document.body.classList.toggle('home',home);
   app.innerHTML=html;
   if(h==='en-tu-casa')arInit();else if(arStream)arStop();
-  applyPos();
+  applyPos();{const s=document.querySelector(".sil");if(s){if(!("IntersectionObserver" in window))s.classList.add("on");else{const o=new IntersectionObserver(e=>{if(e[0].isIntersecting){s.classList.add("on");o.disconnect()}},{threshold:.3});o.observe(s)}}}
   document.querySelectorAll('header [data-r]').forEach(a=>a.classList.toggle('on',h==='tienda'&&a.dataset.r==='tienda'||h==='tienda/'+a.dataset.r||h===a.dataset.r));
   carI=0; carStart();
   const pdp=$('#pdp'); if(pdp&&!animating) requestAnimationFrame(()=>pdp.classList.remove('pre'));
