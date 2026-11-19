@@ -124,7 +124,14 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .cs a.w img{object-fit:contain;padding:1% 0 10%;transform:scale(.8);mix-blend-mode:multiply}.cs a.w:hover img{transform:scale(.83)}
 .cs a:not(.w)::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.16)}
 .cs b{position:relative;z-index:1;color:#fff;font-size:26px!important;font-weight:400!important;letter-spacing:.04em!important}
-.cs a.w b{color:var(--ink);align-self:end;padding-bottom:16px;font-size:22px!important}
+.cs a.w b{color:var(--ink);align-self:end;padding-bottom:16px;font-size:15px!important;letter-spacing:.04em}
+.sil{overflow:hidden;padding:44px 0 8px;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.sil-t{display:flex;width:max-content;animation:silm 46s linear infinite}
+.sil img{height:120px;width:auto;margin:0 34px;filter:brightness(0);opacity:.42;animation:sild 1.4s var(--ease) both;animation-delay:var(--d)}
+@keyframes silm{to{transform:translateX(-50%)}}
+@keyframes sild{0%{clip-path:inset(0 100% 0 0);opacity:0}100%{clip-path:inset(0 0 0 0);opacity:.42}}
+@media(max-width:700px){.sil{padding:30px 0 0}.sil img{height:78px;margin:0 20px}}
+@media(prefers-reduced-motion:reduce){.sil-t,.sil img{animation:none}}
 .cs .ar{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:34px;height:56px;background:none;color:#9A988F;display:grid;place-items:center;cursor:pointer;transition:opacity .3s}
 .cs .nx{right:0}.cs .pv{left:0}
 .cs .ar[disabled]{opacity:0;pointer-events:none}
@@ -583,6 +590,7 @@ function viewHome(){
   return `${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda')}
   <section class="rv rv1"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo<br>en tu casa</h2><b class="rv-go">Abrir la cámara →</b></a></section>
   ${cats()}
+  <section class="sil" aria-hidden="true"><div class="sil-t">${[1,2,3,4,5,6,7,1,2,3,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${(i%7)*.35}s" loading="lazy">`).join("")}</div></section>
   <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${proTile()}</div>
   <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
