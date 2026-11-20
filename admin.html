@@ -77,6 +77,11 @@ td img{width:72px;height:72px}table.big td img,.cp td img{width:88px;height:88px
 .cpn{display:flex;gap:6px}.cpn #cph{width:44px;padding:2px}
 .cm td,.cm th{text-align:center}.cm td:nth-child(2),.cm th:nth-child(2){text-align:left}.cm th i{display:block;width:18px;height:18px;border-radius:50%;margin:0 auto 4px;border:1px solid rgba(0,0,0,.15)}.cm input[type=checkbox]{width:18px;height:18px}
 .pl td{padding:7px 8px}.pl tr.sub td,.pl tr.tot td{border-top:1px solid var(--line)}.pl tr.tot b{font:500 20px "Outfit",sans-serif}.pl tr.top b{font-size:15px}
+.iks{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;margin-bottom:14px}.ik{padding:12px 14px 10px;display:grid;gap:2px}.ik>span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}.ik>b{font:500 26px "Outfit",sans-serif;font-variant-numeric:tabular-nums}.ik small{font-size:11.5px;color:var(--soft)}.ik em{font-style:normal;font-size:12px;margin-right:4px}
+.g3d{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px}.itip{position:absolute;pointer-events:none;background:#141414;color:#fff;font-size:12px;line-height:1.5;padding:7px 10px;border-radius:4px;white-space:nowrap;z-index:5}.ileg{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--soft);margin-top:6px}.ileg i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.i100{display:grid;grid-template-columns:minmax(120px,1.3fr) 1fr 58px;gap:10px;align-items:center;font-size:13px;padding:5px 0}.i100>div{height:8px;background:var(--box);border-radius:4px;overflow:hidden}.i100>div i{display:block;height:100%;background:#9b978e;border-radius:4px}.i100.ok>div i{background:#1baf7a}.i100>b{text-align:right;font-variant-numeric:tabular-nums}.i100.ok{border-top:1px solid var(--line);margin-top:4px;padding-top:9px}
+.ibar{display:grid;grid-template-columns:1fr auto;gap:0 10px;padding:7px 0;border-bottom:1px solid var(--line)}.ibar:last-of-type{border:0}.ibar span{font-size:13.5px}.ibar span i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:7px}.ibar b{font-variant-numeric:tabular-nums}.ibar small{grid-column:1/-1;font-size:11.5px;color:var(--soft)}
+.ifeed{max-height:330px;overflow:auto}.ifeed div{display:grid;grid-template-columns:14px 1fr auto;gap:6px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}.ifeed em{font-style:normal;color:#1baf7a}.ifeed small{color:var(--soft);white-space:nowrap;font-size:11.5px}.iwarn{border-left:3px solid #d68910;margin-bottom:14px;font-size:14px}details>summary{cursor:pointer}
 .kps{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:14px}.kp{padding:12px 14px;display:grid;gap:2px}.kp span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}.kp b{font:500 24px "Outfit",sans-serif;font-variant-numeric:tabular-nums}.kp em{font-style:normal;font-size:12px}.kp small{font-size:11.5px;color:var(--soft)}
 .g2d{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px;margin-bottom:14px}.pad{padding:14px 16px}.pad h4{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
 .chart{width:100%;height:auto;display:block}.chart .br{fill:#6E1F2B}.chart .gl{stroke:var(--line)}.chart .gt{font-size:10px;fill:var(--soft)}
@@ -493,7 +498,7 @@ const delta=(a,b)=>b?`<em class="${a>=b?'pos':'neg'}">${a>=b?'▲':'▼'} ${Math
 function bars(series,fmt){const W=640,H=150,mx=Math.max(1,...series.map(s=>s.v)),bw=W/series.length;
   return `<svg viewBox="0 0 ${W} ${H+22}" class="chart" role="img" aria-label="Gráfico por día">${[0.5,1].map(f=>`<line x1="0" x2="${W}" y1="${H-H*f}" y2="${H-H*f}" class="gl"/><text x="2" y="${H-H*f-3}" class="gt">${fmt(mx*f)}</text>`).join('')}
   ${series.map((s,i)=>`<rect x="${i*bw+bw*.18}" y="${H-s.v/mx*H}" width="${bw*.64}" height="${Math.max(s.v?2:0,s.v/mx*H)}" class="br"><title>${s.l}: ${fmt(s.v)}</title></rect>${series.length<=31&&(i%Math.ceil(series.length/10)===0)?`<text x="${i*bw+bw/2}" y="${H+15}" text-anchor="middle" class="gt">${s.l}</text>`:''}`).join('')}</svg>`}
-async function drawInicio(){
+async function drawInicioViejo(){
   $('#m').innerHTML='<p class="hint">Cargando…</p>';
   const now=Date.now(),from=PER?new Date(now-PER*DIA):new Date(0),prev=PER?new Date(now-2*PER*DIA):null;
   const [{data:o},{data:ev},{data:pp},{data:pr},{data:mm},{data:st}]=await Promise.all([
@@ -724,16 +729,16 @@ async function ventasRent(){
   if(fr.length)await Promise.all(fr);
   const fin=(v)=>{v.iibb=v.venta*T.IIBB;v.chq=v.total*T.CHQ;v.g=v.venta-v.cprod-v.com-v.env-v.iibb-v.chq;v.m=v.venta?v.g/v.venta:null;return v};
   const V=pag.map(o=>{const its=o.order_items||[];return fin({id:'#'+o.id,f:o.created_at,canal:o.canal==='profesional'?'pro':'pub',cli:o.nombre,det:its.map(i=>`${i.cantidad}× ${i.products?i.products.tipo+' '+i.products.nombre:i.product_id} a ${ars(i.precio)}${i.regla?' ('+i.regla+(i.precio_lista_momento?', lista '+ars(i.precio_lista_momento):'')+')':''}`).join(', '),
-    medio:medioTxt(o),total:o.total,venta:o.total/(1+T.IVA),cprod:its.reduce((a,i)=>a+(i.costo_unit||0)*i.cantidad,0),falta:its.some(i=>i.costo_unit==null),
+    medio:medioTxt(o),total:o.total,its:its.map(i=>({id:i.product_id,q:i.cantidad,p:i.precio,c:i.costo_unit,l:i.precio_lista_momento,r:i.regla})),mp:o.medio_pago,cuotas:o.cuotas||1,venta:o.total/(1+T.IVA),cprod:its.reduce((a,i)=>a+(i.costo_unit||0)*i.cantidad,0),falta:its.some(i=>i.costo_unit==null),
     com:o.comision_real!=null?+o.comision_real:o.total*T.COM,comReal:o.comision_real!=null,env:/gratis|express/i.test(o.envio||'')?T.ENV:0,est:EST_TXT[o.estado]})});
   (pp||[]).filter(r=>r.estado!=='cancelado').forEach(r=>{const its=r.items||[];let falta=false;const cprod=its.reduce((a,i)=>{const c=cuR(i.id||i.codigo);if(c==null){falta=true;return a}return a+c*i.q},0);
-    V.push(fin({id:'R'+r.id,f:r.created_at,canal:'may',cli:r.estudio||r.nombre,det:its.map(i=>`${i.q}× ${i.producto}`).join(', '),medio:'Transferencia',total:r.total,venta:r.total/(1+T.IVA),cprod,falta,com:0,env:0,est:r.estado==='confirmado'?'Confirmada':'Reservada, sin confirmar'}))});
+    V.push(fin({id:'R'+r.id,f:r.created_at,canal:'may',its:its.map(i=>({id:i.id||i.codigo,q:i.q,p:i.precio,c:cuR(i.id||i.codigo)})),mp:'transferencia',cuotas:1,cli:r.estudio||r.nombre,det:its.map(i=>`${i.q}× ${i.producto}`).join(', '),medio:'Transferencia',total:r.total,venta:r.total/(1+T.IVA),cprod,falta,com:0,env:0,est:r.estado==='confirmado'?'Confirmada':'Reservada, sin confirmar'}))});
   return V.sort((a,b)=>b.f.localeCompare(a.f));
 }
 /* resultado del período: va en Inicio */
-async function drawResultados(from){
+async function drawResultados(from,VA){
   const w=$('#rentw');if(!w)return;
-  const V=(await ventasRent()).filter(v=>new Date(v.f)>=from),T=TX();
+  const V=(VA||await ventasRent()).filter(v=>new Date(v.f)>=from),T=TX();
   const S=k=>V.reduce((a,v)=>a+v[k],0);
   const dias=PER||(!V.length?30:Math.max(1,Math.ceil((Date.now()-Math.min(Date.now(),...V.map(v=>+new Date(v.f))))/DIA)+1));
   const ads=T.ADS*dias/30,fij=T.FIJ*dias/30,gV=S('g'),antes=gV-ads-fij,gan=Math.max(0,antes)*T.GAN,neto=antes-gan,venta=S('venta');
@@ -773,7 +778,7 @@ async function drawResultados(from){
   <h4 style="margin-top:18px">Venta por venta</h4>
   ${V.length?`<div class="wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Quién</th><th class="hide-m">Productos</th><th>Cómo pagó</th><th class="n">Cobraste</th><th class="n hide-m">Costo productos</th><th class="n hide-m">Comisión + impuestos</th><th class="n">Te quedó</th><th class="n">Margen</th></tr></thead><tbody>
   ${V.map(v=>`<tr><td>${v.id}</td><td>${new Date(v.f).toLocaleDateString('es-AR')}</td><td>${CANAL[v.canal]}<div class="hint">${esc(v.cli||'')} · ${esc(v.est)}</div></td><td class="hide-m hint">${esc(v.det)}</td><td>${esc(v.medio)}</td><td class="n">${ars(v.total)}</td><td class="n hide-m">${ars(v.cprod)}</td><td class="n hide-m">${ars(v.total-v.venta+v.com+v.env+v.iibb+v.chq)}<div class="hint">IVA ${ars(v.total-v.venta)}</div></td><td class="n"><b class="${v.g<0?'neg':''}">${ars(v.g)}</b>${v.falta?'<div class="hint neg">falta el costo de algún producto</div>':''}</td><td class="n">${mc(v.m)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">Todavía no hay ventas cobradas en este período.</p>'}</div>`;
-  const setS=async(k,v,n)=>{ST[k]=v;const {error}=await sb.from('settings').upsert({key:k,value:v,nota:n});toast(error?'No se pudo guardar':'Guardado');drawResultados(from)};
+  const setS=async(k,v,n)=>{ST[k]=v;const {error}=await sb.from('settings').upsert({key:k,value:v,nota:n});toast(error?'No se pudo guardar':'Guardado');tab==='inicio'?drawInicio():drawResultados(from)};
   const num=s=>+String(s).replace(/[^0-9.,]/g,'').replace(',','.')||0;
   [['t_com','comision_mp','Comisión Mercado Pago con IVA',1],['t_iibb','iibb','Ingresos Brutos sobre ventas sin IVA',1],['t_chq','imp_cheque','Impuesto al cheque sobre lo cobrado',1],['t_gan','ganancias','Impuesto a las Ganancias sobre la ganancia',1],
    ['t_env','envio_costo','Costo promedio de un envío que no cobrás aparte (ARS)'],['t_fij','gastos_fijos_mes','Gastos fijos por mes (ARS)'],['t_ads','ads_gasto','Gasto en anuncios últimos 30 días (ARS)']]
@@ -853,6 +858,6 @@ function drawOrders(){
 }
 start();
 </script>
-<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=4"></script>
+<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=4"></script><script src="inicio.js?v=1"></script>
 </body>
 </html>
