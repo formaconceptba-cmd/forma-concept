@@ -14,7 +14,7 @@ function spark(vals,color){if(vals.length<2)return '';const W=120,H=28,mx=Math.m
 /* ventas sin IVA (barras) y ganancia de cada día (línea), con marcas de cambios de precio */
 function chartDias(D){
   const W=760,H=230,L=58,R=10,T=16,B=26,iw=W-L-R,ih=H-T-B,n=D.length,bw=iw/n;
-  const mx=Math.max(1,...D.map(d=>Math.max(d.v,d.g))),mn=Math.min(0,...D.map(d=>d.g)),rg=mx-mn,y=v=>T+(mx-v)/rg*ih,y0=y(0);
+  const mx=Math.max(10000,...D.map(d=>Math.max(d.v,d.g))),mn=Math.min(0,...D.map(d=>d.g)),rg=mx-mn,y=v=>T+(mx-v)/rg*ih,y0=y(0);
   const tk=[mn,0,mx/2,mx].filter((v,i,a)=>a.indexOf(v)===i&&(v===0||Math.abs(v)>rg*0.08));
   const step=Math.max(1,Math.ceil(n/8));
   return `<div class="ich" style="position:relative"><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Ventas y ganancia por día">
@@ -43,7 +43,7 @@ async function drawInicio(silencioso){
   const T=TX(),PB=Object.fromEntries(prods.map(p=>[p.id,p])),PCA=Object.fromEntries((pca||[]).map(x=>[x.id,x])),nom=id=>PB[id]?PB[id].tipo+' '+PB[id].nombre:id;
   const inP=d=>new Date(d)>=from,inPrev=d=>prev&&new Date(d)>=prev&&new Date(d)<from;
   const cur=V.filter(v=>inP(v.f)),old=V.filter(v=>inPrev(v.f));
-  const dias=Math.max(1,largo/DIA),S=(a,k)=>a.reduce((s,v)=>s+v[k],0);
+  const ini0=PER?+from:Math.min(now-DIA,V.reduce((m,v)=>Math.min(m,+new Date(v.f)),now),(ev||[]).reduce((m,x)=>Math.min(m,+new Date(x.created_at)),now)),dias=Math.max(1,(now-ini0)/DIA),S=(a,k)=>a.reduce((s,v)=>s+v[k],0);
   const res=a=>{const venta=S(a,'venta'),g=S(a,'g'),ads=T.ADS*dias/30,fij=T.FIJ*dias/30,antes=g-ads-fij,gan=Math.max(0,antes)*T.GAN;return {total:S(a,'total'),venta,g,ads,fij,antes,gan,neto:antes-gan,n:a.length}};
   const R=res(cur),RP=res(old);
   const E=(ev||[]).filter(x=>inP(x.created_at)),EP=(ev||[]).filter(x=>inPrev(x.created_at));
