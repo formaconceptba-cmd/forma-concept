@@ -24,7 +24,7 @@ const fmtPar=(k,v)=>{const m=PAR_LBL[k];if(!m)return v;return m[3]==='pct'?eP(v,
 
 async function ecoLoad(){
   const [{data:pr},{data:pe},{data:it}]=await Promise.all([sb.from('eco_param').select('*').eq('id',1).maybeSingle(),sb.from('eco_pedidos').select('*').order('created_at'),sb.from('eco_items').select('*').order('orden')]);
-  if(!master.length)await loadMaster();
+  if(!master.length||master[0].moq===undefined)await loadMaster();
   ECO.par=Object.assign({},PAR_DEF,{tc:ST.tc||PAR_DEF.tc},(pr&&pr.par)||{});ECO.par.tc=ST.tc||ECO.par.tc;ECO.ar=(pr&&pr.aranceles)||{};ECO.ped=pe||[];ECO.it=it||[];
 }
 const ecoCat=()=>master.map(x=>({codigo:x.codigo,desc:x.descripcion,subcat:x.subcategoria,prov:x.proveedor,fob:x.fob_usd,cbm:x.cbm,moq:x.moq,foto:x.foto_url,medidas:x.medidas,material:x.material}));

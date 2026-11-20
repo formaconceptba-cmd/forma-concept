@@ -195,11 +195,11 @@ function calcular(pedido,cat,parBase,aranceles){
 function alertasPedido(r){
   const p=r.p,A=[];
   if(r.cbm>0){const c=contenedores(r.cbm,p);const exceso=r.cbm-Math.floor(r.cbm/p.cbmHQ)*p.cbmHQ;
-    if(c.nHQ+c.n40+c.n20>1&&exceso>1e-9&&exceso<=p.cbm20*0.25){const f=c.n20?p.flete20:c.n40?p.flete40:p.fleteHQ;
-      A.push({g:'bad',t:`El volumen se pasó del contenedor por ${exceso.toFixed(2).replace('.',',')} m³ y estás pagando otro contenedor entero (US$ ${Math.round(f+p.terminal+p.transporte+p.descarga).toLocaleString('es-AR')} más). Sacá ${exceso.toFixed(2).replace('.',',')} m³ y entra en uno.`})}}
+    if(c.nHQ+c.n40+c.n20>1&&exceso>1e-9&&exceso<=p.cbm20*0.25){const f=c.n20?p.flete20:c.n40?p.flete40:p.fleteHQ,tA=r.cif>0?r.arancel/r.cif:ARANCEL_DEF;r._desborde=true;
+      A.push({g:'bad',t:`El volumen se pasó del contenedor por ${exceso.toFixed(2).replace('.',',')} m³ y estás pagando otro contenedor entero (unos US$ ${Math.round((f*(1+tA)+p.terminal+p.transporte+p.descarga)*(1+p.imprevistos)).toLocaleString('es-AR')} más). Sacá ${exceso.toFixed(2).replace('.',',')} m³ y entra en uno.`})}}
   const moq=r.items.filter(i=>i.bajoMoq);if(moq.length)A.push({g:'bad',t:`${moq.length} producto${moq.length>1?'s':''} abajo del mínimo del proveedor: ${moq.map(i=>`${i.codigo} (${i.cant} de ${i.moq})`).join(', ')}.`});
   const bad=r.items.filter(i=>i.alerta==='bad');if(bad.length)A.push({g:'bad',t:`${bad.length} producto${bad.length>1?'s':''} con precio abajo del mínimo para no perder: ${bad.map(i=>i.codigo).join(', ')}.`});
-  if(r.capacidad>0&&r.ocupacion<0.85)A.push({g:'warn',t:`El contenedor va al ${Math.round(r.ocupacion*100)}%: hay ${(r.capacidad-r.cbm).toFixed(1).replace('.',',')} m³ libres que ya estás pagando.`});
+  if(!r._desborde&&r.capacidad>0&&r.ocupacion<0.85)A.push({g:'warn',t:`El contenedor va al ${Math.round(r.ocupacion*100)}%: hay ${(r.capacidad-r.cbm).toFixed(1).replace('.',',')} m³ libres que ya estás pagando.`});
   const w=r.items.filter(i=>i.alerta==='warn');if(w.length)A.push({g:'warn',t:`${w.length} producto${w.length>1?'s':''} no llegan al retorno mínimo (${Math.round(p.retornoMinProd*100)}%) o al margen mínimo (${Math.round(p.margenMinProd*100)}%): ${w.map(i=>i.codigo).join(', ')}.`});
   if(!p.pctLiquidado&&!p.pctNoVendido)A.push({g:'warn',t:'Liquidación y no vendido están en cero: es el supuesto más optimista posible (se vende todo a precio lleno).'});
   if(!p.estructuraMes)A.push({g:'warn',t:'Estructura por mes está en cero: el resultado no está pagando tu trabajo.'});
