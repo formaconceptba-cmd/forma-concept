@@ -44,11 +44,13 @@ export default async function handler(req, res) {
     // Todos los precios salen de una sola función de la base (reglas de precio), nunca del navegador.
     const PC = Object.fromEntries((await (await sb('rpc/precios_calc', { method: 'POST', body: '{}' })).json()).map(x => [x.id, x]));
     const transf = body.medio === 'transferencia';
+    // Stock: sale de los contenedores (y descuenta lo reservado por pedidos sin pagar y reservas mayoristas).
+    const STK = Object.fromEntries((await (await sb('rpc/stock_calc', { method: 'POST', body: '{}' })).json()).map(x => [x.id, x]));
     const items = [];
     for (const l of lines) {
       const p = prods[l.id];
       if (!p || !p.activo || !p.precio_lista || p.disponibilidad === 'sin_stock') return res.status(400).json({ error: 'Un producto ya no está disponible.' });
-      const libre = (p.unidades || 0) - (p.vendidas || 0) - lines.filter(x => x.id === l.id && x !== l).reduce((a, x) => a + x.q, 0);
+      const libre = (STK[l.id] ? STK[l.id].disponible : (p.unidades || 0) - (p.vendidas || 0)) - lines.filter(x => x.id === l.id && x !== l).reduce((a, x) => a + x.q, 0);
       if (l.q > libre) return res.status(409).json({ error: `No queda stock suficiente de ${p.tipo} ${p.nombre}.` });
       if (prof) { const mn = p.min_profesional || minProf || 1; const tot = lines.filter(x => x.id === l.id).reduce((s, x) => s + x.q, 0); if (tot < mn) return res.status(400).json({ error: `La compra mínima profesional de ${p.tipo} ${p.nombre} es de ${mn} unidades.` }); }
       const c = PC[l.id]; if (!c) return res.status(400).json({ error: 'Un producto ya no está disponible.' });

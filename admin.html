@@ -161,11 +161,12 @@ function shell(){
 }
 async function draw(){
   drawNav();PRODF=tab==='nacionales'?'nacional':'';if(tab==='nacionales'){await loadProds();drawProds();return}PEDF=tab==='ppedidos'?'profesional':'publico';if(tab==='ppedidos'){await loadOrders();drawOrders();return}if(tab==='pprecios'){await drawProfPrecios();return}if(tab==='pcuentas'){CUENTAS='profesional';await drawPro();return}if(tab==='pro')CUENTAS='mayorista';
-  if(tab==='inicio'){await drawInicio();await drawSubs()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='ecopar'){await loadMaster();await drawEcoPar()}else if(tab==='rent'){await loadMaster();await drawRent()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
+  if(tab==='inicio'){await drawInicio();await drawSubs()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);try{await ecoLoad()}catch(e){}drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='ecopar'){await loadMaster();await drawEcoPar()}else if(tab==='rent'){await loadMaster();await drawRent()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
 }
 
 /* ---------- productos ---------- */
-async function loadProds(){const {data,error}=await sb.from('products').select('*').order('orden');if(error){toast('Error al leer productos');return}prods=data;const r=await sb.from('product_b2b').select('*');b2b=Object.fromEntries((r.data||[]).map(x=>[x.product_id,x.precio]))}
+let STKA={};
+async function loadProds(){const [{data,error},{data:sk}]=await Promise.all([sb.from('products').select('*').order('orden'),sb.rpc('stock_admin')]);if(error){toast('Error al leer productos');return}prods=data;STKA=Object.fromEntries((sk||[]).map(x=>[x.id,x]));const r=await sb.from('product_b2b').select('*');b2b=Object.fromEntries((r.data||[]).map(x=>[x.product_id,x.precio]))}
 let b2b={};
 /* ---------- cambios pendientes: se editan muchas cosas y se guarda todo junto ---------- */
 const PEND=new Map();
@@ -198,7 +199,7 @@ function drawProds(){
    <td class="n hide-m"><input class="num n money" data-f="precio_preventa" value="${money(preP(p))}" inputmode="numeric" title="Escribí un precio para fijarlo a mano. Borralo para que lo calcule el %"><div class="hint" data-ph>${p.precio_preventa?'fijado a mano':'por %'}</div></td>
    <td class="n hide-m"><input class="num n" style="width:64px" data-pct value="${pctP(p)}" inputmode="numeric"><div class="hint">% off</div></td>
    <td class="colc" data-colp="p|${esc(p.id)}">${swatches(p.colores)}<button class="lnk">Elegir</button></td>
-   <td class="n"><input class="num n" style="width:70px" data-f="unidades" value="${p.unidades??0}" inputmode="numeric"></td>
+   <td class="n">${(()=>{const s=STKA[p.id];if(s&&s.fuente==='contenedor')return `<b class="${s.disponible<=0?'neg':''}" title="Físico ${s.fisico} · en camino ${s.en_camino} · reservado ${s.reservado} · vendido ${s.vendido}">${s.disponible} / ${s.total}</b><div class="hint">de contenedores</div>`;return `<input class="num n" style="width:70px" data-f="unidades" value="${p.unidades??0}" inputmode="numeric"><div class="hint">${p.linea==='Nacional'?'a mano':'a mano · sin contenedor confirmado'}</div>`})()}</td>
    <td class="n"><input class="num n" style="width:70px" data-f="vendidas" value="${p.vendidas??0}" inputmode="numeric"></td>
    <td><select data-f="disponibilidad" style="width:auto">${[["","—"],["stock","En stock"],["pedido","A pedido"],["sin_stock","Sin stock"]].map(([v,t])=>`<option value="${v}" ${(p.disponibilidad||"")===v?"selected":""}>${t}</option>`).join("")}</select></td>
    <td><input type="checkbox" data-f="activo" ${p.activo?'checked':''} style="width:auto"></td>
@@ -581,7 +582,7 @@ function drawMaster(){
   <button class="btn ${MF.view==='tabla'?'dk':''}" data-v="tabla">Tabla</button><button class="btn ${MF.view==='grilla'?'dk':''}" data-v="grilla">Fotos</button></div>
   ${MF.view==='grilla'?`<div class="mgrid">${L.map(m=>`<div class="card"><img src="${esc(m.foto_url||'')}" alt="" loading="lazy"><b>${esc(m.descripcion)}</b><div class="k"><span>${esc(m.codigo)}</span><span>${esc(m.proveedor||'')}</span></div><div class="k"><span>FOB ${usd(m.fob_usd)}</span><span>${m.cbm??'—'} m³</span></div><div class="k"><span>Costo ${usd(costo(m.fob_usd,m.cbm))}</span><span>MOQ ${m.moq??'—'}</span></div><button class="btn" data-oc="${esc(m.codigo)}">+ Orden de compra</button></div>`).join('')}</div>`
   :`<div class="card wrap"><table><thead><tr><th></th>${th('codigo','Producto')}${th('proveedor','Proveedor','hide-m')}${th('subcategoria','Subcategoría','hide-m')}${th('material','Material','hide-m')}${th('medidas','Medidas (mm)','hide-m')}${th('moq','MOQ','n')}${th('fob_usd','FOB','n')}${th('cbm','m³','n')}${th('costo','Costo puesto','n')}<th class="n">Margen pro</th>${th('pro','Precio pro','n')}<th></th></tr></thead><tbody>
-  ${L.map(m=>`<tr><td><img src="${esc(m.foto_url||'')}" alt="" loading="lazy"></td><td><b>${esc(m.descripcion)}</b> ${inShop.has(m.codigo)?'<span class="tag">en tienda</span>':''}<div class="hint">${esc(m.codigo)} · ${esc(m.cod_proveedor||'')} · ${esc(m.estado||'')}</div></td>
+  ${L.map(m=>`<tr><td><img src="${esc(m.foto_url||'')}" alt="" loading="lazy"></td><td><b>${esc(m.descripcion)}</b> ${inShop.has(m.codigo)?'<span class="tag">en tienda</span>':''}${(typeof ECO!=='undefined'?ECO.it.filter(i=>i.codigo===m.codigo):[]).map(i=>{const pe=ECO.ped.find(p=>p.id===i.pedido_id);return pe?` <span class="tag" title="${esc(ESTP[pe.estado]||pe.estado)}">${esc(pe.nombre)} · ${i.cant} u.</span>`:''}).join('')}<div class="hint">${esc(m.codigo)} · ${esc(m.cod_proveedor||'')} · ${esc(m.estado||'')}</div></td>
    <td class="hide-m">${esc(m.proveedor)}</td><td class="hide-m">${esc(m.subcategoria)}</td><td class="hide-m">${esc(m.material)}<div class="hint">${esc(m.terminacion||'')}</div></td><td class="hide-m">${esc(m.medidas)}</td>
    <td class="n">${m.moq??'—'}</td><td class="n">${usd(m.fob_usd)}</td><td class="n">${m.cbm??'—'}</td><td class="n">${usd(costo(m.fob_usd,m.cbm))}</td>
    <td class="n"><input class="num n" style="width:70px" data-mk="${esc(m.codigo)}" value="${m.markup!=null?Math.round(m.markup*100):''}" placeholder="${Math.round(ST.markup_pro*100)}" title="% sobre costo. Vacío = general"></td>
@@ -858,6 +859,6 @@ function drawOrders(){
 }
 start();
 </script>
-<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=4"></script><script src="inicio.js?v=4"></script>
+<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=4"></script><script src="inicio.js?v=5"></script>
 </body>
 </html>
