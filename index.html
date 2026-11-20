@@ -41,7 +41,7 @@ body.home:not(.scrolled) .ico i{background:#fff;color:var(--ink)}
 .std .k{font-size:12px;color:var(--soft);display:block;margin-bottom:16px}
 .std h2{font:400 clamp(28px,3.2vw,44px)/1.08 var(--f);letter-spacing:-.01em;margin-bottom:20px}
 .std p{max-width:400px;color:var(--soft);margin-bottom:12px}
-.car{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--box)}
+.car{position:relative;aspect-ratio:3/2;overflow:hidden;background:var(--box);touch-action:pan-y;user-select:none}.car img{-webkit-user-drag:none;pointer-events:none}
 .car img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.03);transition:opacity 1.1s,transform 6s linear}
 .car img.on{opacity:1;transform:scale(1)}
 .dots{position:absolute;left:0;right:0;bottom:16px;display:flex;justify-content:center;gap:4px;z-index:2}
@@ -113,7 +113,7 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .full.w img{object-fit:contain;mix-blend-mode:multiply;padding:10% 8% 24%}
 .full.w::after{display:none}
 .pslide .psl{position:absolute;inset:0}.pslide .psl img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;padding:8% 14% 26%;opacity:0;transition:opacity .9s ease}.pslide .psl img.on{opacity:1}
-.pslide .t{color:var(--ink)}.pslide .ob{color:var(--ink);border-color:var(--ink)}.pslide:hover .ob{background:var(--ink);color:#fff}
+.pslide .t{color:var(--ink)}.pslide .t{padding-bottom:26px;align-items:flex-end}.pslide h2{font-size:clamp(15px,1.3vw,19px)!important;line-height:1.25!important;letter-spacing:.02em!important;max-width:330px}.pslide .psl img{padding:6% 14% 24%!important}.pslide .ob{color:var(--ink);border-color:var(--ink)}.pslide:hover .ob{background:var(--ink);color:#fff}
 /* franja de categorías: dos fotos por pantalla, flecha al costado */
 .cs{position:relative;padding:14px 0;background:var(--bg)}
 .cs .tr{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-behavior:smooth}
@@ -125,13 +125,15 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .cs a:not(.w)::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.16)}
 .cs b{position:relative;z-index:1;color:#fff;font-size:26px!important;font-weight:400!important;letter-spacing:.04em!important}
 .cs a.w b{color:var(--ink);align-self:end;padding-bottom:16px;font-size:15px!important;letter-spacing:.04em}
-.sil{overflow:hidden;padding:44px 0 8px;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-.sil-t{display:flex;width:max-content;animation:silm 46s linear infinite}
-.sil img{height:120px;width:auto;margin:0 34px;filter:brightness(0);opacity:.62;animation:sild 1.4s var(--ease) both;animation-delay:var(--d)}
+.sil{overflow:hidden;padding:14px 0 0;-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.sil-t{display:flex;overflow-x:auto;scrollbar-width:none;cursor:grab;touch-action:pan-x pan-y;user-select:none}.sil-t::-webkit-scrollbar{display:none}.sil-t.dr{cursor:grabbing}
+.sil-s{display:flex;flex:none;min-width:100%;justify-content:space-around}
+.sil img{height:120px;width:auto;flex:none;margin:0 34px;pointer-events:none;filter:brightness(0);opacity:.62;animation:sild 1.4s var(--ease) both;animation-delay:var(--d)}
 @keyframes silm{to{transform:translateX(-50%)}}
 @keyframes sild{0%{clip-path:inset(0 100% 0 0);opacity:0}100%{clip-path:inset(0 0 0 0);opacity:.62}}
-.sil:not(.on) img{animation-play-state:paused}
-@media(max-width:700px){.sil{padding:30px 0 0}.sil img{height:78px;margin:0 20px}}
+.sil:not(.on) img{animation-play-state:paused}.sil .cl img{animation:none}
+.sil+.sec{padding-top:30px}
+@media(max-width:700px){.sil{padding:10px 0 0}.sil+.sec{padding-top:24px}.sil img{height:78px;margin:0 20px}}
 @media(prefers-reduced-motion:reduce){.sil-t,.sil img{animation:none}}
 .cs .ar{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:34px;height:56px;background:none;color:#9A988F;display:grid;place-items:center;cursor:pointer;transition:opacity .3s}
 .cs .nx{right:0}.cs .pv{left:0}
@@ -438,10 +440,10 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 }
 .std .k,.std .k *{font-weight:400!important}.std .k b{font-weight:700!important;font-size:inherit!important;letter-spacing:inherit!important;font-family:inherit!important}
 /* banda que se descubre al bajar (la foto queda quieta y el contenido pasa por encima) */
-.rv{position:relative;height:72svh;min-height:420px;clip-path:inset(0);color:#fff}
+.rv{position:relative;height:72svh;min-height:420px;overflow:hidden;color:#fff}
 .rv2{height:92svh;min-height:560px}
 .rv-ar{display:block;color:#fff}.rv-ar h2{color:#fff!important;font-size:clamp(30px,3vw,44px)!important;margin:8px 0 10px!important}.rv-ar p{font-size:13px!important;text-transform:none!important;letter-spacing:0!important;line-height:1.5;margin:0 0 14px;color:rgba(255,255,255,.85)}.rv-ar .rv-go{font-size:11px;letter-spacing:.12em;font-weight:500;border-bottom:1px solid #fff;padding-bottom:3px}
-.rv-i{position:fixed;inset:0;pointer-events:none}
+.rv-i{position:absolute;left:0;right:0;top:-12%;bottom:-12%;pointer-events:none;will-change:transform}
 .rv-i img{width:100%;height:100%;object-fit:cover;object-position:50% 80%;display:block}
 .rv-i::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.35),rgba(0,0,0,0) 50%)}
 .rv-t{position:absolute;left:var(--g);bottom:32px;width:min(290px,calc(100% - 2*var(--g)));background:rgba(20,20,20,.8);color:#fff;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);padding:16px 18px 18px;text-transform:uppercase;font-family:"Inter Tight",sans-serif}
@@ -588,10 +590,10 @@ document.addEventListener('submit',e=>{if(e.target.id==='ckForm'){e.preventDefau
   $('#cpRes').innerHTML=o?o.map(x=>`<div class="o"><span>${x.t}<small>${x.s}</small></span><span>${x.txt}</span></div>`).join(''):'<div class="nt">Escribí un código postal de 4 números.</div>'});
 function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
-  return `${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda')}
-  <section class="rv rv1"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><a class="rv-t rv-ar" href="#en-tu-casa"><span>Nuevo</span><h2>Probalo<br>en tu casa</h2><b class="rv-go">Abrir la cámara →</b></a></section>
+  return `${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda').replace('loading="lazy"','loading="eager" fetchpriority="high"')}
+  <section class="rv rv1"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><div class="rv-t rv-ar"><span>Próximamente</span><h2>Probalo<br>en tu casa</h2><p>Vas a poder ver los muebles en tu espacio con la cámara del celular.</p></div></section>
   ${cats()}
-  <section class="sil" aria-hidden="true"><div class="sil-t">${[1,2,3,4,5,6,7,1,2,3,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${(i%7)*.35}s" loading="lazy">`).join("")}</div></section>
+  <section class="sil" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,3,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
   <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${proTile()}</div>
   <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
@@ -1015,7 +1017,7 @@ function render(){
   document.body.classList.toggle('home',home);
   app.innerHTML=html;
   if(h==='en-tu-casa')arInit();else if(arStream)arStop();
-  applyPos();{const s=document.querySelector(".sil");if(s){if(!("IntersectionObserver" in window))s.classList.add("on");else{const o=new IntersectionObserver(e=>{if(e[0].isIntersecting){s.classList.add("on");o.disconnect()}},{threshold:.3});o.observe(s)}}}
+  applyPos();rvPar();silInit();{const s=document.querySelector(".sil");if(s){if(!("IntersectionObserver" in window))s.classList.add("on");else{const o=new IntersectionObserver(e=>{if(e[0].isIntersecting){s.classList.add("on");o.disconnect()}},{threshold:.3});o.observe(s)}}}
   document.querySelectorAll('header [data-r]').forEach(a=>a.classList.toggle('on',h==='tienda'&&a.dataset.r==='tienda'||h==='tienda/'+a.dataset.r||h===a.dataset.r));
   carI=0; carStart();
   const pdp=$('#pdp'); if(pdp&&!animating) requestAnimationFrame(()=>pdp.classList.remove('pre'));
@@ -1152,7 +1154,8 @@ function ldWatch(){
   Promise.race([Promise.all(imgs.map(i=>new Promise(r=>{i.addEventListener('load',r,{once:true});i.addEventListener('error',r,{once:true})}))),new Promise(r=>setTimeout(r,6000))]).then(done);
 }
 ldShow();
-addEventListener('load',()=>setTimeout(()=>{ldFirst=false;ldHide();setTimeout(nudge,350)},Math.max(0,1600-performance.now())));
+/* la carga se va recién cuando están los productos, las fotos elegidas en el panel y la foto de portada */
+addEventListener('load',()=>Promise.race([Promise.all([window.pDB,window.pSF]).catch(()=>{}),new Promise(r=>setTimeout(r,3500))]).then(()=>new Promise(r=>requestAnimationFrame(()=>{const h=document.querySelector('#app .full img');if(!h||h.complete)return r();h.addEventListener('load',r,{once:true});h.addEventListener('error',r,{once:true});setTimeout(r,2500)}))).then(()=>setTimeout(()=>{ldFirst=false;ldHide();setTimeout(nudge,350)},Math.max(0,1600-performance.now()))));
 setTimeout(()=>{if(ldFirst){ldFirst=false;ldHide()}},7000);
 function openMenu(){document.body.classList.add('menu-on');$('#menuBtn').setAttribute('aria-expanded','true')}
 function closeMenu(){document.body.classList.remove('menu-on');$('#menuBtn').setAttribute('aria-expanded','false')}
@@ -1160,6 +1163,31 @@ $('#msh').addEventListener('click',closeMenu);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCart();closeMenu()}});
 const onScroll=()=>{document.body.classList.toggle('scrolled',scrollY>20);fsScroll()};
 addEventListener('scroll',onScroll,{passive:true});
+/* cinta de siluetas: avanza sola (15 s por vuelta) y se puede arrastrar con el dedo o el mouse */
+function silInit(){const t=document.getElementById('silT');if(!t||t.dataset.ok)return;t.dataset.ok=1;
+  const s=t.firstElementChild,c=s.cloneNode(true);c.classList.add('cl');t.appendChild(c);
+  let x=0,last=0,hold=0,set=-1,drag=null;const now=()=>performance.now();
+  const stop=()=>{hold=Infinity},go=()=>{hold=now()+1400};
+  t.addEventListener('touchstart',stop,{passive:true});t.addEventListener('touchend',go,{passive:true});t.addEventListener('wheel',go,{passive:true});
+  t.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;drag={x:e.clientX,s:t.scrollLeft};stop();t.classList.add('dr');t.setPointerCapture(e.pointerId)});
+  t.addEventListener('pointermove',e=>{if(drag){const W=s.offsetWidth;let v=drag.s-(e.clientX-drag.x);if(v<0){v+=W;drag.s+=W}if(v>=W){v-=W;drag.s-=W}t.scrollLeft=v}});
+  const up=()=>{if(drag){drag=null;t.classList.remove('dr');go()}};t.addEventListener('pointerup',up);t.addEventListener('pointercancel',up);
+  const loop=ts=>{if(!t.isConnected)return;const dt=last?Math.min(64,ts-last):16;last=ts;const W=s.offsetWidth;
+    if(set>=0&&Math.abs(t.scrollLeft-set)>2&&!drag)go();
+    if(!REDUCED&&!drag&&ts>hold&&t.closest('.sil').classList.contains('on'))x+=W/15000*dt;else x=t.scrollLeft;
+    if(x>=W)x-=W;if(x<1&&ts<=hold&&!drag&&W)x+=W-1;
+    if(Math.abs(t.scrollLeft-x)>.5)t.scrollLeft=x;set=t.scrollLeft;requestAnimationFrame(loop)};
+  requestAnimationFrame(loop)}
+/* fotos de las bandas: se mueven un poco más lento que la página, sin saltos */
+let VH=innerHeight,VW=innerWidth,rvQ=false;
+addEventListener('resize',()=>{if(innerWidth!==VW){VW=innerWidth;VH=innerHeight;rvPar()}});
+function rvPar(){document.querySelectorAll('.rv-i').forEach(el=>{const r=el.parentElement.getBoundingClientRect();if(r.bottom<-50||r.top>VH+50)return;el.style.transform=`translate3d(0,${((r.top+r.height/2-VH/2)*-.09).toFixed(1)}px,0)`})}
+addEventListener('scroll',()=>{if(rvQ)return;rvQ=true;requestAnimationFrame(()=>{rvQ=false;rvPar()})},{passive:true});
+/* fotos de FRM Studio en el inicio: se pasan con el dedo (o arrastrando con el mouse) */
+let carX=null;
+document.addEventListener('pointerdown',e=>{if(e.target.closest('#car')&&!e.target.closest('[data-car]'))carX=e.clientX},true);
+document.addEventListener('pointerup',e=>{if(carX==null)return;const d=e.clientX-carX;carX=null;if(Math.abs(d)>40){carGo(carI+(d<0?1:-1));carStart()}},true);
+document.addEventListener('pointercancel',()=>{carX=null},true);
 function rvCount(){const n=document.querySelector(".rv-n:not([data-done])");if(!n)return;const sec=n.closest(".pvs,.rv"),s=sec.getBoundingClientRect();if(s.top>innerHeight*.85||s.bottom<0)return;n.dataset.done=1;const b=sec.querySelector(".pvs-b i,.rv-b i"),to=+n.dataset.to,t0=performance.now(),d=4500;(function f(t){const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);n.textContent=Math.round(to*e);b.style.width=e*100+"%";if(k<1)requestAnimationFrame(f)})(t0)}
 addEventListener("scroll",rvCount,{passive:true});
 addEventListener('hashchange',()=>{if(!animating){render();scrollTo(0,0)}});
@@ -1190,7 +1218,7 @@ setTimeout(()=>{try{if(localStorage.getItem('fc_nl')||localStorage.getItem('fc_n
   document.body.appendChild(d);d.querySelector('.nlp-x').onclick=ev=>{ev.stopPropagation();try{localStorage.setItem('fc_nl_x','1')}catch(_){}d.remove()}},40000);
 /* aviso de que la página sigue: a los 2 s baja un poco y vuelve, como un resorte (una vez) */
 function nudge(){if(scrollY>5||REDUCED||document.body.classList.contains('menu-on')||(location.hash&&location.hash!=='#inicio'))return;const a=document.getElementById('app');a.classList.add('nudge');setTimeout(()=>a.classList.remove('nudge'),2000)}
-save(); render(); loadDB().then(proLoad); frmLoad(); sfLoad(); track('visita');
+save(); render(); window.pDB=loadDB().then(proLoad); frmLoad(); window.pSF=sfLoad(); track('visita');
 (()=>{if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
 const c=document.createElement('div');c.id='cur';document.body.appendChild(c);document.documentElement.classList.add('cur');
 addEventListener('mousemove',e=>{c.style.transform=`translate(${e.clientX}px,${e.clientY}px)`;c.classList.add('on');
