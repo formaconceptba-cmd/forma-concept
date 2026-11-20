@@ -87,10 +87,10 @@ async function drawInicio(silencioso){
   ${transfPend.length?`<div class="card pad iwarn"><b>${transfPend.length} pedido${transfPend.length>1?'s':''} esperando transferencia</b> · ${transfPend.map(o=>`#${o.id} ${esc(o.nombre||'')} ${ars(o.total)} (${hace(o.created_at)})`).join(' · ')}. Cuando veas la plata, marcalo <b>Pagado</b> en <a href="#pedidos">Pedidos</a>.</div>`:''}
   <div class="iks">
    ${K('Ventas',ars(R.total),`${dl(R.total,RP.total)} ${per}`,spark(D.map(d=>d.t),C_V))}
-   ${K('Te queda limpio',`<span class="${R.neto<0?'neg':''}">${ars(R.neto)}</span>`,`${dl(R.neto,RP.neto)} después de todo`,spark(D.map(d=>d.g),C_G))}
+   ${K('Te queda limpio',`<span class="${R.neto<0?'neg':''}">${R.neto<0?'− '+ars(-R.neto):ars(R.neto)}</span>`,`${dl(R.neto,RP.neto)} después de todo`,spark(D.map(d=>d.g),C_G))}
    ${K('Margen neto',mrg==null?'—':`<span class="${mrg<0.1?'neg':'pos'}">${pct(mrg)}</span>`,'de cada $100 sin IVA')}
    ${K('Pedidos',R.n,`${dl(R.n,RP.n)} ticket ${ars(R.n?R.total/R.n:0)}`,spark(D.map(d=>d.n),C_V))}
-   ${K('Anuncios',ars(R.ads),roas?`ROAS ${roas.toFixed(1).replace('.',',')}× · ${ars(cac)} por venta`:'cargalo abajo en "Tus números"')}
+   ${K('Anuncios',ars(R.ads),roas&&R.n?`ROAS ${roas.toFixed(1).replace('.',',')}× · ${ars(cac)} por venta`:R.ads?'sin ventas todavía para medir el ROAS':'cargá el gasto abajo, en "Tus números"')}
    ${K('Visitantes',vis,`${dl(vis,visP)} conversión ${vis?(R.n/vis*100).toFixed(1).replace('.',','):'0'}%`,spark(D.map(d=>d.u),'#77756F'))}
   </div>
   <div class="g2d" style="align-items:start"><div class="card pad"><h4>Ventas y ganancia por día</h4>${chartDias(D)}</div>
