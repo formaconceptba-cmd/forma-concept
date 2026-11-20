@@ -443,7 +443,7 @@ body *:not(svg):not(svg *){font-family:var(--f)!important;font-size:12px!importa
 .rv{position:relative;height:72svh;min-height:420px;clip-path:inset(0);color:#fff}
 .rv2{height:92svh;min-height:560px}
 .rv-ar{display:block;color:#fff}.rv-ar h2{color:#fff!important;font-size:clamp(30px,3vw,44px)!important;margin:8px 0 10px!important}.rv-ar p{font-size:13px!important;text-transform:none!important;letter-spacing:0!important;line-height:1.5;margin:0 0 14px;color:rgba(255,255,255,.85)}.rv-ar .rv-go{font-size:11px;letter-spacing:.12em;font-weight:500;border-bottom:1px solid #fff;padding-bottom:3px}
-.rv-i{position:fixed;top:0;left:0;right:0;height:100vh;height:100lvh;pointer-events:none}
+.rv-i{position:fixed;inset:0;pointer-events:none}
 .rv-i img{width:100%;height:100%;object-fit:cover;object-position:50% 80%;display:block}
 .rv-i::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.35),rgba(0,0,0,0) 50%)}
 .rv-t{position:absolute;left:var(--g);bottom:32px;width:min(290px,calc(100% - 2*var(--g)));background:rgba(20,20,20,.8);color:#fff;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);padding:16px 18px 18px;text-transform:uppercase;font-family:"Inter Tight",sans-serif}
@@ -593,7 +593,7 @@ function viewHome(){
   return `${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda').replace('loading="lazy"','loading="eager" fetchpriority="high"')}
   <section class="rv rv1"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><div class="rv-t rv-ar"><span>Próximamente</span><h2>Probalo<br>en tu casa</h2><p>Vas a poder ver los muebles en tu espacio con la cámara del celular.</p></div></section>
   ${cats()}
-  <section class="sil" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
+  <section class="sil on" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
   <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${proTile()}</div>
   <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
@@ -1165,17 +1165,17 @@ const onScroll=()=>{document.body.classList.toggle('scrolled',scrollY>20);fsScro
 addEventListener('scroll',onScroll,{passive:true});
 /* cinta de siluetas: avanza sola (15 s por vuelta) y se puede arrastrar con el dedo o el mouse */
 function silInit(){const t=document.getElementById('silT');if(!t||t.dataset.ok)return;t.dataset.ok=1;
-  const s=t.firstElementChild,c=s.cloneNode(true);c.classList.add('cl');t.appendChild(c);
-  let x=0,last=0,hold=0,set=-1,drag=null;const now=()=>performance.now();
+  const s=t.firstElementChild,c=s.cloneNode(true),c0=s.cloneNode(true);c.classList.add('cl');c0.classList.add('cl');t.appendChild(c);t.insertBefore(c0,s);
+  let x=-1,last=0,hold=0,set=-1,drag=null;const now=()=>performance.now();
   const stop=()=>{hold=Infinity},go=()=>{hold=now()+1400};
   t.addEventListener('touchstart',stop,{passive:true});t.addEventListener('touchend',go,{passive:true});t.addEventListener('wheel',go,{passive:true});
   t.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;drag={x:e.clientX,s:t.scrollLeft};stop();t.classList.add('dr');t.setPointerCapture(e.pointerId)});
-  t.addEventListener('pointermove',e=>{if(drag){const W=s.offsetWidth;let v=drag.s-(e.clientX-drag.x);if(v<0){v+=W;drag.s+=W}if(v>=W){v-=W;drag.s-=W}t.scrollLeft=v}});
+  t.addEventListener('pointermove',e=>{if(drag){const W=s.offsetWidth;let v=drag.s-(e.clientX-drag.x);if(v<W*.5){v+=W;drag.s+=W}if(v>=W*1.5){v-=W;drag.s-=W}t.scrollLeft=v}});
   const up=()=>{if(drag){drag=null;t.classList.remove('dr');go()}};t.addEventListener('pointerup',up);t.addEventListener('pointercancel',up);
   const loop=ts=>{if(!t.isConnected)return;const dt=last?Math.min(120,ts-last):16;last=ts;const W=s.offsetWidth;
     if(set>=0&&Math.abs(t.scrollLeft-set)>2&&!drag)go();
     if(!REDUCED&&!drag&&ts>hold&&t.closest('.sil').classList.contains('on'))x+=W/15000*dt;else x=t.scrollLeft;
-    if(x>=W)x-=W;if(x<1&&ts<=hold&&!drag&&W)x+=W-1;
+    if(W){if(x<0)x=W;if(x>=W*1.5)x-=W;if(x<W*.5)x+=W}
     if(Math.abs(t.scrollLeft-x)>.5)t.scrollLeft=x;set=t.scrollLeft;requestAnimationFrame(loop)};
   requestAnimationFrame(loop)}
 /* fotos de las bandas: se mueven un poco más lento que la página, sin saltos */
