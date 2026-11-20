@@ -26,10 +26,14 @@ async function ecoLoad(){
   const [{data:pr},{data:pe},{data:it}]=await Promise.all([sb.from('eco_param').select('*').eq('id',1).maybeSingle(),sb.from('eco_pedidos').select('*').order('created_at'),sb.from('eco_items').select('*').order('orden')]);
   if(!master.length||master[0].moq===undefined)await loadMaster();
   ECO.par=Object.assign({},PAR_DEF,{tc:ST.tc||PAR_DEF.tc},(pr&&pr.par)||{});ECO.par.tc=ST.tc||ECO.par.tc;ECO.ar=(pr&&pr.aranceles)||{};ECO.ped=pe||[];ECO.it=it||[];
+  const [{data:rc},{data:mv}]=await Promise.all([sb.from('eco_recepcion').select('*'),sb.from('eco_movimientos').select('*').order('fecha')]);ECO.rec=rc||[];ECO.mov=mv||[];
 }
 const ecoCat=()=>master.map(x=>({codigo:x.codigo,desc:x.descripcion,subcat:x.subcategoria,prov:x.proveedor,fob:x.fob_usd,cbm:x.cbm,moq:x.moq,foto:x.foto_url,medidas:x.medidas,material:x.material}));
 const ecoPedido=pe=>({par:pe.par||{},items:ECO.it.filter(i=>i.pedido_id===pe.id).map(i=>({codigo:i.codigo,cant:i.cant,precioARS:i.precio_ars,markupManual:i.markup_manual}))});
-const ecoCalc=(pe,extra)=>calcular(Object.assign(ecoPedido(pe),extra?{par:Object.assign({},pe.par||{},extra)}:{}),ecoCat(),ECO.par,ECO.ar);
+/* si el pedido ya pasó a Recibido, se calcula SIEMPRE con la proyección congelada (datos, parámetros y aranceles de ese día) */
+const ecoCalc=(pe,extra)=>{const S=pe.proyeccion;if(S&&S.input)return calcular({items:S.input.items,par:Object.assign({},S.input.par||{},extra||{})},S.cat,S.par,S.ar);return calcular(Object.assign(ecoPedido(pe),extra?{par:Object.assign({},pe.par||{},extra)}:{}),ecoCat(),ECO.par,ECO.ar)};
+function ecoSnapshot(pe){const inp=ecoPedido(pe),cods=new Set(inp.items.map(i=>i.codigo)),cat=ecoCat().filter(c=>cods.has(c.codigo)),r=calcular(inp,cat,ECO.par,ECO.ar);
+  return {fecha:new Date().toISOString(),input:inp,cat,par:{...ECO.par},ar:{...ECO.ar},resultado:{pico:r.pico,teQueda:r.resultado,retorno:r.retorno,rindePorAno:r.anualizado,ciclo:r.ciclo+r.diasAcred,ventaNeta:r.venta,costoFinal:r.costoFinal,costoCobro:r.venta*r.cc.total,unidades:r.unidades},porProducto:r.items.map(i=>({sku:i.codigo,unidades:i.cant,precioUsd:i.precioUsd,margenU:i.margenU,netoU:i.netoU,retorno:i.retorno}))}}
 /* costo puesto en el galpón por unidad (USD), del pedido más reciente que trae ese producto: lo usa Rentabilidad */
 function ecoCostos(){const out={};const ord=[...ECO.ped].sort((a,b)=>(a.estado==='borrador')-(b.estado==='borrador')||b.created_at.localeCompare(a.created_at));
   ord.slice().reverse().forEach(pe=>{const r=ecoCalc(pe);r.items.forEach(i=>{if(i.cant>0&&i.costoU>0)out[i.codigo]=i.costoU})});return out}
@@ -37,6 +41,7 @@ function ecoCostos(){const out={};const ord=[...ECO.ped].sort((a,b)=>(a.estado==
 async function drawEco(){
   $('#m').innerHTML='<p class="hint">Cargando…</p>';
   await ecoLoad();if(!prods.length)await loadProds();
+  if(ECO.sel){try{ECO.V=await ventasRent()}catch(e){ECO.V=null}}
   if(ECO.sel&&!ECO.ped.find(p=>p.id===ECO.sel))ECO.sel=null;
   if(ECO.sel)return drawEcoPedido();
   if(ECO.vista==='comparar')return drawEcoComparar();
@@ -55,27 +60,27 @@ async function drawEco(){
 
 function drawEcoPedido(){
   const pe=ECO.ped.find(p=>p.id===ECO.sel),r=ecoCalc(pe),V=ECO.vista;
-  const T=[['tablero','Tablero'],['productos','Productos'],['precios','Precios'],['costos','Costos'],['caja','Caja']];
-  const body={tablero:ecoTablero,productos:ecoProductos,precios:ecoPrecios,costos:ecoCostosV,caja:ecoCaja}[V]||ecoTablero;
+  const T=[['tablero','Tablero'],['real','Real'],['productos','Productos'],['precios','Precios'],['costos','Costos'],['caja','Caja']];
+  const body={real:ecoRealV,tablero:ecoTablero,productos:ecoProductos,precios:ecoPrecios,costos:ecoCostosV,caja:ecoCaja}[V]||ecoTablero;
   $('#m').innerHTML=`<div class="bar"><button class="btn" id="eback">← Contenedores</button><input id="enom" value="${esc(pe.nombre)}" style="font:500 20px Outfit,sans-serif;border:0;background:none;width:200px"><input id="eprov" value="${esc(pe.proveedor||'')}" placeholder="proveedor" style="width:150px">
    <select id="eest">${Object.entries(ESTP).map(([k,l])=>`<option value="${k}" ${pe.estado===k?'selected':''}>${l}</option>`).join('')}</select><span class="sp"></span><button class="btn" id="edup">Duplicar</button><button class="btn" id="edel">Borrar</button></div>
   <div class="bar" style="gap:6px">${T.map(([k,l])=>`<button class="btn ${V===k?'dk':''}" data-ev="${k}">${l}</button>`).join('')}</div>
   <div id="ebody">${body(pe,r)}</div>`;
   const upd=async(f,v)=>{pe[f]=v;const {error}=await sb.from('eco_pedidos').update({[f]:v}).eq('id',pe.id);toast(error?'No se pudo guardar':'Guardado')};
   $('#eback').onclick=()=>{ECO.sel=null;drawEco()};
-  $('#enom').onchange=e=>upd('nombre',e.target.value.trim()||pe.nombre);$('#eprov').onchange=e=>upd('proveedor',e.target.value.trim());$('#eest').onchange=e=>upd('estado',e.target.value);
+  $('#enom').onchange=e=>upd('nombre',e.target.value.trim()||pe.nombre);$('#eprov').onchange=e=>upd('proveedor',e.target.value.trim());$('#eest').onchange=async e=>{const v=e.target.value;if(['recibido','cerrado'].includes(v)&&!pe.proyeccion){if(!confirm('Al pasar a Recibido se congela la proyección: los supuestos de este pedido quedan fijos para comparar contra lo real. No se puede deshacer. ¿Seguimos?')){e.target.value=pe.estado;return}const s=ecoSnapshot(pe);const {error}=await sb.from('eco_pedidos').update({estado:v,proyeccion:s}).eq('id',pe.id);if(error)return toast('No se pudo guardar');pe.estado=v;pe.proyeccion=s;toast('Proyección congelada');drawEcoPedido();return}upd('estado',v)};
   $('#m').querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>{ECO.vista=b.dataset.ev;drawEcoPedido()});
   $('#edel').onclick=async()=>{if(!confirm(`¿Borrar ${pe.nombre} y todos sus productos? No se puede deshacer.`))return;const {error}=await sb.from('eco_pedidos').delete().eq('id',pe.id);if(error)return toast('No se pudo borrar');ECO.sel=null;drawEco()};
   $('#edup').onclick=async()=>{const {data,error}=await sb.from('eco_pedidos').insert({nombre:pe.nombre+' (copia)',proveedor:pe.proveedor,notas:pe.notas,par:pe.par}).select().single();if(error)return toast('No se pudo duplicar');
     const its=ECO.it.filter(i=>i.pedido_id===pe.id).map(i=>({pedido_id:data.id,codigo:i.codigo,cant:i.cant,precio_ars:i.precio_ars,markup_manual:i.markup_manual,orden:i.orden}));if(its.length)await sb.from('eco_items').insert(its);ECO.sel=data.id;toast('Duplicado');drawEco()};
-  ({productos:bindProductos,precios:bindPrecios,tablero:bindTablero})[V]?.(pe,r);
+  ({productos:bindProductos,precios:bindPrecios,tablero:bindTablero,caja:bindCaja})[V]?.(pe,r);
 }
 
 /* ---- Tablero: 8 bloques ---- */
 const GLBL={merma:'Merma (roturas)',liquidacion:'Liquidación y no vendido',marketing:'Marketing',entrega:'Entrega al cliente',comisionVenta:'Comisión de vendedores',estructura:'Tu sueldo / estructura',web:'Web',prepPedidos:'Preparación de pedidos',seguroDeposito:'Seguro del depósito',cobro:'Costo de cobrar',garantia:'Garantía y devoluciones'};
 const fila=(t,v,extra='',cls='')=>`<tr class="${cls}"><td>${t}</td><td class="n"><b class="${v<-0.5&&cls?'neg':''}">${eU(v)}</b></td>${extra}</tr>`;
 function ecoTablero(pe,r){
-  const p=r.p,A=alertasPedido(r),dV=Math.round(p.meses*30.42),neto=r.items.reduce((a,i)=>a+i.netoT,0);
+  const p=r.p,A=alertasPedido(r).concat(ECO.V?ecoAlertasReales(pe):[]),dV=Math.round(p.meses*30.42),neto=r.items.reduce((a,i)=>a+i.netoT,0);
   const subs={};r.items.forEach(i=>{const s=subs[i.subcat||'Sin subcategoría']||(subs[i.subcat||'Sin subcategoría']={u:0,cbm:0,fob:0,v:0,n:0});s.u+=i.cant;s.cbm+=i.cbmT;s.fob+=i.fobT;s.v+=i.ventaT;s.n+=i.netoT});
   const top=[...r.items].sort((a,b)=>b.netoT-a.netoT).slice(0,5);
   const M=[1,2,3,4,6,8,10,12,18,24].map(m=>({m,x:ecoCalc(pe,{meses:m})}));
@@ -83,7 +88,7 @@ function ecoTablero(pe,r){
   const sup=PAR_META.flatMap(g=>g[1]).filter(x=>x[2]==='SUPUESTO');
   return `<div class="card pad" style="margin-bottom:12px"><h4>1 · La decisión</h4>
    <div class="kps">${[['Plata a poner (pico de caja)',eU(r.pico),'lo máximo que hay que tener puesto'],['Te queda',eU(r.resultado),'neto de todo, después de Ganancias'],['Retorno',eP(r.retorno),'te queda ÷ pico'],['Rinde por año',`<span class="${r.anualizado>=p.objetivo?'pos':'neg'}">${eP(r.anualizado)}</span>`,`objetivo ${eP(p.objetivo,0)} · ${r.anualizado>=p.objetivo?'lo supera':'no llega'}`],['Ciclo',r.ciclo+r.diasAcred+' días',`${r.diaNac} hasta el galpón + ${dV} vendiendo + ${r.diasAcred} cobrando`],['Después del costo de oportunidad',eU(r.resultado-r.costoOport),`la plata quieta al ${eP(p.costoOportunidad,0)} anual costaría ${eU(r.costoOport)}`]].map(([t,v,s])=>`<div class="card kp"><span>${t}</span><b>${v}</b><small>${s}</small></div>`).join('')}</div></div>
-  <div class="card pad" style="margin-bottom:12px"><h4>2 · Qué mirar</h4>${A.length?A.map(a=>`<div style="padding:7px 10px;margin:5px 0;border-left:3px solid ${a.g==='bad'?'#c0392b':'#d68910'};background:${a.g==='bad'?'rgba(192,57,43,.07)':'rgba(214,137,16,.08)'}">${a.g==='bad'?'<b>Grave:</b> ':''}${esc(a.t)}</div>`).join(''):'<p class="hint">Nada para revisar.</p>'}</div>
+  <div class="card pad" style="margin-bottom:12px"><h4>2 · Qué mirar</h4>${A.length?A.map(a=>`<div style="padding:7px 10px;margin:5px 0;border-left:3px solid ${a.g==='bad'?'#c0392b':a.g==='good'?'#1baf7a':'#d68910'};background:${a.g==='bad'?'rgba(192,57,43,.07)':a.g==='good'?'rgba(27,175,122,.08)':'rgba(214,137,16,.08)'}">${a.g==='bad'?'<b>Grave:</b> ':a.g==='good'?'<b>Bien:</b> ':''}${esc(a.t)}</div>`).join(''):'<p class="hint">Nada para revisar.</p>'}</div>
   <div class="g2d" style="align-items:start"><div class="card pad"><h4>3 · De la venta al bolsillo</h4><div class="wrap"><table class="pl"><tbody>
    ${fila('Venta sin IVA',r.venta,'','top')}${fila('− Costo final de la mercadería',-r.costoFinal)}${fila('= Margen bruto',r.margenBruto,`<td class="n hint">${eP(r.margenPctPrecio)}</td>`,'sub')}
    ${fila('− Ingresos Brutos',-r.iibbVenta)}${fila('− Galpón (toda la rotación)',-r.galpon)}${fila('− Recepción en el fulfillment',-r.recepcion)}${fila('− Gastos operativos y de venta',r.gastos)}
@@ -104,15 +109,18 @@ function bindTablero(){}
 
 /* ---- Productos ---- */
 function ecoProductos(pe,r){
-  const cat=ecoCat();
+  const cat=ecoCat();const REC=['recibido','cerrado'].includes(pe.estado);
   return `<div class="bar"><input id="eadd" list="ecatl" placeholder="Buscar en el catálogo por código o nombre y Enter para sumar…" style="flex:1;min-width:240px"><datalist id="ecatl">${cat.map(c=>`<option value="${esc(c.codigo)}">${esc(c.desc||'')} · ${esc(c.subcat||'')}</option>`).join('')}</datalist></div>
-  <div class="card wrap"><table class="big"><thead><tr><th></th><th>Producto</th><th class="n">Cant.</th><th class="n">MOQ</th><th class="n">m³ u.</th><th class="n">m³ total</th><th class="n">% cont.</th><th class="n">FOB u.</th><th class="n">FOB total</th><th class="n">Costo u.</th><th class="n">Costo total</th><th></th></tr></thead><tbody>
+  <div class="card wrap"><table class="big"><thead><tr><th></th><th>Producto</th><th class="n">Cant.</th><th class="n">MOQ</th>${REC?'<th class="n">Recibidas</th><th class="n">Rotas</th>':''}<th class="n">m³ u.</th><th class="n">m³ total</th><th class="n">% cont.</th><th class="n">FOB u.</th><th class="n">FOB total</th><th class="n">Costo u.</th><th class="n">Costo total</th><th></th></tr></thead><tbody>
   ${r.items.map(i=>`<tr><td>${i.foto?`<img src="${esc(src(i.foto))}" alt="">`:''}</td><td><b>${esc(i.codigo)}</b><div class="hint">${esc(i.desc)}${i.subcat?' · '+esc(i.subcat):''}</div></td>
-   <td class="n"><input class="num" style="width:64px" data-cant="${esc(i.codigo)}" value="${i.cant}" inputmode="numeric"></td><td class="n ${i.bajoMoq?'neg':''}">${i.moq||'—'}</td><td class="n">${eN(i.cbmU,3)}</td><td class="n">${eN(i.cbmT)}</td><td class="n">${eP(r.capacidad?i.cbmT/r.capacidad:null)}</td>
+   <td class="n"><input class="num" style="width:64px" data-cant="${esc(i.codigo)}" value="${i.cant}" inputmode="numeric"></td><td class="n ${i.bajoMoq?'neg':''}">${i.moq||'—'}</td>${REC?(()=>{const x=ECO.rec.find(z=>z.pedido_id===pe.id&&z.codigo===i.codigo)||{};return `<td class="n"><input class="num" style="width:56px" data-rcv="${esc(i.codigo)}" value="${x.recibidas??''}" placeholder="${i.cant}" inputmode="numeric"></td><td class="n"><input class="num" style="width:48px" data-rot="${esc(i.codigo)}" value="${x.rotas??''}" placeholder="0" inputmode="numeric"></td>`})():''}<td class="n">${eN(i.cbmU,3)}</td><td class="n">${eN(i.cbmT)}</td><td class="n">${eP(r.capacidad?i.cbmT/r.capacidad:null)}</td>
    <td class="n">${eN(i.fobU)}</td><td class="n">${eU(i.fobT)}</td><td class="n">${eN(i.costoU)}</td><td class="n">${eU(i.costoT)}</td><td><button class="btn" data-del="${esc(i.codigo)}" title="Sacar del pedido">×</button></td></tr>`).join('')}</tbody></table></div>
   <div class="kps" style="margin-top:12px">${[['m³ cargados',eN(r.cbm)],['Capacidad contratada',eN(r.capacidad,0)+' m³'],['Ocupación',eP(r.ocupacion)],['Flete',eU(r.flete)],['Flete por m³',eU(r.cbm?r.flete/r.cbm:null)],['Unidades',r.unidades]].map(([t,v])=>`<div class="card kp"><span>${t}</span><b>${v}</b></div>`).join('')}</div>`;
 }
 function bindProductos(pe){
+  const rcv=async(c,k,v)=>{const x=ECO.rec.find(z=>z.pedido_id===pe.id&&z.codigo===c);const row={pedido_id:pe.id,codigo:c,recibidas:x?x.recibidas:0,rotas:x?x.rotas:0,fecha:x?x.fecha:new Date().toISOString().slice(0,10),[k]:v};const {data,error}=await sb.from('eco_recepcion').upsert(row,{onConflict:'pedido_id,codigo'}).select().single();if(error)return toast('No se pudo guardar');ECO.rec=ECO.rec.filter(z=>z!==x).concat(data);toast('Guardado')};
+  $('#m').querySelectorAll('[data-rcv]').forEach(x=>x.onchange=()=>rcv(x.dataset.rcv,'recibidas',Math.max(0,Math.round(eNum(x.value)||0))));
+  $('#m').querySelectorAll('[data-rot]').forEach(x=>x.onchange=()=>rcv(x.dataset.rot,'rotas',Math.max(0,Math.round(eNum(x.value)||0))));
   const it=c=>ECO.it.find(i=>i.pedido_id===pe.id&&i.codigo===c);
   $('#m').querySelectorAll('[data-cant]').forEach(x=>x.onchange=async()=>{const i=it(x.dataset.cant),v=Math.max(0,Math.round(eNum(x.value)||0));i.cant=v;const {error}=await sb.from('eco_items').update({cant:v}).eq('id',i.id);if(error)toast('No se pudo guardar');drawEcoPedido()});
   $('#m').querySelectorAll('[data-del]').forEach(x=>x.onclick=async()=>{const i=it(x.dataset.del);const {error}=await sb.from('eco_items').delete().eq('id',i.id);if(error)return toast('No se pudo sacar');ECO.it=ECO.it.filter(z=>z!==i);drawEcoPedido()});
@@ -156,13 +164,6 @@ function ecoCostosV(pe,r){
 }
 
 /* ---- Caja ---- */
-function ecoCaja(pe,r){
-  const min=Math.min(...r.flujo.map(f=>f.saldo));
-  return `<p class="hint" style="max-width:760px">Día por día, en qué momento sale y entra la plata. El saldo más negativo (en rojo) es el pico: la plata máxima que tenés que tener puesta. Los gastos de venta van después del cobro porque se pagan a medida que vendés.</p>
-  <div class="card wrap"><table><thead><tr><th class="n">Día</th><th>Concepto</th><th class="n">Monto</th><th class="n">Saldo</th></tr></thead><tbody>
-  ${r.flujo.map(f=>`<tr${f.saldo===min?' style="background:rgba(192,57,43,.1)"':''}><td class="n">${f.dia}</td><td>${esc(f.c)}${f.saldo===min?' <b class="neg">← pico</b>':''}</td><td class="n ${f.m<0?'neg':'pos'}">${eU(f.m)}</td><td class="n"><b class="${f.saldo<0?'neg':''}">${eU(f.saldo)}</b></td></tr>`).join('')}
-  <tr class="tot"><td></td><td>Impuesto a las Ganancias</td><td class="n neg">${eU(-r.impGanancias)}</td><td class="n"><b>${eU(r.resultado)}</b></td></tr></tbody></table></div>`;
-}
 
 /* ---- Comparar ---- */
 function drawEcoComparar(){
@@ -194,4 +195,95 @@ async function ecoPasarTienda(pe){
   if(!confirm(`¿Pasar ${D.length} precio${D.length>1?'s':''} a la tienda? Los clientes van a ver los precios nuevos al instante.`))return;
   let ok=0;for(const {i,p} of D){const v=Math.round(i.precioARS);const {error}=await sb.from('products').update({precio_lista:v,precio_preventa:null}).eq('id',p.id);if(!error){p.precio_lista=v;p.precio_preventa=null;ok++}}
   toast(ok===D.length?'Listo: la tienda ya usa estos precios':`Se pasaron ${ok} de ${D.length}`);drawEcoPedido();
+}
+
+/* ======== Lo real contra lo proyectado ======== */
+/* muestras mínimas: por debajo NO se recalibra nada (se muestra "midiendo n de N") */
+const MIN={dias:30,u:20,ped:15,skuU:5};
+const grupoPago=v=>v.mp==='transferencia'?'transf':v.mp==='credit_card'&&v.cuotas>1?'cuotas':'unPago';
+function ecoReal(pe){
+  const r0=ecoCalc(pe),p0=r0.p,cods=new Set(r0.items.map(i=>i.codigo)),desde=new Date(pe.created_at),now=Date.now(),tc=ST.tc||p0.tc,dt=ST.desc_transf??0.15;
+  const rec=(ECO.rec||[]).filter(x=>x.pedido_id===pe.id),recib=rec.reduce((a,x)=>a+x.recibidas,0),rotas=rec.reduce((a,x)=>a+x.rotas,0);
+  const fRec=pe.proyeccion?new Date(pe.proyeccion.fecha):null,dias=fRec?Math.max(0,(now-fRec)/DIA):null;
+  const L=[],PED=[];(ECO.V||[]).filter(v=>new Date(v.f)>=desde).forEach(v=>{const tot=v.its.reduce((s,i)=>s+(i.p||0)*i.q,0)||1;let any=false;
+    v.its.forEach(i=>{if(!cods.has(i.id))return;any=true;const sh=(i.p||0)*i.q/tot;L.push({f:v.f,sku:i.id,u:i.q,precio:i.p||0,canal:v.canal,pago:grupoPago(v),com:v.com*sh,cobrado:v.total*sh,neta:v.venta*sh,desc:/transferencia/.test(i.r||'')||v.mp==='transferencia'?(i.p||0)*i.q*(1/(1-dt)-1):0})});if(any)PED.push(v)});
+  const u=L.reduce((a,x)=>a+x.u,0),nP=PED.length,cobr=L.reduce((a,x)=>a+x.cobrado,0),neta=L.reduce((a,x)=>a+x.neta,0);
+  const total=recib?recib-rotas:r0.unidades;
+  const C={};const add=(k,label,proj,real,n,N,ok,fmt,mejor)=>C[k]={label,proj,real,n,N,ok,fmt,mejor};
+  /* rotación */
+  const okRot=dias!=null&&dias>=MIN.dias&&u>=MIN.u,vel=dias?u/dias:0;
+  add('meses','Meses para vender',p0.meses,okRot?dias/30.42+((total-u)/vel)/30.42:null,dias==null?0:`${Math.floor(dias)} días · ${u} u.`,`${MIN.dias} días y ${MIN.u} u.`,okRot,x=>eN(x,1),-1);
+  /* mezcla de pago, ponderada por monto */
+  const okMix=nP>=MIN.ped,sh=k=>cobr?L.filter(x=>x.pago===k).reduce((a,x)=>a+x.cobrado,0)/cobr:0;
+  add('mixTransf','Pagan con transferencia',p0.mixTransf,okMix?sh('transf'):null,nP,MIN.ped,okMix,x=>eP(x,0),0);
+  add('mixUnPago','Pagan con tarjeta en 1 pago',p0.mixUnPago,okMix?sh('unPago'):null,nP,MIN.ped,okMix,x=>eP(x,0),0);
+  add('unidPorVenta','Unidades por venta',p0.unidPorVenta,okMix?u/nP:null,nP,MIN.ped,okMix,x=>eN(x,2),1);
+  /* costo de cobrar: comisión real + descuento por transferencia, sobre la venta sin IVA a precio lleno */
+  const dsc=L.reduce((a,x)=>a+x.desc,0),costoCob=neta?((L.reduce((a,x)=>a+x.com,0)+dsc)/(1+p0.iva))/(neta+dsc/(1+p0.iva)):null;
+  add('cobro','Costo de cobrar',r0.cc.total,okMix?costoCob:null,nP,MIN.ped,okMix,x=>eP(x,1),-1);
+  add('merma','Merma (roturas)',p0.merma,recib?rotas/recib:null,recib?`${recib} recibidas`:0,'la recepción',!!recib,x=>eP(x,1),-1);
+  add('entrega','Entrega al cliente',p0.entrega,null,0,'el costo real de cada envío',false,x=>eP(x,1),-1);
+  /* precio efectivo por producto */
+  const SKU={};L.forEach(x=>{const s=SKU[x.sku]||(SKU[x.sku]={u:0,m:0,ult:null});s.u+=x.u;s.m+=x.precio*x.u;if(!s.ult||new Date(x.f)>s.ult)s.ult=new Date(x.f)});
+  /* proyección al cierre: el mismo cálculo con lo medido (sólo lo que pasó la muestra mínima) */
+  const over={};if(okRot)over.meses=C.meses.real;if(okMix){over.mixTransf=C.mixTransf.real;over.mixUnPago=C.mixUnPago.real;over.unidPorVenta=C.unidPorVenta.real}if(recib)over.merma=C.merma.real;
+  const S=pe.proyeccion,inp=S&&S.input?S.input:ecoPedido(pe);
+  const items=inp.items.map(it=>{const s=SKU[it.codigo];return s&&s.u>=MIN.skuU?{...it,precioARS:s.m/s.u}:it});
+  const r1=calcular({items,par:Object.assign({},inp.par||{},over)},S?S.cat:ecoCat(),S?S.par:ECO.par,S?S.ar:ECO.ar);
+  return {r0,r1,C,L,PED,u,nP,dias,fRec,recib,rotas,total,SKU,cobr,neta,tc};
+}
+function ecoAlertasReales(pe){
+  const X=ecoReal(pe),A=[],p=X.r0.p;if(!X.fRec)return A;
+  X.r0.items.forEach(i=>{const s=X.SKU[i.codigo];if(!s&&X.dias>90)A.push({g:'bad',t:`${i.codigo} no vendió ninguna unidad en ${Math.floor(X.dias)} días desde que se recibió.`})});
+  const mitad=X.u>=X.total/2||X.dias>=p.meses*30.42/2;if(mitad&&X.r1.anualizado<p.objetivo)A.push({g:'bad',t:`A mitad de camino, el rinde por año proyectado con lo real es ${eP(X.r1.anualizado)}, debajo del objetivo de ${eP(p.objetivo,0)}.`});
+  if(X.C.cobro.ok&&X.C.cobro.real>X.C.cobro.proj+0.02)A.push({g:'warn',t:`Cobrar cuesta ${eP(X.C.cobro.real)} contra ${eP(X.C.cobro.proj)} supuesto: se está vendiendo más en cuotas de lo previsto.`});
+  if(X.C.meses.ok&&X.C.meses.real>p.meses+4)A.push({g:'warn',t:`Al ritmo actual se vende todo en ${eN(X.C.meses.real,1)} meses: ${eN(X.C.meses.real-p.meses,1)} meses de atraso contra lo supuesto.`});
+  X.r0.items.forEach(i=>{const s=X.SKU[i.codigo];if(s&&s.u>=MIN.skuU&&s.m/s.u<i.precioARSef*0.9)A.push({g:'warn',t:`${i.codigo} se vende en promedio a ${ars(s.m/s.u)}, ${eP(1-(s.m/s.u)/i.precioARSef,0)} abajo de la lista del pedido (${ars(i.precioARSef)}).`})});
+  if(X.C.meses.ok&&X.C.meses.real<p.meses)A.push({g:'good',t:`El pedido va adelantado: al ritmo actual se vende todo en ${eN(X.C.meses.real,1)} meses contra ${p.meses} supuestos. Sirve para decidir cuándo pedir el próximo.`});
+  return A;
+}
+/* pestaña Real: proyectado · real / proyección al cierre · desvío (el color depende de si más es mejor o peor) */
+function ecoRealV(pe){
+  if(!ECO.V)return '<p class="hint">No se pudieron leer las ventas.</p>';
+  const X=ecoReal(pe),r0=X.r0,r1=X.r1,S=pe.proyeccion;
+  const dv=(a,b,mejor,pts)=>{if(a==null||b==null||!isFinite(a)||!isFinite(b))return '—';const d=pts?(b-a)*100:a?(b-a)/Math.abs(a)*100:0;if(Math.abs(d)<0.05)return '<span class="hint">igual</span>';const bueno=mejor>0?d>0:d<0;return `<b class="${bueno?'pos':'neg'}">${d>0?'+':'−'}${Math.abs(d).toFixed(1).replace('.',',')}${pts?' pts':'%'}</b>`};
+  const F=[['Venta sin IVA',r0.venta,r1.venta,eU,1],['Costo de cobrar',r0.venta*r0.cc.total,r1.venta*r1.cc.total,eU,-1],['Meses para vender',r0.p.meses,r1.p.meses,x=>eN(x,1),-1],['Te queda',r0.resultado,r1.resultado,eU,1],['Plata a poner (pico)',r0.pico,r1.pico,eU,-1],['Rinde por año',r0.anualizado,r1.anualizado,x=>eP(x),1,1]];
+  return `<div class="card pad" style="margin-bottom:12px">${S?`<p class="hint">Proyección congelada el ${new Date(S.fecha).toLocaleDateString('es-AR')}. Los supuestos de este pedido ya no cambian: lo real se mide contra eso.</p>`:`<p class="hint"><b>El pedido está en ${ESTP[pe.estado]||pe.estado}.</b> La comparación arranca cuando pase a <b>Recibido</b>: ahí se congela la proyección y empieza a contar la rotación. Mientras tanto ya se ven las ventas de preventa.</p>`}
+   <div class="kps">${[['Vendidas',`${X.u} de ${X.total}`],['Pedidos',X.nP],['Cobrado',ars(X.cobr)],['Días desde que se recibió',X.dias==null?'—':Math.floor(X.dias)]].map(([t,v])=>`<div class="card kp"><span>${t}</span><b>${v}</b></div>`).join('')}</div>
+   <div class="wrap"><table><thead><tr><th></th><th class="n">Proyectado</th><th class="n">Real / proyección al cierre</th><th class="n">Desvío</th></tr></thead><tbody>${F.map(([t,a,b,fm,m,pts])=>`<tr><td>${t}</td><td class="n">${fm(a)}</td><td class="n"><b>${fm(b)}</b></td><td class="n">${dv(a,b,m,pts)}</td></tr>`).join('')}</tbody></table></div>
+   <p class="hint">La proyección al cierre es el mismo cálculo del tablero, pero con lo que ya se midió en lugar de los supuestos (sólo lo que llegó a la muestra mínima).</p></div>
+  <div class="card pad" style="margin-bottom:12px"><h4>Supuestos: lo que se dijo contra lo que se mide</h4><div class="wrap"><table><thead><tr><th>Supuesto</th><th class="n">Se dijo</th><th class="n">Se mide</th><th>Estado</th></tr></thead><tbody>
+   ${Object.values(X.C).map(c=>`<tr><td>${c.label}</td><td class="n">${c.fmt(c.proj)}</td><td class="n">${c.ok&&c.real!=null?`<b>${c.fmt(c.real)}</b>`:'—'}</td><td>${c.ok?'<span class="pos">recalibrado</span>':`<span class="hint">midiendo (${c.n||0} de ${c.N})</span>`}</td></tr>`).join('')}</tbody></table></div>
+   <p class="hint">Por debajo de la muestra mínima no se recalibra nada: con 3 ventas la proyección saltaría de 12 meses a 2 y de vuelta.</p></div>
+  <div class="card pad"><h4>Por producto</h4><div class="wrap"><table><thead><tr><th>Producto</th><th class="n">Vendidas / ${X.recib?'recibidas':'pedidas'}</th><th class="n">Precio efectivo</th><th class="n">Lista del pedido</th><th class="n">Retorno<br><small>proyectado → real</small></th><th class="n">Días sin vender</th></tr></thead><tbody>
+   ${r0.items.map(i=>{const s=X.SKU[i.codigo],rc=(ECO.rec||[]).find(z=>z.pedido_id===pe.id&&z.codigo===i.codigo),i1=r1.items.find(z=>z.codigo===i.codigo),ok=s&&s.u>=MIN.skuU,ult=s?s.ult:X.fRec;return `<tr><td><b>${esc(i.codigo)}</b><div class="hint">${esc(i.desc)}</div></td><td class="n">${s?s.u:0} / ${rc?rc.recibidas-rc.rotas:i.cant}</td>
+    <td class="n">${s?ars(s.m/s.u):'—'}${s&&!ok?`<div class="hint">midiendo (${s.u} de ${MIN.skuU})</div>`:''}</td><td class="n">${ars(i.precioARSef)}${ok?`<div class="${s.m/s.u<i.precioARSef*0.9?'neg':'hint'}">${eP(s.m/s.u/i.precioARSef-1,0)}</div>`:''}</td>
+    <td class="n">${eP(i.retorno,0)} → ${i1?`<b>${eP(i1.retorno,0)}</b>`:'—'}</td><td class="n">${ult?Math.floor((Date.now()-ult)/DIA):'—'}</td></tr>`}).join('')}</tbody></table></div></div>`;
+}
+
+/* ======== Caja: lo proyectado y lo real, en dos columnas (nunca se pisan) ======== */
+const CONC=[['anticipo','Anticipo al proveedor',0],['saldo','Saldo al proveedor',1],['flete','Flete',2],['seguro','Seguro',2],['despacho','Despacho y terminal',3],['honorarios','Honorarios del despachante',3],['aranceles','Aranceles',4],['iva','IVA y percepciones',5],['deposito','Depósito fiscal',6],['recepcion','Recepción en el fulfillment',7],['galpon','Alquiler de galpón (mensual)',8]];
+function ecoCaja(pe,r){
+  const MV=(ECO.mov||[]).filter(m=>m.pedido_id===pe.id),X=ECO.V?ecoReal(pe):null;
+  const real=r.flujo.map(()=>null);MV.forEach(m=>{const c=CONC.find(x=>x[0]===m.concepto);if(c)real[c[2]]=(real[c[2]]||0)-Math.abs(+m.monto_usd)});
+  if(X&&X.cobr)real[9]=X.cobr/X.tc;
+  let sp=0,sr=0;const rows=r.flujo.map((f,i)=>{sp+=f.m;if(real[i]!=null)sr+=real[i];return {...f,real:real[i],sp,sr}});
+  const picoReal=Math.abs(Math.min(0,...rows.filter(x=>x.real!=null).map(x=>x.sr))),egP=r.flujo.slice(0,9).reduce((a,f)=>a+Math.min(0,f.m),0),egR=real.slice(0,9).reduce((a,v)=>a+(v||0),0);
+  const minP=Math.min(...rows.map(x=>x.sp));
+  return `<div class="kps">${[['Pico proyectado',eU(r.pico)],['Pico real hasta hoy',eU(picoReal)],['Ya pusiste',eU(-egR)],['Falta poner (según lo proyectado)',eU(Math.max(0,-egP+egR))]].map(([t,v])=>`<div class="card kp"><span>${t}</span><b>${v}</b></div>`).join('')}</div>
+  <div class="card wrap"><table><thead><tr><th class="n">Día</th><th>Concepto</th><th class="n">Proyectado</th><th class="n">Real</th><th class="n">Saldo proyectado</th><th class="n">Saldo real</th></tr></thead><tbody>
+  ${rows.map(f=>{const sobre=f.real!=null&&f.m<0&&Math.abs(f.real)>Math.abs(f.m)*1.1;return `<tr${f.sp===minP?' style="background:rgba(192,57,43,.08)"':''}><td class="n">${f.dia}</td><td>${esc(f.c)}${f.sp===minP?' <b class="neg">← pico</b>':''}${sobre?`<div class="neg hint">el real supera al proyectado en ${eP(Math.abs(f.real)/Math.abs(f.m)-1,0)}</div>`:''}</td><td class="n ${f.m<0?'neg':'pos'}">${eU(f.m)}</td><td class="n">${f.real==null?'<span class="hint">—</span>':`<b class="${f.real<0?'neg':'pos'}">${eU(f.real)}</b>`}</td><td class="n">${eU(f.sp)}</td><td class="n">${f.real==null?'':eU(f.sr)}</td></tr>`}).join('')}
+  <tr class="tot"><td></td><td>Impuesto a las Ganancias</td><td class="n neg">${eU(-r.impGanancias)}</td><td></td><td class="n"><b>${eU(r.resultado)}</b></td><td></td></tr></tbody></table></div>
+  <p class="hint">Los pagos grandes se cargan a mano abajo. Los cobros no: salen solos de las ventas de los productos de este contenedor. Los gastos de venta van después del cobro porque se pagan a medida que vendés.</p>
+  <div class="card pad" style="margin-top:12px"><h4>Cargar un pago real</h4><div class="bar" style="flex-wrap:wrap;gap:8px">
+   <input type="date" id="mv_f" value="${new Date().toISOString().slice(0,10)}"><select id="mv_c">${CONC.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join('')}</select>
+   <input id="mv_m" class="num" placeholder="monto" style="width:120px" inputmode="decimal"><select id="mv_mo"><option value="usd">US$</option><option value="ars">$ pesos</option></select>
+   <input id="mv_tc" class="num" style="width:80px" value="${ST.tc||''}" title="tipo de cambio" inputmode="decimal"><input id="mv_cp" placeholder="comprobante (n° o link)" style="width:180px"><input id="mv_n" placeholder="nota" style="width:160px"><button class="btn dk" id="mv_ok">Agregar</button></div>
+   ${MV.length?`<div class="wrap"><table><thead><tr><th>Fecha</th><th>Concepto</th><th class="n">US$</th><th class="n">Pesos</th><th class="n">TC</th><th>Comprobante</th><th></th></tr></thead><tbody>${MV.map(m=>`<tr><td>${new Date(m.fecha+'T12:00').toLocaleDateString('es-AR')}</td><td>${esc((CONC.find(c=>c[0]===m.concepto)||[0,m.concepto])[1])}${m.nota?`<div class="hint">${esc(m.nota)}</div>`:''}</td><td class="n">${eU(m.monto_usd)}</td><td class="n">${m.monto_ars?ars(m.monto_ars):'—'}</td><td class="n">${m.tc||'—'}</td><td class="hint">${esc(m.comprobante||'')}</td><td><button class="btn" data-mvx="${m.id}">×</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">Todavía no cargaste pagos. Podés empezar por el anticipo al proveedor.</p>'}</div>`;
+}
+function bindCaja(pe){
+  $('#mv_ok').onclick=async()=>{const m=eNum($('#mv_m').value),tc=eNum($('#mv_tc').value)||ST.tc,enArs=$('#mv_mo').value==='ars';if(!m||!isFinite(m))return toast('Poné el monto');
+    const row={pedido_id:pe.id,fecha:$('#mv_f').value,concepto:$('#mv_c').value,monto_usd:enArs?Math.round(m/tc*100)/100:m,monto_ars:enArs?m:Math.round(m*tc),tc,comprobante:$('#mv_cp').value.trim()||null,nota:$('#mv_n').value.trim()||null};
+    const {data,error}=await sb.from('eco_movimientos').insert(row).select().single();if(error)return toast('No se pudo guardar');ECO.mov.push(data);toast('Pago cargado');drawEcoPedido()};
+  $('#m').querySelectorAll('[data-mvx]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Borrar este pago?'))return;const {error}=await sb.from('eco_movimientos').delete().eq('id',+b.dataset.mvx);if(error)return toast('No se pudo borrar');ECO.mov=ECO.mov.filter(m=>m.id!==+b.dataset.mvx);drawEcoPedido()});
 }
