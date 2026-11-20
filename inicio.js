@@ -112,6 +112,7 @@ async function drawInicio(silencioso){
   <div class="card pad" style="margin-bottom:14px"><h4>Carritos abandonados <small class="hint">— empezaron a pagar y no terminaron</small></h4>
    ${aband.length?`<div class="wrap"><table><thead><tr><th>Cuándo</th><th>Cliente</th><th class="hide-m">Productos</th><th class="n">Total</th><th></th></tr></thead><tbody>${aband.map(x=>`<tr><td>${hace(x.created_at)}</td><td><b>${esc(x.nombre||'—')}</b><div class="hint">${esc(x.email||'')} · ${esc(x.telefono||'')}</div></td><td class="hide-m">${(x.order_items||[]).map(i=>`${i.cantidad}× ${esc(i.products?i.products.tipo+' '+i.products.nombre:i.product_id)}`).join('<br>')}</td><td class="n">${ars(x.total)}</td>
     <td style="white-space:nowrap">${x.telefono?`<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${String(x.telefono).replace(/\D/g,'').replace(/^0?(11|15)/,'54911').replace(/^(?!54)/,'549')}?text=${encodeURIComponent('Hola '+(x.nombre||'').split(' ')[0]+', vimos que te quedó una compra sin terminar en FORMA Concept. ¿Te ayudamos?')}">WhatsApp</a>`:''} ${x.email?`<button class="btn" data-rem="${x.id}">${x.recordado_at?'Reenviar mail':'Mandar mail'}</button>`:''}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">No hay carritos abandonados en este período.</p>'}</div>
+  <div id="itrk"></div>
   <details class="card pad" id="idet" ${INI_DET?'open':''}><summary><b>Estado de resultados completo, venta por venta y tus números</b> <span class="hint">(comisiones, impuestos, gastos fijos, anuncios)</span></summary><div id="rentw" style="margin-top:12px"></div></details>
   <div id="subsw"></div>`;
   $('#m').querySelectorAll('[data-per]').forEach(b=>b.onclick=()=>{PER=+b.dataset.per;drawInicio()});
@@ -123,7 +124,38 @@ async function drawInicio(silencioso){
   const ich=$('#m .ich'),tip=ich&&ich.querySelector('.itip');
   if(ich){ich.onmousemove=e=>{const t=e.target.closest('[data-tip]');if(!t){tip.hidden=true;return}tip.innerHTML=t.dataset.tip;tip.hidden=false;const b=ich.getBoundingClientRect(),x=e.clientX-b.left;tip.style.left=Math.min(b.width-tip.offsetWidth-4,Math.max(4,x+12))+'px';tip.style.top=Math.max(0,e.clientY-b.top-tip.offsetHeight-10)+'px'};ich.onmouseleave=()=>tip.hidden=true}
   await drawResultados(from,V);
+  await drawSalud(V);
   /* en vivo: se actualiza solo */
   const tick=()=>{const u=$('#iupd');if(u)u.textContent='actualizado '+hace(INI_AT)};const iv=setInterval(()=>{if(tab!=='inicio'||!$('#iupd'))return clearInterval(iv);tick()},10000);
   INI_T=setTimeout(()=>{if(tab!=='inicio')return;const a=document.activeElement;if(document.hidden||(a&&a.matches&&a.matches('input,select,textarea'))){INI_T=setTimeout(()=>drawInicio(true),30000);return}clearInterval(iv);drawInicio(true).then(()=>typeof drawSubs==='function'&&drawSubs())},30000);
+}
+
+/* ---- Salud del seguimiento: si se rompe, se ve acá y no dos meses después ---- */
+async function drawSalud(V){
+  const w=$('#itrk');if(!w)return;
+  const [{data:lg},{data:cf}]=await Promise.all([sb.from('tracking_log').select('*').order('id',{ascending:false}).limit(500),sb.from('config_pub').select('*')]);
+  const C=Object.fromEntries((cf||[]).map(x=>[x.key,x.value])),L=lg||[],now=Date.now(),d24=L.filter(x=>now-new Date(x.created_at)<DIA);
+  const sinCfg=x=>x.status===0,reales=L.filter(x=>!sinCfg(x)),err24=d24.filter(x=>!x.ok&&!sinCfg(x));
+  const tipos={};d24.filter(x=>!sinCfg(x)).forEach(x=>{const k=(x.destino==='meta'?'Meta · ':'GA4 · ')+x.evento;const t=tipos[k]||(tipos[k]={ok:0,mal:0});x.ok?t.ok++:t.mal++});
+  const sem=7*DIA,pag=V.filter(v=>v.canal!=='may'&&now-new Date(v.f)<sem),pids=new Set(pag.map(v=>+v.id.slice(1)));
+  const purch=new Set(L.filter(x=>x.destino==='meta'&&x.evento==='Purchase'&&x.ok&&now-new Date(x.created_at)<sem).map(x=>x.pedido_id));
+  const pM=L.filter(x=>x.destino==='meta'&&x.evento==='Purchase'&&!sinCfg(x)),conEm=pM.length?pM.filter(x=>x.con_em).length/pM.length:null;
+  const mE=reales.filter(x=>x.destino==='meta'),conFbc=mE.length?mE.filter(x=>x.con_fbc).length/mE.length:null;
+  const ult=reales[0],metaOn=!!C.meta_pixel_id,gaOn=!!C.ga4_id,falta=L.find(sinCfg);
+  const dot=c=>`<i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c};margin-right:7px"></i>`;
+  const R=(t,v,c,s='')=>`<div class="rw" style="gap:10px"><span>${c?dot(c):''}${t}${s?`<div class="hint">${s}</div>`:''}</span><b>${v}</b></div>`;
+  w.innerHTML=`<div class="card pad" style="margin-bottom:14px"><h4>Salud del seguimiento de anuncios <small class="hint">— Meta (pixel + servidor) y Google Analytics</small></h4>
+  <div class="g2d" style="align-items:start"><div>
+   ${R('Purchase enviados por el servidor vs pedidos aprobados (7 días)',`${purch.size} / ${pids.size}`,!metaOn?'#9b978e':purch.size===pids.size?'#1baf7a':'#e34948',!metaOn?'Meta todavía no está configurado':purch.size===pids.size?'1 a 1, bien':'faltan ventas por avisarle a Meta')}
+   ${R('Ventas con mail (para que Meta reconozca a la persona)',conEm==null?'—':pct(conEm),conEm==null?'':conEm<0.9?'#eda100':'#1baf7a','tiene que ser 90% o más')}
+   ${R('Eventos con clic de Meta (fbc)',conFbc==null?'—':pct(conFbc),'','informativo: cuántos vinieron de un anuncio')}
+   ${R('Errores de Meta y GA4 (24 h)',err24.length,err24.length?'#e34948':'#1baf7a',err24.length?esc((err24[0].respuesta||'').slice(0,140)):'')}
+   ${R('Último evento enviado',ult?hace(ult.created_at):'nunca',ult&&now-new Date(ult.created_at)>DIA&&pids.size?'#e34948':'')}
+   ${Object.keys(tipos).length?`<div class="hint" style="margin-top:8px">Últimas 24 h: ${Object.entries(tipos).map(([k,t])=>`${esc(k)} ${t.ok}${t.mal?` (<span class="neg">${t.mal} con error</span>)`:''}`).join(' · ')}</div>`:''}</div>
+   <div><div class="rw"><span>${dot(metaOn?'#1baf7a':'#9b978e')}ID del Pixel de Meta</span><input id="cf_px" value="${esc(C.meta_pixel_id||'')}" placeholder="ej. 123456789012345" style="width:190px"></div>
+   <div class="rw"><span>${dot(gaOn?'#1baf7a':'#9b978e')}ID de Google Analytics 4</span><input id="cf_ga" value="${esc(C.ga4_id||'')}" placeholder="G-XXXXXXX" style="width:190px"></div>
+   <p class="hint">Estos dos son públicos y se cargan acá. Las claves secretas (el token de la API de conversiones de Meta y el API secret de GA4) van en Vercel, en las variables <b>META_CAPI_TOKEN</b> y <b>GA4_API_SECRET</b>: cargalas vos, nunca las pegues en un chat.${falta?`<br><span class="neg">Último aviso: ${esc(falta.respuesta)}</span>`:''}</p>
+   ${L.length?`<details><summary class="hint">Ver los últimos envíos</summary><div class="wrap" style="max-height:260px;overflow:auto"><table><tbody>${L.slice(0,60).map(x=>`<tr><td class="hint">${hace(x.created_at)}</td><td>${x.destino} · ${esc(x.evento||'')}${x.pedido_id?' #'+x.pedido_id:''}</td><td class="${x.ok?'pos':'neg'}">${x.ok?'ok':x.status===0?'sin configurar':'error '+x.status}</td></tr>`).join('')}</tbody></table></div></details>`:''}</div></div></div>`;
+  const sv=async(k,v)=>{const {error}=await sb.from('config_pub').upsert({key:k,value:v.trim()||null});toast(error?'No se pudo guardar':'Guardado');drawSalud(V)};
+  $('#cf_px').onchange=e=>sv('meta_pixel_id',e.target.value.replace(/\D/g,''));$('#cf_ga').onchange=e=>sv('ga4_id',e.target.value.toUpperCase());
 }

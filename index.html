@@ -539,6 +539,39 @@ const REF=(()=>{try{const r=document.referrer?new URL(document.referrer).hostnam
 function track(tipo,x={}){try{if(/[?&]notrack/.test(location.search)||localStorage.getItem('fc_notrack')||localStorage.getItem('fc_consent')==='no')return;
   fetch(SB_URL+'/rest/v1/eventos',{method:'POST',keepalive:true,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
   body:JSON.stringify({tipo,visitante:VID,sesion:SID,path:(location.hash||'#inicio').slice(0,200),ref:REF.slice(0,200),utm:UTM.slice(0,200),dispositivo:/Mobi|Android/i.test(navigator.userAgent)?'celular':'computadora',producto:x.producto||null,email:x.email||null,valor:x.valor||null})}).catch(()=>{})}catch(e){}}
+/* ---- Seguimiento para anuncios (Meta pixel + Conversions API, GA4). Respeta "rechazar" en el aviso de cookies. ---- */
+const NOCONS=()=>{try{return localStorage.getItem('fc_consent')==='no'||/[?&]notrack/.test(location.search)||!!localStorage.getItem('fc_notrack')}catch(e){return false}};
+const gck=n=>{const m=document.cookie.match('(?:^|; )'+n.replace(/[.$?*|{}()[\]\/+^]/g,'\$&')+'=([^;]*)');return m?decodeURIComponent(m[1]):''};
+const sck=(n,v,d)=>{try{document.cookie=`${n}=${encodeURIComponent(v)}; max-age=${d*86400}; path=/; SameSite=Lax`}catch(e){}};
+/* de dónde vino: se guarda al entrar (último clic, 7 días) */
+const ATTR=(()=>{const q=new URLSearchParams(location.search),k={fbclid:q.get('fbclid'),gclid:q.get('gclid'),ttclid:q.get('ttclid')},utm={};['utm_source','utm_medium','utm_campaign','utm_content','utm_term','utm_id'].forEach(x=>{if(q.get(x))utm[x.slice(4)]=q.get(x)});
+  let a=null;try{a=JSON.parse(localStorage.getItem('fc_attr')||'null')}catch(e){}
+  if(k.fbclid||k.gclid||k.ttclid||Object.keys(utm).length){a={landing_url:location.href.slice(0,1000),referrer:document.referrer.slice(0,500),...k,utm,ts:Date.now()};try{localStorage.setItem('fc_attr',JSON.stringify(a))}catch(e){}}
+  else if(!a){a={landing_url:location.href.slice(0,1000),referrer:document.referrer.slice(0,500),utm:{},ts:Date.now()};try{localStorage.setItem('fc_attr',JSON.stringify(a))}catch(e){}}
+  if(a&&Date.now()-a.ts>7*864e5){a={landing_url:a.landing_url,referrer:a.referrer,utm:{},ts:a.ts}}
+  if(a&&a.fbclid&&!gck('_fbc')&&!NOCONS())sck('_fbc',`fb.1.${a.ts}.${a.fbclid}`,90);
+  return a||{}})();
+const fbpV=()=>{if(NOCONS())return '';let v=gck('_fbp');if(!v){v=`fb.1.${Date.now()}.${Math.floor(1e9+Math.random()*9e9)}`;sck('_fbp',v,90)}return v};
+const fbcV=()=>NOCONS()?'':gck('_fbc')||(ATTR.fbclid?`fb.1.${ATTR.ts}.${ATTR.fbclid}`:'');
+const gaCid=()=>{const g=gck('_ga');return g?g.split('.').slice(-2).join('.'):''};
+const trackingData=()=>({fbp:fbpV(),fbc:fbcV(),ga_client_id:gaCid(),gclid:ATTR.gclid||'',ttclid:ATTR.ttclid||'',landing_url:ATTR.landing_url||'',referrer:ATTR.referrer||'',utm:ATTR.utm||{},clic_ts:ATTR.ts||null,checkout_url:location.href.slice(0,500)});
+/* pixel y GA4: los IDs salen de la base (config_pub); si no están cargados, no se carga nada */
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window,document);
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
+(async()=>{if(NOCONS())return;try{const r=await fetch(SB_URL+'/rest/v1/config_pub?select=key,value',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});const c=Object.fromEntries((await r.json()).map(x=>[x.key,x.value]));
+  if(c.meta_pixel_id){const s=document.createElement('script');s.async=1;s.src='https://connect.facebook.net/en_US/fbevents.js';document.head.appendChild(s);fbq('init',c.meta_pixel_id);fbq('track','PageView')}
+  if(c.ga4_id){const s=document.createElement('script');s.async=1;s.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(c.ga4_id);document.head.appendChild(s);gtag('js',new Date());gtag('config',c.ga4_id)}}catch(e){}})();
+const META_EV={vista_producto:['ViewContent','view_item'],agregar_carrito:['AddToCart','add_to_cart'],inicio_checkout:['InitiateCheckout','begin_checkout']};
+function mEv(tipo,x){if(NOCONS())return;const m=META_EV[tipo];if(!m)return;const eid=m[0]+'.'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  const ids=x.producto?[x.producto]:cart.map(l=>l.id),cd={currency:'ARS',value:Math.round(x.valor||0),content_ids:ids,content_type:'product',num_items:x.producto?undefined:cart.reduce((s,l)=>s+l.q,0)};
+  try{fbq('track',m[0],cd,{eventID:eid})}catch(e){}try{gtag('event',m[1],{currency:'ARS',value:cd.value,items:ids.map(i=>({item_id:i}))})}catch(e){}
+  try{fetch('/api/track',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({event_name:m[0],event_id:eid,custom_data:cd,fbp:fbpV(),fbc:fbcV(),url:location.href})}).catch(()=>{})}catch(e){}}
+{const _trk=track;track=function(tipo,x={}){_trk(tipo,x);try{mEv(tipo,x)}catch(e){}}}
+/* la compra en el navegador: mismo event_id (id del pedido) y mismo valor que manda el servidor, así Meta no la cuenta dos veces */
+function compraNavegador(){if(NOCONS())return;let o=null;try{o=JSON.parse(localStorage.getItem('fc_last_order')||'null')}catch(e){}const q=new URLSearchParams(location.search),ref=q.get('external_reference');
+  if(!o||(ref&&String(o.order)!==ref))return;try{localStorage.removeItem('fc_last_order')}catch(e){}
+  try{fbq('track','Purchase',{currency:'ARS',value:Math.round(o.total),content_ids:o.ids||[],content_type:'product'},{eventID:String(o.order)})}catch(e){}
+  try{gtag('event','purchase',{transaction_id:String(o.order),currency:'ARS',value:Math.round(o.total)})}catch(e){}}
 async function loadDB(){
   try{
     const r=await fetch(SB_URL+'/rest/v1/products?select=*&activo=eq.true&order=orden',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
@@ -1128,8 +1161,8 @@ document.addEventListener('click',e=>{
   if(a.dataset.env){ENV=a.dataset.env;drawEnvio();return}
   if(a.dataset.paym){PAYM=a.dataset.paym;render();return}
   if(a.id==='payMP'){const TR=PAYM==='transferencia',lbl=TR?'Confirmar pedido con transferencia':'Pagar con Mercado Pago';a.disabled=true;a.textContent=TR?'Reservando tu pedido…':'Abriendo Mercado Pago…';const tot=cart.reduce((s,l)=>s+((TR&&byId(l.id).transf)||byId(l.id).price||0)*l.q,0);track('inicio_checkout',{valor:tot});
-    (async()=>{const ss=sbInit()?(await sbInit().auth.getSession()).data.session:null;return fetch('/api/checkout',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},ss?{Authorization:'Bearer '+ss.access_token}:{}),body:JSON.stringify({medio:TR?'transferencia':'mp',buyer:TR?{cp:CPV,nombre:BUY.n,email:BUY.e,telefono:BUY.t}:{cp:CPV},envio:ENV,cp:CPV,visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0]}))})})})()
-      .then(r=>r.json()).then(d=>{if(d.url){location.href=d.url}else if(d.transfer){TRF=d.transfer;track('compra_transferencia',{valor:d.transfer.total});cart=[];save();location.hash='#transferencia'}else{toast(d.error||'No pudimos iniciar el pago.');a.disabled=false;a.textContent=lbl}})
+    (async()=>{const ss=sbInit()?(await sbInit().auth.getSession()).data.session:null;return fetch('/api/checkout',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},ss?{Authorization:'Bearer '+ss.access_token}:{}),body:JSON.stringify({tracking:trackingData(),medio:TR?'transferencia':'mp',buyer:TR?{cp:CPV,nombre:BUY.n,email:BUY.e,telefono:BUY.t}:{cp:CPV},envio:ENV,cp:CPV,visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0]}))})})})()
+      .then(r=>r.json()).then(d=>{if(d.url){try{localStorage.setItem('fc_last_order',JSON.stringify({order:d.order,total:d.total,ids:cart.map(l=>l.id)}))}catch(e){}location.href=d.url}else if(d.transfer){TRF=d.transfer;track('compra_transferencia',{valor:d.transfer.total});cart=[];save();location.hash='#transferencia'}else{toast(d.error||'No pudimos iniciar el pago.');a.disabled=false;a.textContent=lbl}})
       .catch(()=>{toast('No pudimos iniciar el pago. Probá de nuevo.');a.disabled=false;a.textContent=lbl});return}
   if(a.hasAttribute('data-back')){drawCart();return}
   if(a.id==='arrGo'){const v=k=>$('#ar_'+k).value.trim();const d={nombre:v('n'),email:v('e'),telefono:v('t'),pedido:v('p'),motivo:v('m')};
@@ -1214,7 +1247,7 @@ addEventListener("scroll",rvCount,{passive:true});
 addEventListener('hashchange',()=>{if(!animating){render();scrollTo(0,0)}});
 addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
 (()=>{const q=new URLSearchParams(location.search).get('pago');if(!q)return;
-  if(q==='ok'){track('compra',{valor:cart.reduce((s,l)=>s+(byId(l.id).price||0)*l.q,0)});cart=[];setTimeout(()=>toast('¡Gracias por tu compra! Te escribimos para coordinar la entrega.'),600)}
+  if(q==='ok'){compraNavegador();track('compra',{valor:cart.reduce((s,l)=>s+(byId(l.id).price||0)*l.q,0)});cart=[];setTimeout(()=>toast('¡Gracias por tu compra! Te escribimos para coordinar la entrega.'),600)}
   else if(q==='pendiente'){cart=[];setTimeout(()=>toast('Tu pago está pendiente. Te avisamos cuando se acredite.'),600)}
   else setTimeout(()=>toast('El pago no se completó. Podés intentar de nuevo.'),600);
   try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}})();

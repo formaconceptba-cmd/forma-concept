@@ -66,8 +66,11 @@ export default async function handler(req, res) {
     if (transf && prof) { buyer.nombre = buyer.nombre || prof.nombre; buyer.email = buyer.email || prof.email; buyer.telefono = buyer.telefono || prof.telefono || ''; }
     if (transf && (!buyer.nombre || !/\S+@\S+\.\S+/.test(buyer.email) || buyer.telefono.replace(/\D/g, '').length < 8)) return res.status(400).json({ error: 'Completá tu nombre, mail y teléfono para pagar con transferencia.' });
     const total = items.reduce((a, i) => a + i.precio * i.q, 0) + costoEnvio;
+    // Datos de seguimiento capturados en el navegador antes del pago (después ya no existen). event_id = id del pedido.
+    const tk = body.tracking || {}, cl = (s, n) => String(s ?? '').slice(0, n);
+    const tracking = { fbp: cl(tk.fbp, 120) || null, fbc: cl(tk.fbc, 300) || null, ga_client_id: cl(tk.ga_client_id, 80) || null, gclid: cl(tk.gclid, 200) || null, ttclid: cl(tk.ttclid, 200) || null, landing_url: cl(tk.landing_url, 1000) || null, referrer: cl(tk.referrer, 500) || null, utm: tk.utm && typeof tk.utm === 'object' ? Object.fromEntries(Object.entries(tk.utm).slice(0, 6).map(([k, v]) => [cl(k, 20), cl(v, 200)])) : null, clic_ts: +tk.clic_ts || null, checkout_url: cl(tk.checkout_url, 500) || null, ip: cl((req.headers['x-forwarded-for'] || '').split(',')[0].trim(), 60), user_agent: cl(req.headers['user-agent'], 400) };
 
-    const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, ...(prof ? { email: buyer.email || prof.email, nombre: buyer.nombre || (prof.nombre + (prof.estudio ? ' (' + prof.estudio + ')' : '')), telefono: buyer.telefono || prof.telefono || '' } : {}), canal: prof ? 'profesional' : 'publico', ...(transf ? { medio_pago: 'transferencia', cuotas: 1, comision_real: 0 } : {}), envio: ENVIOS[envio], costo_envio: costoEnvio, total, visitante: clean(body.visitante, 64) || null }) });
+    const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, ...(prof ? { email: buyer.email || prof.email, nombre: buyer.nombre || (prof.nombre + (prof.estudio ? ' (' + prof.estudio + ')' : '')), telefono: buyer.telefono || prof.telefono || '' } : {}), canal: prof ? 'profesional' : 'publico', tracking, ...(transf ? { medio_pago: 'transferencia', cuotas: 1, comision_real: 0 } : {}), envio: ENVIOS[envio], costo_envio: costoEnvio, total, visitante: clean(body.visitante, 64) || null }) });
     if (!or.ok) throw new Error('orders ' + (await or.text()));
     const [order] = await or.json();
     const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio, precio_lista_momento: i.lista, regla: i.regla }))) });
@@ -104,7 +107,7 @@ export default async function handler(req, res) {
     const pref = await mp.json();
     if (!mp.ok) throw new Error('mp ' + JSON.stringify(pref));
     await sb('orders?id=eq.' + order.id, { method: 'PATCH', body: JSON.stringify({ mp_preference: pref.id }) });
-    return res.status(200).json({ url: pref.init_point, order: order.id });
+    return res.status(200).json({ url: pref.init_point, order: order.id, total });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'No pudimos iniciar el pago. Probá de nuevo o escribinos por WhatsApp.' });
