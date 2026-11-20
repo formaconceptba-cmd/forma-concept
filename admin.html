@@ -732,9 +732,9 @@ async function drawResultados(from){
   const w=$('#rentw');if(!w)return;
   const V=(await ventasRent()).filter(v=>new Date(v.f)>=from),T=TX();
   const S=k=>V.reduce((a,v)=>a+v[k],0);
-  const dias=PER||Math.max(1,Math.ceil((Date.now()-Math.min(Date.now(),...V.map(v=>+new Date(v.f))))/DIA)+1);
+  const dias=PER||(!V.length?30:Math.max(1,Math.ceil((Date.now()-Math.min(Date.now(),...V.map(v=>+new Date(v.f))))/DIA)+1));
   const ads=T.ADS*dias/30,fij=T.FIJ*dias/30,gV=S('g'),antes=gV-ads-fij,gan=Math.max(0,antes)*T.GAN,neto=antes-gan,venta=S('venta');
-  const R=(t,v,h='',cls='')=>`<tr class="${cls}"><td>${t}${h?`<div class="hint">${h}</div>`:''}</td><td class="n"><b class="${v<0&&cls?'neg':''}">${v<0?'− '+ars(-v):ars(v)}</b></td><td class="n hint">${venta&&cls!=='top'?pct(Math.abs(v)/venta):''}</td></tr>`;
+  const R=(t,v,h='',cls='')=>`<tr class="${cls}"><td>${t}${h?`<div class="hint">${h}</div>`:''}</td><td class="n"><b class="${v<-0.5&&cls?'neg':''}">${v<-0.5?'− '+ars(-v):ars(Math.abs(v))}</b></td><td class="n hint">${venta&&cls!=='top'?pct(Math.abs(v)/venta):''}</td></tr>`;
   const inp=(id,v,suf,w=64)=>`<input id="${id}" class="num" style="width:${w}px" value="${v}" inputmode="decimal">${suf}`;
   const CAN=['pub','pro','may'].map(c=>{const x=V.filter(v=>v.canal===c),ve=x.reduce((a,v)=>a+v.venta,0),g=x.reduce((a,v)=>a+v.g,0);return {c,n:x.length,ve,g,m:ve?g/ve:null}});
   const mc=x=>x==null?'—':`<span class="${x<0.15?'neg':'pos'}">${pct(x)}</span>`;
@@ -745,7 +745,7 @@ async function drawResultados(from){
    ${R('IVA',-(S('total')-venta),'No es tuyo: se paga a ARCA. El IVA que pagaste al importar se descuenta de acá.')}
    ${R('Ventas sin IVA',venta,'','sub')}
    ${R('Costo de los productos',-S('cprod'),'Fábrica + flete + aduana + gastos, puesto en Argentina, al dólar del día de cada venta')}
-   ${R('Comisión de Mercado Pago',-S('com'),V.some(v=>v.comReal)?'La real de cada cobro (la informa Mercado Pago)':`${pct(T.COM)} de lo cobrado. Las transferencias no pagan.`)}
+   ${R('Comisión de Mercado Pago',-S('com'),V.some(v=>v.comReal)?'La real de cada cobro (la informa Mercado Pago)':`${(T.COM*100).toFixed(1).replace('.',',')}% de lo cobrado. Las transferencias no pagan.`)}
    ${R('Envíos que pagás vos',-S('env'))}
    ${R('Ingresos Brutos',-S('iibb'),`${(T.IIBB*100).toFixed(1).replace('.',',')}% de las ventas sin IVA`)}
    ${R('Impuesto al cheque',-S('chq'),`${(T.CHQ*100).toFixed(1).replace('.',',')}% de lo que entra a la cuenta`)}
