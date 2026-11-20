@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       // Marcar pagado sólo si sigue pendiente (evita sumar ventas dos veces).
       const up = await sb(`orders?id=eq.${orderId}&estado=eq.pendiente`, {
         method: 'PATCH', headers: { Prefer: 'return=representation' },
-        body: JSON.stringify({ estado: 'pagado', mp_payment: String(pay.id), ...datosPagador(pay, order) })
+        body: JSON.stringify({ estado: 'pagado', mp_payment: String(pay.id), ...medioPago(pay), ...datosPagador(pay, order) })
       });
       const changed = await up.json();
       if (!changed.length) return res.status(200).send('ya procesado');
@@ -75,4 +75,10 @@ function datosPagador(pay, order) {
   if (!order.nombre && nombre) out.nombre = nombre;
   if (!order.telefono && tel) out.telefono = tel;
   return out;
+}
+
+// Cómo pagó (tarjeta, débito, dinero en cuenta, efectivo…), en cuántas cuotas y cuánto cobró Mercado Pago de comisión.
+function medioPago(pay) {
+  const fee = (pay.fee_details || []).reduce((s, f) => s + (+f.amount || 0), 0);
+  return { medio_pago: pay.payment_type_id || null, cuotas: pay.installments || 1, comision_real: fee ? Math.round(fee * 100) / 100 : null };
 }

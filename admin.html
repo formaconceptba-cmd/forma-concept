@@ -76,6 +76,7 @@ td img{width:72px;height:72px}table.big td img,.cp td img{width:88px;height:88px
 .cpc{display:flex!important;align-items:center;gap:6px;margin:0!important;text-transform:none!important;letter-spacing:0!important;font-size:13px!important;color:var(--ink)!important;cursor:pointer}.cpc input{width:auto}.cpc i{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
 .cpn{display:flex;gap:6px}.cpn #cph{width:44px;padding:2px}
 .cm td,.cm th{text-align:center}.cm td:nth-child(2),.cm th:nth-child(2){text-align:left}.cm th i{display:block;width:18px;height:18px;border-radius:50%;margin:0 auto 4px;border:1px solid rgba(0,0,0,.15)}.cm input[type=checkbox]{width:18px;height:18px}
+.pl td{padding:7px 8px}.pl tr.sub td,.pl tr.tot td{border-top:1px solid var(--line)}.pl tr.tot b{font:500 20px "Outfit",sans-serif}.pl tr.top b{font-size:15px}
 .kps{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:14px}.kp{padding:12px 14px;display:grid;gap:2px}.kp span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}.kp b{font:500 24px "Outfit",sans-serif;font-variant-numeric:tabular-nums}.kp em{font-style:normal;font-size:12px}.kp small{font-size:11.5px;color:var(--soft)}
 .g2d{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px;margin-bottom:14px}.pad{padding:14px 16px}.pad h4{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
 .chart{width:100%;height:auto;display:block}.chart .br{fill:#6E1F2B}.chart .gl{stroke:var(--line)}.chart .gt{font-size:10px;fill:var(--soft)}
@@ -420,7 +421,7 @@ const GRUPOS=[['inicio','Inicio',[['inicio','Resumen']]],
  ['prof','Profesionales',[['pprecios','Precios y mínimos'],['pcuentas','Cuentas'],['ppedidos','Pedidos']]],
  ['may','Mayoristas',[['pro','Cuentas, contenedor y catálogo']]],
  ['cont','Contenido',[['frm','FRM Studio'],['fotos','Fotos de la página']]],
- ['gest','Gestión',[['maestro','Maestro de productos'],['rent','Rentabilidad'],['eco','Economía'],['compras','Órdenes a proveedores']]]];
+ ['gest','Gestión',[['maestro','Maestro de productos'],['rent','Precios y márgenes'],['eco','Economía'],['compras','Órdenes a proveedores']]]];
 const grupoDe=t=>(GRUPOS.find(g=>g[2].some(s=>s[0]===t))||GRUPOS[0]);
 function drawNav(){const g=grupoDe(tab);const n=document.getElementById('gnav'),s=document.getElementById('snav');if(!n)return;
   n.innerHTML=GRUPOS.map(x=>`<button data-g="${x[0]}" class="${x[0]===g[0]?'on':''}">${x[1]}</button>`).join('');
@@ -529,8 +530,9 @@ async function drawInicio(){
   $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Así va el negocio</b><span class="live"><i></i>${live} ${live===1?'persona':'personas'} en la tienda ahora</span><span class="sp"></span>
    ${[[1,'Hoy'],[7,'7 días'],[30,'30 días'],[0,'Todo']].map(([d,l])=>`<button class="btn ${PER===d?'dk':''}" data-per="${d}">${l}</button>`).join('')}</div>
   <div class="kps">${kpi('Ventas',ars(ventas),PER?delta(ventas,ventasPrev):'')}${kpi('Pedidos pagados',cur.length,PER?delta(cur.length,old.length):'')}${kpi('Ticket promedio',ars(cur.length?ventas/cur.length:0))}
-   ${kpi('Ganancia bruta',ars(gan),`<small>${marg==null?'':'Margen '+pct(marg)+' · sin IVA'}</small>`)}${kpi('Visitantes',vis,PER?delta(vis,visPrev):'')}${kpi('Conversión',conv==null?'—':(conv*100).toFixed(1)+'%','<small>visitantes que compran</small>')}
+   ${kpi('Visitantes',vis,PER?delta(vis,visPrev):'')}${kpi('Conversión',conv==null?'—':(conv*100).toFixed(1)+'%','<small>visitantes que compran</small>')}
    ${kpi('Carritos abandonados',aband.length,`<small>${ars(sum(aband))} sin cobrar</small>`)}${kpi('ROAS anuncios',ads&&PER===30?(ventas/ads).toFixed(1)+'×':'—',`<small>${ads?'gasto 30 días '+ars(ads):'cargá el gasto abajo'}</small>`)}</div>
+  <div id="rentw"><p class="hint">Calculando ganancias…</p></div>
   <div class="g2d"><div class="card pad"><h4>Ventas por día</h4>${bars(sV,v=>ars(v))}</div><div class="card pad"><h4>Visitantes por día</h4>${bars(sU,v=>Math.round(v))}</div></div>
   <div class="g2d"><div class="card pad"><h4>Embudo de compra</h4>${F.map(([t,n],i)=>`<div class="fn"><span>${t}</span><div class="fb"><i style="width:${F[0][1]?n/F[0][1]*100:0}%"></i></div><b>${n}</b><small>${i&&F[i-1][1]?pct(n/F[i-1][1]):''}</small></div>`).join('')}<p class="hint">El % compara con el paso anterior. Dónde más se cae la gente es lo primero a mejorar.</p></div>
    <div class="card pad"><h4>De dónde vienen</h4>${src.map(([k,n])=>`<div class="rw"><span>${esc(k)}</span><b>${n}</b></div>`).join('')||'<p class="hint">Sin visitas todavía.</p>'}<h4 style="margin-top:14px">Dispositivo</h4>${dev.map(([k,n])=>`<div class="rw"><span>${esc(k)}</span><b>${n}</b></div>`).join('')}</div></div>
@@ -540,13 +542,12 @@ async function drawInicio(){
   <div class="g2d"><div class="card pad"><h4>Productos</h4><div class="wrap"><table><thead><tr><th>Producto</th><th class="n">Vistas</th><th class="n">Al carrito</th><th class="n">Vendidas</th><th class="n">Preventa</th></tr></thead><tbody>
    ${prodRows.map(r=>`<tr><td>${esc(r.p.tipo)} ${esc(r.p.nombre)}</td><td class="n">${r.vv}</td><td class="n">${r.ad}</td><td class="n">${r.sold}</td><td class="n"><div class="fb sm"><i style="width:${r.p.unidades?Math.min(100,r.p.vendidas/r.p.unidades*100):0}%"></i></div><small>${r.p.vendidas||0}/${r.p.unidades||0}</small></td></tr>`).join('')}</tbody></table></div></div>
    <div class="card pad"><h4>Profesionales y contenedor</h4><div class="rw"><span>Reservas activas</span><b>${proRes.length}</b></div><div class="rw"><span>Monto reservado</span><b>${ars(proRes.reduce((s,x)=>s+x.total,0))}</b></div><div class="rw"><span>Volumen reservado</span><b>${cbmPro.toFixed(2)} m³ de ${ST.cap_cbm}</b></div>
-   <div class="fb" style="margin:8px 0"><i style="width:${Math.min(100,cbmPro/ST.cap_cbm*100)}%"></i></div>
-   <h4 style="margin-top:16px">Gasto en anuncios (últimos 30 días)</h4><input id="adsg" class="num" style="width:160px" value="${ads||''}" placeholder="$ ARS" inputmode="numeric"><p class="hint">Mientras no conectemos Meta Ads, cargalo a mano para ver el ROAS (ventas ÷ gasto) en la vista de 30 días.</p></div></div>`;
+   <div class="fb" style="margin:8px 0"><i style="width:${Math.min(100,cbmPro/ST.cap_cbm*100)}%"></i></div></div></div>`;
   $('#m').querySelectorAll('[data-per]').forEach(b=>b.onclick=()=>{PER=+b.dataset.per;drawInicio()});
-  $('#adsg').onchange=async e=>{const v=+e.target.value.replace(/\D/g,'')||0;const {error}=await sb.from('settings').upsert({key:'ads_gasto',value:v,nota:'Gasto en anuncios últimos 30 días (ARS)'});toast(error?'No se pudo guardar':'Guardado');ST.ads_gasto=v};
   $('#m').querySelectorAll('[data-rem]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {data:{session}}=await sb.auth.getSession();
     const r=await fetch('/api/recordatorio',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({id:+b.dataset.rem})});const d=await r.json().catch(()=>({}));
     b.disabled=false;toast(r.ok?'Mail enviado':(d.error||'No se pudo enviar'));if(r.ok)b.textContent='Reenviar mail'});
+  await drawResultados(from);
 }
 
 /* ---------- maestro · economía · compras ---------- */
@@ -703,58 +704,100 @@ function bindPr(){
   });
 }
 
-/* ---------- rentabilidad: cuánto se gana en cada venta ---------- */
-let RMES='';
+/* ---------- rentabilidad: cuánto queda de cada venta ---------- */
+const MEDIO={credit_card:'Tarjeta de crédito',debit_card:'Tarjeta de débito',prepaid_card:'Tarjeta prepaga',account_money:'Dinero en cuenta MP',ticket:'Efectivo (Rapipago / Pago Fácil)',bank_transfer:'Transferencia',atm:'Cajero',digital_currency:'Mercado Crédito',digital_wallet:'Billetera virtual'};
+const medioTxt=o=>(MEDIO[o.medio_pago]||o.medio_pago||'Mercado Pago')+(o.cuotas>1?` · ${o.cuotas} cuotas`:o.medio_pago==='credit_card'?' · 1 pago':'');
+const TX=()=>({IVA:ST.iva??0.21,COM:ST.comision_mp??0.043,ENV:ST.envio_costo||0,IIBB:ST.iibb??0.03,CHQ:ST.imp_cheque??0.006,GAN:ST.ganancias??0.30,FIJ:ST.gastos_fijos_mes||0,ADS:ST.ads_gasto||0});
+const CANAL={pub:'Público (tienda)',pro:'Profesionales',may:'Mayoristas (contenedor)'};
+/* costo de 1 unidad puesta en Argentina, en pesos y sin IVA */
+const cuR=id=>{const m=byCod(id);if(m){const c=costo(m.fob_usd,m.cbm);if(c!=null)return c*ST.tc}const p=prods.find(p=>p.id===id);return p&&p.costo_manual!=null?+p.costo_manual:null};
+/* todas las ventas cobradas, con lo que se lleva cada uno */
+async function ventasRent(){
+  if(!prods.length)await loadProds();
+  const [{data:os},{data:pp}]=await Promise.all([sb.from('orders').select('*,order_items(*,products(tipo,nombre))').order('created_at',{ascending:false}),sb.from('pedidos_pro').select('*').order('created_at',{ascending:false})]);
+  const T=TX(),pag=(os||[]).filter(o=>o.estado!=='pendiente'&&o.estado!=='cancelado');
+  /* el costo de cada venta se guarda la primera vez: así no cambia si después sube el dólar */
+  const fr=[];pag.forEach(o=>(o.order_items||[]).forEach(i=>{if(i.costo_unit==null){const c=cuR(i.product_id);if(c!=null){i.costo_unit=Math.round(c);fr.push(sb.from('order_items').update({costo_unit:i.costo_unit}).eq('id',i.id))}}}));
+  if(fr.length)await Promise.all(fr);
+  const fin=(v)=>{v.iibb=v.venta*T.IIBB;v.chq=v.total*T.CHQ;v.g=v.venta-v.cprod-v.com-v.env-v.iibb-v.chq;v.m=v.venta?v.g/v.venta:null;return v};
+  const V=pag.map(o=>{const its=o.order_items||[];return fin({id:'#'+o.id,f:o.created_at,canal:o.canal==='profesional'?'pro':'pub',cli:o.nombre,det:its.map(i=>`${i.cantidad}× ${i.products?i.products.tipo+' '+i.products.nombre:i.product_id}`).join(', '),
+    medio:medioTxt(o),total:o.total,venta:o.total/(1+T.IVA),cprod:its.reduce((a,i)=>a+(i.costo_unit||0)*i.cantidad,0),falta:its.some(i=>i.costo_unit==null),
+    com:o.comision_real!=null?+o.comision_real:o.total*T.COM,comReal:o.comision_real!=null,env:/gratis|express/i.test(o.envio||'')?T.ENV:0,est:EST_TXT[o.estado]})});
+  (pp||[]).filter(r=>r.estado!=='cancelado').forEach(r=>{const its=r.items||[];let falta=false;const cprod=its.reduce((a,i)=>{const c=cuR(i.id||i.codigo);if(c==null){falta=true;return a}return a+c*i.q},0);
+    V.push(fin({id:'R'+r.id,f:r.created_at,canal:'may',cli:r.estudio||r.nombre,det:its.map(i=>`${i.q}× ${i.producto}`).join(', '),medio:'Transferencia',total:r.total,venta:r.total/(1+T.IVA),cprod,falta,com:0,env:0,est:r.estado==='confirmado'?'Confirmada':'Reservada, sin confirmar'}))});
+  return V.sort((a,b)=>b.f.localeCompare(a.f));
+}
+/* resultado del período: va en Inicio */
+async function drawResultados(from){
+  const w=$('#rentw');if(!w)return;
+  const V=(await ventasRent()).filter(v=>new Date(v.f)>=from),T=TX();
+  const S=k=>V.reduce((a,v)=>a+v[k],0);
+  const dias=PER||Math.max(1,Math.ceil((Date.now()-Math.min(Date.now(),...V.map(v=>+new Date(v.f))))/DIA)+1);
+  const ads=T.ADS*dias/30,fij=T.FIJ*dias/30,gV=S('g'),antes=gV-ads-fij,gan=Math.max(0,antes)*T.GAN,neto=antes-gan,venta=S('venta');
+  const R=(t,v,h='',cls='')=>`<tr class="${cls}"><td>${t}${h?`<div class="hint">${h}</div>`:''}</td><td class="n"><b class="${v<0&&cls?'neg':''}">${v<0?'− '+ars(-v):ars(v)}</b></td><td class="n hint">${venta&&cls!=='top'?pct(Math.abs(v)/venta):''}</td></tr>`;
+  const inp=(id,v,suf,w=64)=>`<input id="${id}" class="num" style="width:${w}px" value="${v}" inputmode="decimal">${suf}`;
+  const CAN=['pub','pro','may'].map(c=>{const x=V.filter(v=>v.canal===c),ve=x.reduce((a,v)=>a+v.venta,0),g=x.reduce((a,v)=>a+v.g,0);return {c,n:x.length,ve,g,m:ve?g/ve:null}});
+  const mc=x=>x==null?'—':`<span class="${x<0.15?'neg':'pos'}">${pct(x)}</span>`;
+  const per=PER===1?'hoy':PER?`los últimos ${PER} días`:'todo el período';
+  w.innerHTML=`<div class="card pad" style="margin-bottom:14px"><h4>¿Cuánto ganaste? <small class="hint">— ${per}, todas las ventas cobradas (tienda, profesionales y mayoristas)</small></h4>
+  <div class="g2d" style="align-items:start"><div class="wrap"><table class="pl"><tbody>
+   ${R('Cobraste',S('total'),'Lo que pagaron los clientes, con IVA','top')}
+   ${R('IVA',-(S('total')-venta),'No es tuyo: se paga a ARCA. El IVA que pagaste al importar se descuenta de acá.')}
+   ${R('Ventas sin IVA',venta,'','sub')}
+   ${R('Costo de los productos',-S('cprod'),'Fábrica + flete + aduana + gastos, puesto en Argentina, al dólar del día de cada venta')}
+   ${R('Comisión de Mercado Pago',-S('com'),V.some(v=>v.comReal)?'La real de cada cobro (la informa Mercado Pago)':`${pct(T.COM)} de lo cobrado. Las transferencias no pagan.`)}
+   ${R('Envíos que pagás vos',-S('env'))}
+   ${R('Ingresos Brutos',-S('iibb'),`${(T.IIBB*100).toFixed(1).replace('.',',')}% de las ventas sin IVA`)}
+   ${R('Impuesto al cheque',-S('chq'),`${(T.CHQ*100).toFixed(1).replace('.',',')}% de lo que entra a la cuenta`)}
+   ${R('Ganancia de las ventas',gV,'Lo que dejan las ventas antes de los gastos del negocio','sub')}
+   ${R('Anuncios',-ads,PER===30?'Gasto de los últimos 30 días':'Gasto de 30 días, proporcional al período')}
+   ${R('Gastos fijos',-fij,'Alquiler, sueldos, contador, programas… proporcional al período')}
+   ${R('Ganancia antes de impuesto a las Ganancias',antes,'','sub')}
+   ${R('Impuesto a las Ganancias (estimado)',-gan,`${pct(T.GAN)} de la ganancia, si hay ganancia`)}
+   ${R('Te queda limpio',neto,'','tot')}
+  </tbody></table></div>
+  <div><h4>Quién te compró</h4><div class="wrap"><table><thead><tr><th></th><th class="n">Ventas</th><th class="n">Sin IVA</th><th class="n">Ganancia</th><th class="n">Margen</th></tr></thead><tbody>${CAN.map(c=>`<tr><td><b>${CANAL[c.c]}</b></td><td class="n">${c.n}</td><td class="n">${ars(c.ve)}</td><td class="n">${ars(c.g)}</td><td class="n">${mc(c.m)}</td></tr>`).join('')}</tbody></table></div>
+   <p class="hint">Margen = lo que te queda de cada $100 vendidos sin IVA, antes de anuncios y gastos fijos. Debajo de 15% está en rojo.</p>
+   <h4 style="margin-top:16px">Tus números <small class="hint">— cambialos y se recalcula todo</small></h4>
+   <div class="rw"><span>Comisión de Mercado Pago</span><span>${inp('t_com',+(T.COM*100).toFixed(2),' %')}</span></div>
+   <div class="rw"><span>Ingresos Brutos</span><span>${inp('t_iibb',+(T.IIBB*100).toFixed(2),' %')}</span></div>
+   <div class="rw"><span>Impuesto al cheque</span><span>${inp('t_chq',+(T.CHQ*100).toFixed(2),' %')}</span></div>
+   <div class="rw"><span>Impuesto a las Ganancias</span><span>${inp('t_gan',+(T.GAN*100).toFixed(2),' %')}</span></div>
+   <div class="rw"><span>Envío que pagás vos, por pedido</span><span>${inp('t_env',T.ENV,'',110)}</span></div>
+   <div class="rw"><span>Gastos fijos por mes</span><span>${inp('t_fij',T.FIJ,'',110)}</span></div>
+   <div class="rw"><span>Anuncios, últimos 30 días</span><span>${inp('t_ads',T.ADS,'',110)}</span></div>
+   <p class="hint">Mercado Pago hoy te cobra 3,55% + IVA (4,3%) con la plata a 18 días. Ingresos Brutos y Ganancias son estimados: confirmá los porcentajes con tu contador.</p></div></div>
+  <h4 style="margin-top:18px">Venta por venta</h4>
+  ${V.length?`<div class="wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Quién</th><th class="hide-m">Productos</th><th>Cómo pagó</th><th class="n">Cobraste</th><th class="n hide-m">Costo productos</th><th class="n hide-m">Comisión + impuestos</th><th class="n">Te quedó</th><th class="n">Margen</th></tr></thead><tbody>
+  ${V.map(v=>`<tr><td>${v.id}</td><td>${new Date(v.f).toLocaleDateString('es-AR')}</td><td>${CANAL[v.canal]}<div class="hint">${esc(v.cli||'')} · ${esc(v.est)}</div></td><td class="hide-m hint">${esc(v.det)}</td><td>${esc(v.medio)}</td><td class="n">${ars(v.total)}</td><td class="n hide-m">${ars(v.cprod)}</td><td class="n hide-m">${ars(v.total-v.venta+v.com+v.env+v.iibb+v.chq)}<div class="hint">IVA ${ars(v.total-v.venta)}</div></td><td class="n"><b class="${v.g<0?'neg':''}">${ars(v.g)}</b>${v.falta?'<div class="hint neg">falta el costo de algún producto</div>':''}</td><td class="n">${mc(v.m)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">Todavía no hay ventas cobradas en este período.</p>'}</div>`;
+  const setS=async(k,v,n)=>{ST[k]=v;const {error}=await sb.from('settings').upsert({key:k,value:v,nota:n});toast(error?'No se pudo guardar':'Guardado');drawResultados(from)};
+  const num=s=>+String(s).replace(/[^0-9.,]/g,'').replace(',','.')||0;
+  [['t_com','comision_mp','Comisión Mercado Pago con IVA',1],['t_iibb','iibb','Ingresos Brutos sobre ventas sin IVA',1],['t_chq','imp_cheque','Impuesto al cheque sobre lo cobrado',1],['t_gan','ganancias','Impuesto a las Ganancias sobre la ganancia',1],
+   ['t_env','envio_costo','Costo promedio de un envío que no cobrás aparte (ARS)'],['t_fij','gastos_fijos_mes','Gastos fijos por mes (ARS)'],['t_ads','ads_gasto','Gasto en anuncios últimos 30 días (ARS)']]
+   .forEach(([id,k,n,p])=>$('#'+id).onchange=e=>setS(k,p?num(e.target.value)/100:Math.round(num(e.target.value)),n));
+}
+/* simulador: cuánto queda de cada producto según quién lo compra */
 async function drawRent(){
   if(!prods.length)await loadProds();
-  const [{data:os},{data:pp},{data:cp}]=await Promise.all([sb.from('orders').select('*,order_items(*,products(tipo,nombre))').order('created_at',{ascending:false}),sb.from('pedidos_pro').select('*').order('created_at',{ascending:false}),sb.from('catalogo_pro').select('*')]);
-  const IVA=ST.iva??0.21,COM=ST.comision_mp??0.043,ENV=ST.envio_costo||0;
-  const PB=Object.fromEntries(prods.map(p=>[p.id,p]));
-  /* costo de 1 unidad puesta en Argentina, en pesos y sin IVA */
-  const cu=id=>{const m=byCod(id);if(m){const c=costo(m.fob_usd,m.cbm);if(c!=null)return c*ST.tc}const p=PB[id];return p&&p.costo_manual!=null?+p.costo_manual:null};
-  /* congelar el costo de cada venta cobrada la primera vez que se ve: así no cambia si después sube el dólar */
-  const pag=(os||[]).filter(o=>o.estado!=='pendiente'&&o.estado!=='cancelado');
-  const fr=[];pag.forEach(o=>(o.order_items||[]).forEach(i=>{if(i.costo_unit==null){const c=cu(i.product_id);if(c!=null){i.costo_unit=Math.round(c);fr.push(sb.from('order_items').update({costo_unit:i.costo_unit}).eq('id',i.id))}}}));
-  if(fr.length)await Promise.all(fr);
-  const V=[];
-  pag.forEach(o=>{const its=o.order_items||[];const falta=its.some(i=>i.costo_unit==null);const venta=o.total/(1+IVA);const cprod=its.reduce((a,i)=>a+(i.costo_unit||0)*i.cantidad,0);const com=o.total*COM;const env=/gratis|express/i.test(o.envio||'')?ENV:0;const g=venta-cprod-com-env;
-    V.push({id:'#'+o.id,f:o.created_at,canal:o.canal==='profesional'?'Profesional':'Público',cli:o.nombre,det:its.map(i=>`${i.cantidad}× ${i.products?i.products.tipo+' '+i.products.nombre:i.product_id}`).join(', '),total:o.total,venta,cprod,com,env,g,m:venta?g/venta:null,falta,est:EST_TXT[o.estado]})});
-  (pp||[]).filter(r=>r.estado!=='cancelado').forEach(r=>{const its=r.items||[];let falta=false;const cprod=its.reduce((a,i)=>{const c=cu(i.id||i.codigo);if(c==null){falta=true;return a}return a+c*i.q},0);const venta=r.total/(1+IVA);const g=venta-cprod;
-    V.push({id:'R'+r.id,f:r.created_at,canal:'Mayorista',cli:r.estudio||r.nombre,det:its.map(i=>`${i.q}× ${i.producto}`).join(', '),total:r.total,venta,cprod,com:0,env:0,g,m:venta?g/venta:null,falta,est:r.estado==='confirmado'?'Confirmada':'Reservada (sin confirmar)'})});
-  const meses=[...new Set(V.map(v=>v.f.slice(0,7)))].sort().reverse();
-  const L=V.filter(v=>!RMES||v.f.slice(0,7)===RMES);
-  const tot=k=>L.reduce((a,v)=>a+v[k],0);
-  const CAN=['Público','Profesional','Mayorista'].map(c=>{const x=L.filter(v=>v.canal===c),ve=x.reduce((a,v)=>a+v.venta,0),g=x.reduce((a,v)=>a+v.g,0);return {c,n:x.length,ve,g,m:ve?g/ve:null}});
-  const ads=ST.ads_gasto||0,gT=tot('g'),vT=tot('venta');
-  const mc=x=>x==null?'—':`<span class="${x<0.15?'neg':'pos'}">${pct(x)}</span>`;
-  /* simulador: margen de cada producto en cada canal */
-  const dP=ST.desc_profesional??0.5,dM=ST.desc_pro??0.3,CP=Object.fromEntries((cp||[]).map(c=>[c.codigo,c]));
-  const mg=(precio,c)=>precio&&c!=null?(precio/(1+IVA)-precio*COM-c)/(precio/(1+IVA)):null;
-  const mgM=(precio,c)=>precio&&c!=null?(precio/(1+IVA)-c)/(precio/(1+IVA)):null;
-  let S=prods.filter(p=>p.activo&&p.precio_lista).map(p=>{const c=cu(p.id),pub=p.linea==='Nacional'?p.precio_lista:preP(p),pro=Math.round(p.precio_lista*(1-(p.pct_profesional??dP))/1000)*1000,k=CP[p.id],lm=k?(k.precio_lista||p.precio_lista):null,may=k&&lm?Math.round(lm*(1-(k.descuento??dM))/1000)*1000:null;
-    return {p,c,pub,mpub:mg(pub,c),pro,mpro:mg(pro,c),may,mmay:mgM(may,c)}});
+  const {data:cp}=await sb.from('catalogo_pro').select('*');
+  const T=TX(),dP=ST.desc_profesional??0.5,dM=ST.desc_pro??0.3,CP=Object.fromEntries((cp||[]).map(c=>[c.codigo,c]));
+  /* margen = lo que queda de cada $100 sin IVA, ya descontados costo, comisión MP (no en mayorista), Ingresos Brutos e impuesto al cheque */
+  const mg=(precio,c,mp)=>{if(!precio||c==null)return null;const n=precio/(1+T.IVA);return (n-c-(mp?precio*T.COM:0)-n*T.IIBB-precio*T.CHQ)/n};
+  let S=prods.filter(p=>p.activo&&p.precio_lista).map(p=>{const c=cuR(p.id),pub=p.linea==='Nacional'?p.precio_lista:preP(p),pro=Math.round(p.precio_lista*(1-(p.pct_profesional??dP))/1000)*1000,k=CP[p.id],lm=k?(k.precio_lista||p.precio_lista):null,may=k&&lm?Math.round(lm*(1-(k.descuento??dM))/1000)*1000:null;
+    return {p,c,pub,mpub:mg(pub,c,1),pro,mpro:mg(pro,c,1),may,mmay:mg(may,c,0),mal:(pro>pub)||(may&&may>pub)}});
+  const malos=S.filter(r=>r.mal).length;
   S=sortBy('rent',S,(r,k)=>({nombre:r.p.tipo+' '+r.p.nombre,costo:r.c,pub:r.mpub,pro:r.mpro,may:r.mmay}[k]));
-  $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Rentabilidad</b><span class="sp"></span><label style="margin:0">Mes</label><select id="rmes"><option value="">Todo</option>${meses.map(m=>`<option value="${m}" ${m===RMES?'selected':''}>${m.slice(5)}/${m.slice(0,4)}</option>`).join('')}</select></div>
-  <div class="stats"><div class="card"><b>${ars(vT)}</b><span>vendido sin IVA</span></div><div class="card"><b class="${gT<0?'neg':''}">${ars(gT)}</b><span>ganancia antes de anuncios · ${mc(vT?gT/vT:null)}</span></div><div class="card"><b>${ars(ads)}</b><span>anuncios (cargado en Inicio)</span></div><div class="card"><b class="${gT-ads<0?'neg':'pos'}">${ars(gT-ads)}</b><span>ganancia después de anuncios</span></div></div>
-  <div class="card wrap"><table><thead><tr><th>Canal</th><th class="n">Ventas</th><th class="n">Vendido sin IVA</th><th class="n">Ganancia</th><th class="n">Margen</th></tr></thead><tbody>${CAN.map(c=>`<tr><td><b>${c.c}</b></td><td class="n">${c.n}</td><td class="n">${ars(c.ve)}</td><td class="n">${ars(c.g)}</td><td class="n">${mc(c.m)}</td></tr>`).join('')}</tbody></table></div>
-  <p class="hint">Ganancia = precio sin IVA − costo de los productos puestos en Argentina − comisión de Mercado Pago − envío que pagás vos. Las reservas mayoristas no pagan comisión (se cobran por transferencia) y cuentan aunque todavía no estén confirmadas. El costo de cada venta se guarda el día que se ve cobrada acá, así no cambia si después sube el dólar.</p>
-  <h3 style="margin:24px 0 10px">Venta por venta</h3>
-  ${L.length?`<div class="card wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Canal</th><th>Cliente</th><th class="n">Cobrado</th><th class="n hide-m">Sin IVA</th><th class="n hide-m">Costo productos</th><th class="n hide-m">Comisión MP</th><th class="n hide-m">Envío</th><th class="n">Ganancia</th><th class="n">Margen</th></tr></thead><tbody>
-  ${L.map(v=>`<tr><td>${v.id}</td><td>${new Date(v.f).toLocaleDateString('es-AR')}</td><td>${v.canal}<div class="hint">${esc(v.est)}</div></td><td><b>${esc(v.cli||'')}</b><div class="hint">${esc(v.det)}</div></td><td class="n">${ars(v.total)}</td><td class="n hide-m">${ars(v.venta)}</td><td class="n hide-m">${ars(v.cprod)}</td><td class="n hide-m">${ars(v.com)}</td><td class="n hide-m">${ars(v.env)}</td><td class="n"><b class="${v.g<0?'neg':''}">${ars(v.g)}</b>${v.falta?'<div class="hint neg">falta el costo de algún producto</div>':''}</td><td class="n">${mc(v.m)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="card" style="padding:30px;text-align:center;color:var(--soft)">Todavía no hay ventas cobradas en este período.</div>'}
-  <h3 style="margin:28px 0 10px">Simulador: cuánto ganás con cada producto según quién compra</h3>
-  <div class="bar"><label style="margin:0">Comisión Mercado Pago</label><input id="rcom" class="num" style="width:70px" value="${+(COM*100).toFixed(2)}" inputmode="decimal"> % <span class="hint">(3,55% + IVA, cobro a 18 días)</span>
-   <label style="margin:0 0 0 16px">Envío que pagás vos, por pedido</label><input id="renv" class="num" style="width:100px" value="${ENV}" inputmode="numeric"></div>
-  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('rent','nombre','Producto')}${thS('rent','costo','Costo puesto en Argentina','n')}${thS('rent','pub','Público','n')}${thS('rent','pro','Profesional','n')}${thS('rent','may','Mayorista','n')}</tr></thead><tbody>
-  ${S.map(r=>`<tr><td><img src="${esc(src(r.p.img))}" alt=""></td><td><b>${esc(r.p.tipo)} ${esc(r.p.nombre)}</b><div class="hint">${esc(r.p.id)}${r.p.linea==='Nacional'?' · nacional':''}</div></td>
-   <td class="n">${byCod(r.p.id)?ars(r.c):`<input class="num n" style="width:110px" data-cm="${esc(r.p.id)}" value="${r.p.costo_manual??''}" placeholder="cargá el costo" inputmode="numeric"><div class="hint">sin IVA, a mano</div>`}</td>
-   <td class="n">${ars(r.pub)}<div>${mc(r.mpub)}</div></td><td class="n">${ars(r.pro)}<div>${mc(r.mpro)}</div></td><td class="n">${r.may?ars(r.may)+'<div>'+mc(r.mmay)+'</div>':'<span class="hint">no está en el catálogo</span>'}</td></tr>`).join('')}</tbody></table></div>
-  <p class="hint">Margen sobre el precio sin IVA, ya descontada la comisión de Mercado Pago (salvo mayorista). En rojo, menos de 15%. Los precios salen de Productos, de Precios y mínimos (profesionales) y del catálogo mayorista. Los productos que no están en el Maestro, como los nacionales, necesitan que cargues su costo a mano.</p>`;
+  const mc=x=>x==null?'':`<div class="${x<0.15?'neg':'pos'}">te queda ${pct(x)}</div>`;
+  $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Precios y márgenes</b></div>
+  <p class="hint" style="max-width:760px">Cada fila es un producto. Para cada tipo de cliente ves <b>el precio que paga</b> (con IVA) y abajo <b>qué % de ese precio sin IVA te queda</b> después de pagar el producto puesto en Argentina, la comisión de Mercado Pago, Ingresos Brutos e impuesto al cheque. Debajo de 15% está en rojo. Lo normal es que el precio baje de izquierda a derecha: público → profesional → mayorista.</p>
+  ${malos?`<div class="card pad" style="border-color:#c0392b;margin:10px 0"><b class="neg">${malos} productos tienen el precio al revés:</b> el profesional o el mayorista paga más caro que el público. Pasa porque la preventa al público tiene ${pctP({})}% de descuento sobre el precio de lista, y profesionales y mayoristas tienen menos descuento sobre ese mismo precio de lista. Las filas con el problema están marcadas.</div>`:''}
+  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('rent','nombre','Producto')}${thS('rent','costo','Te cuesta puesto en Argentina','n')}${thS('rent','pub','Público (preventa)','n')}${thS('rent','pro','Profesional','n')}${thS('rent','may','Mayorista','n')}</tr></thead><tbody>
+  ${S.map(r=>`<tr${r.mal?' style="background:rgba(192,57,43,.07)"':''}><td><img src="${esc(src(r.p.img))}" alt=""></td><td><b>${esc(r.p.tipo)} ${esc(r.p.nombre)}</b><div class="hint">${esc(r.p.id)}${r.p.linea==='Nacional'?' · nacional':''}</div>${r.mal?'<div class="hint neg">precio al revés</div>':''}</td>
+   <td class="n">${byCod(r.p.id)?ars(r.c)+'<div class="hint">sin IVA</div>':`<input class="num n" style="width:110px" data-cm="${esc(r.p.id)}" value="${r.p.costo_manual??''}" placeholder="cargá el costo" inputmode="numeric"><div class="hint">sin IVA, a mano</div>`}</td>
+   <td class="n">${ars(r.pub)}${mc(r.mpub)}</td><td class="n"><span class="${r.pro>r.pub?'neg':''}">${ars(r.pro)}</span>${mc(r.mpro)}</td><td class="n">${r.may?`<span class="${r.may>r.pub?'neg':''}">${ars(r.may)}</span>${mc(r.mmay)}`:'<span class="hint">no está en el catálogo</span>'}</td></tr>`).join('')}</tbody></table></div>
+  <p class="hint">Los precios salen de Productos (público), Profesionales → Precios y mínimos, y Mayoristas → catálogo. Los productos que no están en el Maestro, como los nacionales, necesitan que cargues su costo a mano. Los porcentajes de comisión e impuestos se cambian en Inicio.</p>`;
   bindSort(drawRent);
-  $('#rmes').onchange=e=>{RMES=e.target.value;drawRent()};
-  const setS=async(k,v,n)=>{ST[k]=v;const {error}=await sb.from('settings').upsert({key:k,value:v,nota:n});toast(error?'No se pudo guardar':'Guardado');drawRent()};
-  $('#rcom').onchange=e=>setS('comision_mp',(+e.target.value.replace(',','.')||0)/100,'Comisión Mercado Pago con IVA');
-  $('#renv').onchange=e=>setS('envio_costo',+e.target.value.replace(/\D/g,'')||0,'Costo promedio de un envío que no cobrás aparte (ARS)');
-  $('#m').querySelectorAll('[data-cm]').forEach(i=>i.onchange=async()=>{const d=i.value.replace(/\D/g,''),v=d?+d:null;const p=PB[i.dataset.cm];p.costo_manual=v;const {error}=await sb.from('products').update({costo_manual:v}).eq('id',p.id);toast(error?'No se pudo guardar':'Costo guardado');drawRent()});
+  $('#m').querySelectorAll('[data-cm]').forEach(i=>i.onchange=async()=>{const d=i.value.replace(/\D/g,''),v=d?+d:null;const p=prods.find(p=>p.id===i.dataset.cm);p.costo_manual=v;const {error}=await sb.from('products').update({costo_manual:v}).eq('id',p.id);toast(error?'No se pudo guardar':'Costo guardado');drawRent()});
 }
 
 /* ---------- pedidos ---------- */
