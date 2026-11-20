@@ -113,7 +113,7 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .full.w img{object-fit:contain;mix-blend-mode:multiply;padding:10% 8% 24%}
 .full.w::after{display:none}
 .pslide .psl{position:absolute;inset:0}.pslide .psl img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;padding:8% 14% 26%;opacity:0;transition:opacity .9s ease}.pslide .psl img.on{opacity:1}
-.pslide .t{color:var(--ink)}.pslide .t{padding-bottom:26px;align-items:flex-end}.pslide h2{font-size:clamp(15px,1.3vw,19px)!important;line-height:1.25!important;letter-spacing:.02em!important;max-width:330px}.pslide .psl img{padding:6% 14% 24%!important}.pslide .ob{color:var(--ink);border-color:var(--ink)}.pslide:hover .ob{background:var(--ink);color:#fff}
+.pslide .t{color:var(--ink)}.pslide .t{padding-bottom:26px;align-items:flex-end}a.full.pslide .t h2{font-size:clamp(14px,1.2vw,17px)!important;line-height:1.25!important;letter-spacing:.02em!important;max-width:330px}.pslide .psl img{padding:6% 14% 24%!important}.pslide .ob{color:var(--ink);border-color:var(--ink)}.pslide:hover .ob{background:var(--ink);color:#fff}
 /* franja de categorías: dos fotos por pantalla, flecha al costado */
 .cs{position:relative;padding:14px 0;background:var(--bg)}
 .cs .tr{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-behavior:smooth}
@@ -1172,7 +1172,7 @@ function silInit(){const t=document.getElementById('silT');if(!t||t.dataset.ok)r
   t.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;drag={x:e.clientX,s:t.scrollLeft};stop();t.classList.add('dr');t.setPointerCapture(e.pointerId)});
   t.addEventListener('pointermove',e=>{if(drag){const W=s.offsetWidth;let v=drag.s-(e.clientX-drag.x);if(v<0){v+=W;drag.s+=W}if(v>=W){v-=W;drag.s-=W}t.scrollLeft=v}});
   const up=()=>{if(drag){drag=null;t.classList.remove('dr');go()}};t.addEventListener('pointerup',up);t.addEventListener('pointercancel',up);
-  const loop=ts=>{if(!t.isConnected)return;const dt=last?Math.min(64,ts-last):16;last=ts;const W=s.offsetWidth;
+  const loop=ts=>{if(!t.isConnected)return;const dt=last?Math.min(120,ts-last):16;last=ts;const W=s.offsetWidth;
     if(set>=0&&Math.abs(t.scrollLeft-set)>2&&!drag)go();
     if(!REDUCED&&!drag&&ts>hold&&t.closest('.sil').classList.contains('on'))x+=W/15000*dt;else x=t.scrollLeft;
     if(x>=W)x-=W;if(x<1&&ts<=hold&&!drag&&W)x+=W-1;
