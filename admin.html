@@ -155,7 +155,7 @@ function shell(){
 }
 async function draw(){
   drawNav();PRODF=tab==='nacionales'?'nacional':'';if(tab==='nacionales'){await loadProds();drawProds();return}PEDF=tab==='ppedidos'?'profesional':'publico';if(tab==='ppedidos'){await loadOrders();drawOrders();return}if(tab==='pprecios'){await drawProfPrecios();return}if(tab==='pcuentas'){CUENTAS='profesional';await drawPro();return}if(tab==='pro')CUENTAS='mayorista';
-  if(tab==='inicio'){await drawInicio();await drawSubs()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
+  if(tab==='inicio'){await drawInicio();await drawSubs()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='rent'){await loadMaster();await drawRent()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
 }
 
 /* ---------- productos ---------- */
@@ -420,7 +420,7 @@ const GRUPOS=[['inicio','Inicio',[['inicio','Resumen']]],
  ['prof','Profesionales',[['pprecios','Precios y mínimos'],['pcuentas','Cuentas'],['ppedidos','Pedidos']]],
  ['may','Mayoristas',[['pro','Cuentas, contenedor y catálogo']]],
  ['cont','Contenido',[['frm','FRM Studio'],['fotos','Fotos de la página']]],
- ['gest','Gestión',[['maestro','Maestro de productos'],['eco','Economía'],['compras','Órdenes a proveedores']]]];
+ ['gest','Gestión',[['maestro','Maestro de productos'],['rent','Rentabilidad'],['eco','Economía'],['compras','Órdenes a proveedores']]]];
 const grupoDe=t=>(GRUPOS.find(g=>g[2].some(s=>s[0]===t))||GRUPOS[0]);
 function drawNav(){const g=grupoDe(tab);const n=document.getElementById('gnav'),s=document.getElementById('snav');if(!n)return;
   n.innerHTML=GRUPOS.map(x=>`<button data-g="${x[0]}" class="${x[0]===g[0]?'on':''}">${x[1]}</button>`).join('');
@@ -701,6 +701,60 @@ function bindPr(){
     const d=await r.json().catch(()=>({}));s.disabled=false;
     toast(!r.ok?(d.error||'No se pudo cambiar'):d.aviso||(d.invitado?'Aprobado: le mandamos el mail de acceso':'Estado actualizado'));
   });
+}
+
+/* ---------- rentabilidad: cuánto se gana en cada venta ---------- */
+let RMES='';
+async function drawRent(){
+  if(!prods.length)await loadProds();
+  const [{data:os},{data:pp},{data:cp}]=await Promise.all([sb.from('orders').select('*,order_items(*,products(tipo,nombre))').order('created_at',{ascending:false}),sb.from('pedidos_pro').select('*').order('created_at',{ascending:false}),sb.from('catalogo_pro').select('*')]);
+  const IVA=ST.iva??0.21,COM=ST.comision_mp??0.043,ENV=ST.envio_costo||0;
+  const PB=Object.fromEntries(prods.map(p=>[p.id,p]));
+  /* costo de 1 unidad puesta en Argentina, en pesos y sin IVA */
+  const cu=id=>{const m=byCod(id);if(m){const c=costo(m.fob_usd,m.cbm);if(c!=null)return c*ST.tc}const p=PB[id];return p&&p.costo_manual!=null?+p.costo_manual:null};
+  /* congelar el costo de cada venta cobrada la primera vez que se ve: así no cambia si después sube el dólar */
+  const pag=(os||[]).filter(o=>o.estado!=='pendiente'&&o.estado!=='cancelado');
+  const fr=[];pag.forEach(o=>(o.order_items||[]).forEach(i=>{if(i.costo_unit==null){const c=cu(i.product_id);if(c!=null){i.costo_unit=Math.round(c);fr.push(sb.from('order_items').update({costo_unit:i.costo_unit}).eq('id',i.id))}}}));
+  if(fr.length)await Promise.all(fr);
+  const V=[];
+  pag.forEach(o=>{const its=o.order_items||[];const falta=its.some(i=>i.costo_unit==null);const venta=o.total/(1+IVA);const cprod=its.reduce((a,i)=>a+(i.costo_unit||0)*i.cantidad,0);const com=o.total*COM;const env=/gratis|express/i.test(o.envio||'')?ENV:0;const g=venta-cprod-com-env;
+    V.push({id:'#'+o.id,f:o.created_at,canal:o.canal==='profesional'?'Profesional':'Público',cli:o.nombre,det:its.map(i=>`${i.cantidad}× ${i.products?i.products.tipo+' '+i.products.nombre:i.product_id}`).join(', '),total:o.total,venta,cprod,com,env,g,m:venta?g/venta:null,falta,est:EST_TXT[o.estado]})});
+  (pp||[]).filter(r=>r.estado!=='cancelado').forEach(r=>{const its=r.items||[];let falta=false;const cprod=its.reduce((a,i)=>{const c=cu(i.id||i.codigo);if(c==null){falta=true;return a}return a+c*i.q},0);const venta=r.total/(1+IVA);const g=venta-cprod;
+    V.push({id:'R'+r.id,f:r.created_at,canal:'Mayorista',cli:r.estudio||r.nombre,det:its.map(i=>`${i.q}× ${i.producto}`).join(', '),total:r.total,venta,cprod,com:0,env:0,g,m:venta?g/venta:null,falta,est:r.estado==='confirmado'?'Confirmada':'Reservada (sin confirmar)'})});
+  const meses=[...new Set(V.map(v=>v.f.slice(0,7)))].sort().reverse();
+  const L=V.filter(v=>!RMES||v.f.slice(0,7)===RMES);
+  const tot=k=>L.reduce((a,v)=>a+v[k],0);
+  const CAN=['Público','Profesional','Mayorista'].map(c=>{const x=L.filter(v=>v.canal===c),ve=x.reduce((a,v)=>a+v.venta,0),g=x.reduce((a,v)=>a+v.g,0);return {c,n:x.length,ve,g,m:ve?g/ve:null}});
+  const ads=ST.ads_gasto||0,gT=tot('g'),vT=tot('venta');
+  const mc=x=>x==null?'—':`<span class="${x<0.15?'neg':'pos'}">${pct(x)}</span>`;
+  /* simulador: margen de cada producto en cada canal */
+  const dP=ST.desc_profesional??0.5,dM=ST.desc_pro??0.3,CP=Object.fromEntries((cp||[]).map(c=>[c.codigo,c]));
+  const mg=(precio,c)=>precio&&c!=null?(precio/(1+IVA)-precio*COM-c)/(precio/(1+IVA)):null;
+  const mgM=(precio,c)=>precio&&c!=null?(precio/(1+IVA)-c)/(precio/(1+IVA)):null;
+  let S=prods.filter(p=>p.activo&&p.precio_lista).map(p=>{const c=cu(p.id),pub=p.linea==='Nacional'?p.precio_lista:preP(p),pro=Math.round(p.precio_lista*(1-(p.pct_profesional??dP))/1000)*1000,k=CP[p.id],lm=k?(k.precio_lista||p.precio_lista):null,may=k&&lm?Math.round(lm*(1-(k.descuento??dM))/1000)*1000:null;
+    return {p,c,pub,mpub:mg(pub,c),pro,mpro:mg(pro,c),may,mmay:mgM(may,c)}});
+  S=sortBy('rent',S,(r,k)=>({nombre:r.p.tipo+' '+r.p.nombre,costo:r.c,pub:r.mpub,pro:r.mpro,may:r.mmay}[k]));
+  $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Rentabilidad</b><span class="sp"></span><label style="margin:0">Mes</label><select id="rmes"><option value="">Todo</option>${meses.map(m=>`<option value="${m}" ${m===RMES?'selected':''}>${m.slice(5)}/${m.slice(0,4)}</option>`).join('')}</select></div>
+  <div class="stats"><div class="card"><b>${ars(vT)}</b><span>vendido sin IVA</span></div><div class="card"><b class="${gT<0?'neg':''}">${ars(gT)}</b><span>ganancia antes de anuncios · ${mc(vT?gT/vT:null)}</span></div><div class="card"><b>${ars(ads)}</b><span>anuncios (cargado en Inicio)</span></div><div class="card"><b class="${gT-ads<0?'neg':'pos'}">${ars(gT-ads)}</b><span>ganancia después de anuncios</span></div></div>
+  <div class="card wrap"><table><thead><tr><th>Canal</th><th class="n">Ventas</th><th class="n">Vendido sin IVA</th><th class="n">Ganancia</th><th class="n">Margen</th></tr></thead><tbody>${CAN.map(c=>`<tr><td><b>${c.c}</b></td><td class="n">${c.n}</td><td class="n">${ars(c.ve)}</td><td class="n">${ars(c.g)}</td><td class="n">${mc(c.m)}</td></tr>`).join('')}</tbody></table></div>
+  <p class="hint">Ganancia = precio sin IVA − costo de los productos puestos en Argentina − comisión de Mercado Pago − envío que pagás vos. Las reservas mayoristas no pagan comisión (se cobran por transferencia) y cuentan aunque todavía no estén confirmadas. El costo de cada venta se guarda el día que se ve cobrada acá, así no cambia si después sube el dólar.</p>
+  <h3 style="margin:24px 0 10px">Venta por venta</h3>
+  ${L.length?`<div class="card wrap"><table><thead><tr><th>#</th><th>Fecha</th><th>Canal</th><th>Cliente</th><th class="n">Cobrado</th><th class="n hide-m">Sin IVA</th><th class="n hide-m">Costo productos</th><th class="n hide-m">Comisión MP</th><th class="n hide-m">Envío</th><th class="n">Ganancia</th><th class="n">Margen</th></tr></thead><tbody>
+  ${L.map(v=>`<tr><td>${v.id}</td><td>${new Date(v.f).toLocaleDateString('es-AR')}</td><td>${v.canal}<div class="hint">${esc(v.est)}</div></td><td><b>${esc(v.cli||'')}</b><div class="hint">${esc(v.det)}</div></td><td class="n">${ars(v.total)}</td><td class="n hide-m">${ars(v.venta)}</td><td class="n hide-m">${ars(v.cprod)}</td><td class="n hide-m">${ars(v.com)}</td><td class="n hide-m">${ars(v.env)}</td><td class="n"><b class="${v.g<0?'neg':''}">${ars(v.g)}</b>${v.falta?'<div class="hint neg">falta el costo de algún producto</div>':''}</td><td class="n">${mc(v.m)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="card" style="padding:30px;text-align:center;color:var(--soft)">Todavía no hay ventas cobradas en este período.</div>'}
+  <h3 style="margin:28px 0 10px">Simulador: cuánto ganás con cada producto según quién compra</h3>
+  <div class="bar"><label style="margin:0">Comisión Mercado Pago</label><input id="rcom" class="num" style="width:70px" value="${+(COM*100).toFixed(2)}" inputmode="decimal"> % <span class="hint">(3,55% + IVA, cobro a 18 días)</span>
+   <label style="margin:0 0 0 16px">Envío que pagás vos, por pedido</label><input id="renv" class="num" style="width:100px" value="${ENV}" inputmode="numeric"></div>
+  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('rent','nombre','Producto')}${thS('rent','costo','Costo puesto en Argentina','n')}${thS('rent','pub','Público','n')}${thS('rent','pro','Profesional','n')}${thS('rent','may','Mayorista','n')}</tr></thead><tbody>
+  ${S.map(r=>`<tr><td><img src="${esc(src(r.p.img))}" alt=""></td><td><b>${esc(r.p.tipo)} ${esc(r.p.nombre)}</b><div class="hint">${esc(r.p.id)}${r.p.linea==='Nacional'?' · nacional':''}</div></td>
+   <td class="n">${byCod(r.p.id)?ars(r.c):`<input class="num n" style="width:110px" data-cm="${esc(r.p.id)}" value="${r.p.costo_manual??''}" placeholder="cargá el costo" inputmode="numeric"><div class="hint">sin IVA, a mano</div>`}</td>
+   <td class="n">${ars(r.pub)}<div>${mc(r.mpub)}</div></td><td class="n">${ars(r.pro)}<div>${mc(r.mpro)}</div></td><td class="n">${r.may?ars(r.may)+'<div>'+mc(r.mmay)+'</div>':'<span class="hint">no está en el catálogo</span>'}</td></tr>`).join('')}</tbody></table></div>
+  <p class="hint">Margen sobre el precio sin IVA, ya descontada la comisión de Mercado Pago (salvo mayorista). En rojo, menos de 15%. Los precios salen de Productos, de Precios y mínimos (profesionales) y del catálogo mayorista. Los productos que no están en el Maestro, como los nacionales, necesitan que cargues su costo a mano.</p>`;
+  bindSort(drawRent);
+  $('#rmes').onchange=e=>{RMES=e.target.value;drawRent()};
+  const setS=async(k,v,n)=>{ST[k]=v;const {error}=await sb.from('settings').upsert({key:k,value:v,nota:n});toast(error?'No se pudo guardar':'Guardado');drawRent()};
+  $('#rcom').onchange=e=>setS('comision_mp',(+e.target.value.replace(',','.')||0)/100,'Comisión Mercado Pago con IVA');
+  $('#renv').onchange=e=>setS('envio_costo',+e.target.value.replace(/\D/g,'')||0,'Costo promedio de un envío que no cobrás aparte (ARS)');
+  $('#m').querySelectorAll('[data-cm]').forEach(i=>i.onchange=async()=>{const d=i.value.replace(/\D/g,''),v=d?+d:null;const p=PB[i.dataset.cm];p.costo_manual=v;const {error}=await sb.from('products').update({costo_manual:v}).eq('id',p.id);toast(error?'No se pudo guardar':'Costo guardado');drawRent()});
 }
 
 /* ---------- pedidos ---------- */
