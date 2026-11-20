@@ -161,7 +161,7 @@ function shell(){
 }
 async function draw(){
   drawNav();PRODF=tab==='nacionales'?'nacional':'';if(tab==='nacionales'){await loadProds();drawProds();return}PEDF=tab==='ppedidos'?'profesional':'publico';if(tab==='ppedidos'){await loadOrders();drawOrders();return}if(tab==='pprecios'){await drawProfPrecios();return}if(tab==='pcuentas'){CUENTAS='profesional';await drawPro();return}if(tab==='pro')CUENTAS='mayorista';
-  if(tab==='inicio'){await drawInicio();await drawSubs()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);try{await ecoLoad()}catch(e){}drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='ecopar'){await loadMaster();await drawEcoPar()}else if(tab==='rent'){await loadMaster();await drawRent()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
+  if(tab==='inicio'){await drawInicio();await drawSubs()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);try{await ecoLoad()}catch(e){}drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='ecopar'){await loadMaster();await drawEcoPar()}else if(tab==='rent'){await loadMaster();await drawRent()}else if(tab==='campanias'){await drawCampanias()}else if(tab==='clientes'){await drawClientes()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
 }
 
 /* ---------- productos ---------- */
@@ -423,7 +423,7 @@ async function drawProfPrecios(){
   $('#gmp').onchange=e=>{const v=Math.max(1,+e.target.value.replace(/\D/g,'')||1);ST.min_profesional=v;mark(e.target,'settings','key','min_profesional','value',v);drawProfPrecios()};
 }
 /* ---------- menú del panel por secciones ---------- */
-const GRUPOS=[['inicio','Inicio',[['inicio','Resumen']]],
+const GRUPOS=[['inicio','Inicio',[['inicio','Resumen'],['campanias','Anuncios por campaña'],['clientes','Clientes']]],
  ['b2c','Tienda',[['productos','Productos'],['nacionales','Productos nacionales'],['pedidos','Pedidos y arrepentimientos']]],
  ['prof','Profesionales',[['pprecios','Precios y mínimos'],['pcuentas','Cuentas'],['ppedidos','Pedidos']]],
  ['may','Mayoristas',[['pro','Cuentas, contenedor y catálogo']]],
@@ -730,10 +730,10 @@ async function ventasRent(){
   if(fr.length)await Promise.all(fr);
   const fin=(v)=>{v.iibb=v.venta*T.IIBB;v.chq=v.total*T.CHQ;v.g=v.venta-v.cprod-v.com-v.env-v.iibb-v.chq;v.m=v.venta?v.g/v.venta:null;return v};
   const V=pag.map(o=>{const its=o.order_items||[];return fin({id:'#'+o.id,f:o.created_at,canal:o.canal==='profesional'?'pro':'pub',cli:o.nombre,det:its.map(i=>`${i.cantidad}× ${i.products?i.products.tipo+' '+i.products.nombre:i.product_id} a ${ars(i.precio)}${i.regla?' ('+i.regla+(i.precio_lista_momento?', lista '+ars(i.precio_lista_momento):'')+')':''}`).join(', '),
-    medio:medioTxt(o),total:o.total,its:its.map(i=>({id:i.product_id,q:i.cantidad,p:i.precio,c:i.costo_unit,l:i.precio_lista_momento,r:i.regla})),mp:o.medio_pago,cuotas:o.cuotas||1,venta:o.total/(1+T.IVA),cprod:its.reduce((a,i)=>a+(i.costo_unit||0)*i.cantidad,0),falta:its.some(i=>i.costo_unit==null),
+    medio:medioTxt(o),total:o.total,its:its.map(i=>({id:i.product_id,q:i.cantidad,p:i.precio,c:i.costo_unit,l:i.precio_lista_momento,r:i.regla})),mp:o.medio_pago,cuotas:o.cuotas||1,tk:o.tracking||null,em:(o.email||'').trim().toLowerCase(),tel:o.telefono,venta:o.total/(1+T.IVA),cprod:its.reduce((a,i)=>a+(i.costo_unit||0)*i.cantidad,0),falta:its.some(i=>i.costo_unit==null),
     com:o.comision_real!=null?+o.comision_real:o.total*T.COM,comReal:o.comision_real!=null,env:/gratis|express/i.test(o.envio||'')?T.ENV:0,est:EST_TXT[o.estado]})});
   (pp||[]).filter(r=>r.estado!=='cancelado').forEach(r=>{const its=r.items||[];let falta=false;const cprod=its.reduce((a,i)=>{const c=cuR(i.id||i.codigo);if(c==null){falta=true;return a}return a+c*i.q},0);
-    V.push(fin({id:'R'+r.id,f:r.created_at,canal:'may',its:its.map(i=>({id:i.id||i.codigo,q:i.q,p:i.precio,c:cuR(i.id||i.codigo)})),mp:'transferencia',cuotas:1,cli:r.estudio||r.nombre,det:its.map(i=>`${i.q}× ${i.producto}`).join(', '),medio:'Transferencia',total:r.total,venta:r.total/(1+T.IVA),cprod,falta,com:0,env:0,est:r.estado==='confirmado'?'Confirmada':'Reservada, sin confirmar'}))});
+    V.push(fin({id:'R'+r.id,f:r.created_at,canal:'may',its:its.map(i=>({id:i.id||i.codigo,q:i.q,p:i.precio,c:cuR(i.id||i.codigo)})),mp:'transferencia',cuotas:1,tk:null,em:(r.email||'').trim().toLowerCase(),tel:r.telefono,cli:r.estudio||r.nombre,det:its.map(i=>`${i.q}× ${i.producto}`).join(', '),medio:'Transferencia',total:r.total,venta:r.total/(1+T.IVA),cprod,falta,com:0,env:0,est:r.estado==='confirmado'?'Confirmada':'Reservada, sin confirmar'}))});
   return V.sort((a,b)=>b.f.localeCompare(a.f));
 }
 /* resultado del período: va en Inicio */
@@ -859,6 +859,6 @@ function drawOrders(){
 }
 start();
 </script>
-<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=5"></script><script src="inicio.js?v=5"></script>
+<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=6"></script><script src="inicio.js?v=6"></script><script src="marketing.js?v=1"></script>
 </body>
 </html>

@@ -208,7 +208,7 @@ function ecoReal(pe){
   const L=[],PED=[];(ECO.V||[]).filter(v=>new Date(v.f)>=desde).forEach(v=>{const tot=v.its.reduce((s,i)=>s+(i.p||0)*i.q,0)||1;let any=false;
     v.its.forEach(i=>{if(!cods.has(i.id))return;any=true;const sh=(i.p||0)*i.q/tot;L.push({f:v.f,sku:i.id,u:i.q,precio:i.p||0,canal:v.canal,pago:grupoPago(v),com:v.com*sh,cobrado:v.total*sh,neta:v.venta*sh,desc:/transferencia/.test(i.r||'')||v.mp==='transferencia'?(i.p||0)*i.q*(1/(1-dt)-1):0})});if(any)PED.push(v)});
   const u=L.reduce((a,x)=>a+x.u,0),nP=PED.length,cobr=L.reduce((a,x)=>a+x.cobrado,0),neta=L.reduce((a,x)=>a+x.neta,0);
-  const total=recib?recib-rotas:r0.unidades;
+  const total=r0.items.reduce((a,i)=>{const x=rec.find(z=>z.codigo===i.codigo);return a+(x?x.recibidas-x.rotas:i.cant)},0);
   const C={};const add=(k,label,proj,real,n,N,ok,fmt,mejor)=>C[k]={label,proj,real,n,N,ok,fmt,mejor};
   /* rotación */
   const okRot=dias!=null&&dias>=MIN.dias&&u>=MIN.u,vel=dias?u/dias:0;

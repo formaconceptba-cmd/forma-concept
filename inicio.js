@@ -38,14 +38,16 @@ async function drawInicio(silencioso){
     sb.from('eventos').select('created_at,visitante,sesion,tipo,producto,ref,utm,dispositivo,valor').gte('created_at',(prev||from).toISOString()).order('created_at',{ascending:false}).limit(20000),
     sb.from('orders').select('*,order_items(*,products(tipo,nombre))').eq('estado','pendiente').order('created_at',{ascending:false}).limit(60),
     sb.from('precio_historial').select('*').order('fecha',{ascending:false}).limit(200),sb.rpc('precios_admin'),sb.from('settings').select('*'),sb.rpc('stock_admin')]);
+  const {data:AC}=await sb.from('ads_campania').select('fecha,gasto');
   if(tab!=='inicio')return;
   ST=Object.fromEntries((st||[]).map(x=>[x.key,+x.value]));
   const T=TX(),PB=Object.fromEntries(prods.map(p=>[p.id,p])),PCA=Object.fromEntries((pca||[]).map(x=>[x.id,x])),nom=id=>PB[id]?PB[id].tipo+' '+PB[id].nombre:id;
   const inP=d=>new Date(d)>=from,inPrev=d=>prev&&new Date(d)>=prev&&new Date(d)<from;
   const cur=V.filter(v=>inP(v.f)),old=V.filter(v=>inPrev(v.f));
   const ini0=PER?+from:Math.min(now-DIA,V.reduce((m,v)=>Math.min(m,+new Date(v.f)),now),(ev||[]).reduce((m,x)=>Math.min(m,+new Date(x.created_at)),now)),dias=Math.max(1,(now-ini0)/DIA),S=(a,k)=>a.reduce((s,v)=>s+v[k],0);
-  const res=a=>{const venta=S(a,'venta'),g=S(a,'g'),ads=T.ADS*dias/30,fij=T.FIJ*dias/30,antes=g-ads-fij,gan=Math.max(0,antes)*T.GAN;return {total:S(a,'total'),venta,g,ads,fij,antes,gan,neto:antes-gan,n:a.length}};
-  const R=res(cur),RP=res(old);
+  const adsDe=(d0,d1)=>(AC||[]).length?(AC||[]).filter(x=>{const t=+new Date(x.fecha+'T12:00');return t>=+d0&&t<+d1}).reduce((s,x)=>s+(+x.gasto),0):T.ADS*dias/30;
+  const res=(a,d0,d1)=>{const venta=S(a,'venta'),g=S(a,'g'),ads=adsDe(d0,d1),fij=T.FIJ*dias/30,antes=g-ads-fij,gan=Math.max(0,antes)*T.GAN;return {total:S(a,'total'),venta,g,ads,fij,antes,gan,neto:antes-gan,n:a.length}};
+  const R=res(cur,PER?from:new Date(ini0),new Date(now+DIA)),RP=res(old,prev||new Date(0),from);
   const E=(ev||[]).filter(x=>inP(x.created_at)),EP=(ev||[]).filter(x=>inPrev(x.created_at));
   const uv=(a,t)=>new Set(a.filter(x=>!t||x.tipo===t).map(x=>x.visitante)).size;
   const vis=uv(E,'visita')||uv(E),visP=uv(EP,'visita')||uv(EP),live=new Set((ev||[]).filter(x=>now-new Date(x.created_at)<5*6e4).map(x=>x.visitante)).size;
