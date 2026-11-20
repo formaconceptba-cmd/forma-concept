@@ -593,7 +593,7 @@ function viewHome(){
   return `${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','Madera maciza teñida y tapizados que abrazan. Para quedarse.','Ver todos','#tienda').replace('loading="lazy"','loading="eager" fetchpriority="high"')}
   <section class="rv rv1"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><div class="rv-t rv-ar"><span>Próximamente</span><h2>Probalo<br>en tu casa</h2><p>Vas a poder ver los muebles en tu espacio con la cámara del celular.</p></div></section>
   ${cats()}
-  <section class="sil" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,3,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
+  <section class="sil" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
   <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
   <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${proTile()}</div>
   <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
