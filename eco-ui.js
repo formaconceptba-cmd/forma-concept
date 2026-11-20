@@ -36,7 +36,7 @@ function ecoCostos(){const out={};const ord=[...ECO.ped].sort((a,b)=>(a.estado==
 
 async function drawEco(){
   $('#m').innerHTML='<p class="hint">Cargando…</p>';
-  await ecoLoad();
+  await ecoLoad();if(!prods.length)await loadProds();
   if(ECO.sel&&!ECO.ped.find(p=>p.id===ECO.sel))ECO.sel=null;
   if(ECO.sel)return drawEcoPedido();
   if(ECO.vista==='comparar')return drawEcoComparar();
@@ -121,9 +121,10 @@ function bindProductos(pe){
 }
 
 /* ---- Precios (reemplaza la hoja PRICING) ---- */
+function ecoTienda(r){const PB=Object.fromEntries(prods.map(p=>[p.id,p]));return r.items.filter(i=>i.precioARS>0&&PB[i.codigo]&&(+PB[i.codigo].precio_lista!==Math.round(i.precioARS)||PB[i.codigo].precio_preventa)).map(i=>({i,p:PB[i.codigo]}))}
 function ecoPrecios(pe,r){
   const cc=r.cc,p=r.p,AL={ok:'<span class="pos">bien</span>',warn:'<span style="color:#d68910">flojo</span>',bad:'<span class="neg">pierde</span>'};
-  return `<p class="hint" style="max-width:820px">El único precio que se carga es el <b>precio de lista en pesos con IVA</b>. Todo lo demás sale de ahí: el markup es un resultado, no un dato. El markup editable sólo sirve para el precio sugerido.</p>
+  return `${(()=>{const D=ecoTienda(r);return D.length?`<div class="card pad" style="margin-bottom:12px;border-color:#d68910"><h4>${D.length} precio${D.length>1?'s':''} de este pedido no coinciden con la tienda</h4><div class="wrap"><table><thead><tr><th>Producto</th><th class="n">Lista hoy en la tienda</th><th class="n">Lista de este pedido</th><th></th></tr></thead><tbody>${D.map(({i,p})=>`<tr><td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(i.codigo)}</div></td><td class="n">${ars(p.precio_lista)}${p.precio_preventa?`<div class="hint">preventa fija a mano ${ars(p.precio_preventa)}</div>`:''}</td><td class="n"><b>${ars(i.precioARS)}</b></td><td class="hint">${+p.precio_lista===Math.round(i.precioARS)?'sólo saca la preventa fija':i.precioARS>p.precio_lista?'sube':'baja'}</td></tr>`).join('')}</tbody></table></div><p class="hint">Al pasarlos, la tienda usa el precio de lista de este pedido y los demás precios (preventa, transferencia, profesional, mayorista) se recalculan con las reglas. Si había una preventa fijada a mano, se borra para que siga la regla.</p><button class="btn dk" id="etienda">Pasar estos precios a la tienda</button></div>`:`<p class="hint" style="margin-bottom:10px">✓ Los precios de este pedido son los mismos que tiene la tienda.</p>`})()}<p class="hint" style="max-width:820px">El único precio que se carga es el <b>precio de lista en pesos con IVA</b>. Todo lo demás sale de ahí: el markup es un resultado, no un dato. El markup editable sólo sirve para el precio sugerido.</p>
   <div class="card wrap"><table class="big"><thead><tr><th></th><th>Producto</th><th class="n">Cant.</th><th class="n">Costo u.</th><th class="n">Desembolso u.</th><th class="n">Markup</th><th class="n">Sugerido</th><th class="n">PRECIO LISTA</th><th class="n">Transferencia</th><th class="n">US$ s/IVA</th><th class="n">Markup real</th><th class="n">Margen</th><th class="n">Te queda u.</th><th class="n">Neto u.</th><th class="n">Retorno</th><th>Alerta</th><th class="n">Mín. objetivo</th><th class="n">Mín. sin perder</th><th class="n">Venta total</th><th class="n">Neto total</th></tr></thead><tbody>
   ${r.items.map(i=>`<tr><td>${i.foto?`<img src="${esc(src(i.foto))}" alt="">`:''}</td><td><b>${esc(i.codigo)}</b><div class="hint">${esc(i.desc)}</div></td><td class="n">${i.cant}</td><td class="n">${eN(i.costoU)}</td><td class="n">${eN(i.desembolsoU)}</td>
    <td class="n"><input class="num" style="width:54px" data-mk="${esc(i.codigo)}" value="${i.markupManual!=null?Math.round(i.markupManual*100):''}" placeholder="${Math.round(p.markupDefault*100)}">%</td><td class="n">${ars(i.sugeridoARS)}</td>
@@ -136,6 +137,7 @@ function ecoPrecios(pe,r){
    <div class="rw"><span class="hint">Mezcla: ${eP(p.mixTransf,0)} transferencia · ${eP(p.mixUnPago,0)} 1 pago · ${eP(cc.mixCuotas,0)} cuotas</span><span></span></div><div class="rw" style="border-top:1px solid var(--line);padding-top:6px"><span><b>Costo de cobrar promedio</b> (sobre la venta sin IVA)</span><b>${eP(cc.total,2)}</b></div></div>`;
 }
 function bindPrecios(pe){
+  const et=$('#etienda');if(et)et.onclick=()=>ecoPasarTienda(pe);
   const it=c=>ECO.it.find(i=>i.pedido_id===pe.id&&i.codigo===c);
   $('#m').querySelectorAll('[data-pr]').forEach(x=>{x.oninput=()=>{const d=x.value.replace(/\D/g,'');x.value=d?(+d).toLocaleString('es-AR'):''};x.onchange=async()=>{const i=it(x.dataset.pr),d=x.value.replace(/\D/g,''),v=d?+d:null;i.precio_ars=v;const {error}=await sb.from('eco_items').update({precio_ars:v}).eq('id',i.id);toast(error?'No se pudo guardar':'Precio guardado');drawEcoPedido()}});
   $('#m').querySelectorAll('[data-mk]').forEach(x=>x.onchange=async()=>{const i=it(x.dataset.mk),n=eNum(x.value),v=n==null?null:n/100;i.markup_manual=v;const {error}=await sb.from('eco_items').update({markup_manual:v}).eq('id',i.id);if(error)toast('No se pudo guardar');drawEcoPedido()});
@@ -185,4 +187,11 @@ async function drawEcoPar(){
   $('#m').querySelectorAll('[data-pk]').forEach(i=>i.onchange=async()=>{const v=eNum(i.value);if(v==null||!isFinite(v))return toast('Número inválido');const k=i.dataset.pk;ECO.par[k]=v;i.nextElementSibling.textContent=PAR_LBL[k][3]==='pct'?eP(v,2):'';
     if(k==='tc'){ST.tc=v;await sb.from('settings').upsert({key:'tc',value:v,nota:'Tipo de cambio ARS por USD'})}await save()});
   $('#m').querySelectorAll('[data-ark]').forEach(i=>i.onchange=async()=>{const v=eNum(i.value);if(v==null||!isFinite(v))return toast('Número inválido');ECO.ar[i.dataset.ark]=v;i.nextElementSibling.textContent=eP(v);await save()});
+}
+/* pasa el precio de lista del pedido a la tienda (única fuente del precio) */
+async function ecoPasarTienda(pe){
+  const D=ecoTienda(ecoCalc(pe));if(!D.length)return;
+  if(!confirm(`¿Pasar ${D.length} precio${D.length>1?'s':''} a la tienda? Los clientes van a ver los precios nuevos al instante.`))return;
+  let ok=0;for(const {i,p} of D){const v=Math.round(i.precioARS);const {error}=await sb.from('products').update({precio_lista:v,precio_preventa:null}).eq('id',p.id);if(!error){p.precio_lista=v;p.precio_preventa=null;ok++}}
+  toast(ok===D.length?'Listo: la tienda ya usa estos precios':`Se pasaron ${ok} de ${D.length}`);drawEcoPedido();
 }

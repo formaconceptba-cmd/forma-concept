@@ -289,6 +289,8 @@ a.fs-p{display:block;color:inherit}a.fs-p .fim img{transition:transform 1.2s var
 .ck2-n{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:12px}
 .ck2-cp{display:flex;gap:8px;max-width:420px}.ck2-cp input{flex:1;height:44px;border:1px solid var(--line);padding:0 12px;font:inherit;font-size:15px;background:#fff;min-width:0}.ck2-cp .buy{width:auto;padding:0 20px;margin:0;height:44px}
 .ck2-z{font-size:14px;text-transform:none;letter-spacing:0}.ck2 .mut{text-transform:none!important;letter-spacing:0!important;font-size:13.5px!important;line-height:1.5}
+.ck2-dt{display:grid;gap:8px;margin-top:12px}.ck2-dt input{height:44px;padding:0 12px;border:1px solid var(--line,#ddd);background:transparent;font:inherit;color:inherit}
+.ck2-tr{border:1px solid var(--line,#ddd);margin:18px 0;max-width:520px}.ck2-tr div{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:11px 14px;border-top:1px solid var(--line,#ddd)}.ck2-tr div:first-child{border-top:0}.ck2-tr span{font-size:12px;color:var(--soft,#777)}.ck2-tr b{word-break:break-all}
 .ck2-r{position:sticky;top:80px;border:1px solid var(--line);background:#fff;padding:20px;display:grid;gap:12px}.ck2-h{font-size:12px;letter-spacing:.08em;font-weight:500}
 .ck2-i{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;font-size:13px}.ck2-i img{width:56px;height:56px;object-fit:contain;background:var(--box);mix-blend-mode:multiply}.ck2-i small{display:block;color:var(--soft);text-transform:none;letter-spacing:0}
 .ck2-r .lnk{justify-self:start;background:none;border:0;text-decoration:underline;cursor:pointer;font:inherit;font-size:12px;color:var(--soft)}.ck2-r .buy{margin:4px 0 0}.ck2-r .buy[disabled]{opacity:.45;cursor:not-allowed}.ck2-r .safe{display:block;text-align:center;color:var(--soft);font-size:11.5px;text-transform:none;letter-spacing:0}
@@ -542,6 +544,7 @@ async function loadDB(){
     const r=await fetch(SB_URL+'/rest/v1/products?select=*&activo=eq.true&order=orden',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});
     if(!r.ok)return; const rows=await r.json(); if(!rows.length)return;
     const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,disp:x.disponibilidad||'',cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,pp:x.pct_preventa,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores&&x.colores.length?x.colores:[['Único','#D8D2C8']],noColor:!(x.colores&&x.colores.length),feat:x.destacado?1:0}));
+    try{const q=await fetch(SB_URL+'/rest/v1/rpc/precios_publicos',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const m=Object.fromEntries((await q.json()).map(x=>[x.id,x]));list.forEach(p=>{const x=m[p.id];if(x){p.list=x.lista;p.price=x.publico;p.transf=x.transf}})}}catch(e){}
     P.splice(0,P.length,...list);
     if(!animating)render();
   }catch(e){console.warn('DB',e)}
@@ -632,8 +635,9 @@ function viewLegal(k){
    <h3>Interior del país</h3><p>Lo enviamos por transporte a tu localidad. Te pasamos el costo antes de despachar y lo abonás al recibir.</p>
    <h3>Retiro</h3><p>También podés retirarlo en Buenos Aires, coordinando día y horario.</p>
    <h3>Cómo te llega</h3><p>Cada pieza viaja en caja de cartón reforzado, con esquineros y protección en cada cara. Si necesita armado, incluye herrajes e instrucciones; en CABA y GBA te lo podemos dejar armado.</p>`],
-  'ayuda-pagos':['Medios de pago',`<p>Todos los pagos se hacen a través de <b>Mercado Pago</b>, de forma segura. Tus datos de tarjeta nunca pasan por nuestra página.</p>
-   <h3>Precio de preventa</h3><p>Se paga en <b>un solo pago</b>, con tarjeta de crédito, débito, dinero en cuenta de Mercado Pago o efectivo en puntos de pago. La preventa no tiene cuotas.</p>
+  'ayuda-pagos':['Medios de pago',`<p>Podés pagar con <b>Mercado Pago</b> (tarjeta de crédito, débito, dinero en cuenta o efectivo) o con <b>transferencia bancaria</b>. Tus datos de tarjeta nunca pasan por nuestra página.</p>
+   <h3>Transferencia: 15% de descuento</h3><p>Si pagás con transferencia tenés <b>15% de descuento</b>. Al finalizar la compra te damos los datos de la cuenta; cuando vemos la plata acreditada te confirmamos el pedido.</p>
+   <h3>Cuotas</h3><p>Con tarjeta de crédito tenés <b>hasta 3 cuotas sin interés</b>. También podés pagar en 6 o 12 cuotas, con el interés de tu tarjeta.</p>
    <h3>Factura</h3><p>Emitimos factura A o B. Si necesitás factura A, escribinos con tu CUIT después de comprar.</p>
    <h3>¿Problemas con el pago?</h3><p>Escribinos por ${wa} y te ayudamos.</p>`],
   'ayuda-preventa':['Cómo funciona la preventa',`<p>Compramos en contenedores directamente a los fabricantes. Con la preventa reservás tu producto antes de que llegue, con un descuento sobre el precio de lista.</p>
@@ -648,7 +652,7 @@ function viewLegal(k){
    <h3>Cambios de color o modelo</h3><p>Como los productos se fabrican a partir de tu compra, los cambios de color o modelo se pueden hacer hasta que cierre el contenedor. Escribinos y lo vemos.</p>`],
   'ayuda-preguntas':['Preguntas frecuentes',`<h3>¿Cuándo llega mi compra?</h3><p>Los productos de la preventa tienen entrega estimada en ${ENTREGA.toLowerCase()}.</p>
    <h3>¿Por qué es más barato en preventa?</h3><p>Porque lo traemos directo del fabricante y vos pagás antes de que llegue. Sin intermediarios ni stock parado.</p>
-   <h3>¿Puedo pagar en cuotas?</h3><p>El precio de preventa es en un solo pago.</p>
+   <h3>¿Puedo pagar en cuotas?</h3><p>Sí: hasta 3 cuotas sin interés con tarjeta de crédito, o 6 y 12 cuotas con interés.</p>
    <h3>¿Puedo ver los productos antes?</h3><p>Sí, con cita previa en Buenos Aires. Escribinos por ${wa}. También podés probarlos en tu casa con la cámara del celular desde <a href="#en-tu-casa">Probalo en tu casa</a>.</p>
    <h3>¿Hacen envíos al interior?</h3><p>Sí, por transporte. Te pasamos el costo antes de despachar.</p>
    <h3>¿Tienen precios para arquitectos, estudios o comercios?</h3><p>Sí. Entrá en <a href="#proyectos">Profesionales</a> y pedí tu acceso.</p>
@@ -670,7 +674,7 @@ async function proLoad(){
     const r=await c.from('profesionales').select('*').maybeSingle(); PRO=r.data||null;
     ISADM=(await c.rpc('is_admin')).data===true;
     if(isPro()){const {data}=await c.rpc('pro_catalogo');PROCAT=data||[];await contLoad();await misLoad()}
-    if(isProf()){const {data}=await c.rpc('prof_precios');const m=Object.fromEntries((data||[]).map(x=>[x.id,x]));P.forEach(p=>{const x=m[p.id];if(x){p.price=x.precio;p.min=x.minimo||1}})}
+    if(isProf()){const {data}=await c.rpc('prof_precios');const m=Object.fromEntries((data||[]).map(x=>[x.id,x]));P.forEach(p=>{const x=m[p.id];if(x){p.price=x.precio;p.transf=x.transf;p.min=x.minimo||1}})}
   }
   document.body.classList.toggle('pro',isPro()||isProf());document.body.classList.toggle('may',isPro());
   try{ISADM?localStorage.setItem('fc_notrack','1'):localStorage.removeItem('fc_notrack')}catch(e){}
@@ -900,10 +904,11 @@ function viewProduct(p){
     <h1>${esc(title(p))}</h1>
     ${p.price?`${p.list>p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>`:""}
      <div class="price">${ars(p.price)} <span class="tag">${p.fam==='Nacional'?(DISP[p.disp]||'Fabricación nacional'):isProf()?'Precio profesional −'+off(p)+'%':'Preventa −'+off(p)+'%'}</span></div>
-     <ul class="pay"><li><b>${p.fam==='Nacional'?'Precio':isProf()?'Precio profesional':'Precio de preventa'} · un solo pago</b><span>${ars(p.price)}</span></li>
+     <ul class="pay"><li><b>${p.fam==='Nacional'?'Precio':isProf()?'Precio profesional':'Precio de preventa'} · Mercado Pago</b><span>${ars(p.price)}</span></li>
+      ${p.transf?`<li><b>Con transferencia · 15% off</b><span>${ars(p.transf)}</span></li>`:''}<li><b>Hasta 3 cuotas sin interés</b><span>3 × ${ars(Math.ceil(p.price/3))}</span></li>
       <li><b>Entrega</b><span>${p.fam==='Nacional'?({stock:'Inmediata',pedido:'A pedido, a coordinar',sin_stock:'Sin stock por ahora'}[p.disp]||'A coordinar'):'Estimada '+ENTREGA}</span></li>
       ${isProf()&&p.min>1?`<li><b>Compra mínima profesional</b><span>${p.min} unidades</span></li>`:""}
-      <li><b>Tarjeta, débito, dinero en cuenta o efectivo</b><span>Mercado Pago</span></li></ul>`:'<div class="cuo">Precio a confirmar</div>'}
+      <li><b>6 y 12 cuotas, débito, dinero en cuenta o efectivo</b><span>Mercado Pago</span></li></ul>`:'<div class="cuo">Precio a confirmar</div>'}
     ${p.noColor?'':`<div class="lb">Color</div>
     <div class="sw">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i?'':'on'}" style="background:${c[1]}" aria-label="${esc(c[0])}"></button>`).join('')}</div>
     <div class="swn" id="swn">${esc(p.colors[0][0])}</div>`}
@@ -937,13 +942,13 @@ function drawCart(){
     <div class="cnt"><div><span>Contenedor compartido</span><span>${pc}% lleno</span></div><div class="cbar"><i style="width:${pc0}%"></i><b style="left:${pc0}%;width:${Math.max(0,pc-pc0)}%"></b></div><small>Tu pedido ocupa ${cbm.toFixed(2).replace('.',',')} m³. Lo confirmamos cuando el contenedor se completa con otros pedidos y la preventa.</small></div>
     ${bad.length?`<p class="cwarn">Revisá los mínimos: ${bad.map(l=>esc(title(byId(l.id)))+' ('+(byId(l.id).moq||1)+' u.)').join(', ')}</p>`:''}
     <button class="buy" id="proReserve" ${bad.length?'disabled':''}>Reservar en el contenedor</button><button class="lnk" id="proQuote">Consultar por WhatsApp</button>`:'';return}
-  $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>Entrega estimada</span><span>${ENTREGA}</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="pay">Ir a pagar</button><small class="safe">🔒 Pago seguro con Mercado Pago · tarjeta, débito, transferencia o efectivo</small>`:'';
+  $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>Entrega estimada</span><span>${ENTREGA}</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="pay">Ir a pagar</button><small class="safe">🔒 Mercado Pago (hasta 3 cuotas sin interés) o transferencia con 15% off</small>`:'';
 }
 const openCart=()=>{drawCart();$('#dr').classList.add('on');$('#dr').setAttribute('aria-hidden','false')};
 const closeCart=()=>{$('#dr').classList.remove('on');$('#dr').setAttribute('aria-hidden','true')};
 document.querySelector('#dr .sh')?.addEventListener('click',closeCart);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#dr').classList.contains('on'))closeCart()});
 /* Paso previo al pago: envío y resumen. El costo real lo vuelve a calcular el servidor. */
-let ENV='gratis', ENV_EXP=35000;
+let ENV='gratis', ENV_EXP=35000, PAYM='mp', BUY={n:'',e:'',t:''}, TRF=null;
 fetch(SB_URL+'/rest/v1/rpc/envio_precios',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).then(d=>{if(d&&d[0]&&d[0].express!=null)ENV_EXP=+d[0].express}).catch(()=>{});
 /* ---------- página de pago: envío según código postal + resumen + cómo te llega ---------- */
 const ZONAS={caba:{n:'Ciudad de Buenos Aires',dias:'martes, jueves y sábados'},gba:{n:'Gran Buenos Aires',dias:'jueves y sábados'},int:{n:'Interior del país',dias:''}};
@@ -959,22 +964,35 @@ function envOps(z){
 function viewCheckout(){
   if(!cart.length)return `<section class="ck2"><h1>Tu carrito está vacío</h1><p class="mut">Agregá productos para seguir con la compra.</p><a class="buy" href="#tienda" style="display:inline-flex;align-items:center;justify-content:center;padding:0 32px;width:auto">Ver productos</a></section>`;
   const z=zonaCP(CPV),ops=envOps(z);if(!ops.some(o=>o[0]===ENV))ENV=ops[0]?ops[0][0]:'gratis';
-  const sub=cart.reduce((a,l)=>a+(byId(l.id).price||0)*l.q,0),env=ENV==='express'&&z&&z!=='int'?ENV_EXP:0,tot=sub+env;
+  const TR=PAYM==='transferencia',pu=p=>(TR&&p.transf?p.transf:p.price)||0;
+  const sub=cart.reduce((a,l)=>a+pu(byId(l.id))*l.q,0),subMP=cart.reduce((a,l)=>a+(byId(l.id).price||0)*l.q,0),env=ENV==='express'&&z&&z!=='int'?ENV_EXP:0,tot=sub+env;
+  const nPay=z?3:2,okBuy=!TR||(BUY.n&&/\S+@\S+\.\S+/.test(BUY.e)&&BUY.t.replace(/\D/g,'').length>=8);
   return `<section class="ck2"><a class="back" href="#tienda">← Seguir comprando</a><h1>Finalizar compra</h1>
   <div class="ck2-g"><div class="ck2-l">
    <div class="ck2-b"><span class="ck2-n">1</span><div><b>¿Dónde lo recibís?</b>
     <form id="ckForm" class="ck2-cp"><input id="ckCp" inputmode="numeric" maxlength="4" placeholder="Código postal" value="${esc(CPV)}" aria-label="Código postal"><button class="buy" type="submit">Calcular envío</button></form>
     ${z?`<p class="ck2-z">${ZONAS[z].n}${ZONAS[z].dias?` · entregamos los <b>${ZONAS[z].dias}</b>`:''}</p>`:`<p class="mut">Escribí tu código postal de 4 números para ver las opciones y los días de entrega.</p>`}</div></div>
    ${z?`<div class="ck2-b"><span class="ck2-n">2</span><div><b>Elegí cómo te llega</b><div class="env">${ops.map(([k,t,s,p])=>`<button class="env-o ${ENV===k?'on':''}" data-env2="${k}"><i></i><span><b>${t}</b><small>${s}</small></span><em>${p}</em></button>`).join('')}</div></div></div>`:''}
-   <div class="ck2-b"><span class="ck2-n">${z?3:2}</span><div><b>Pagás en Mercado Pago</b><p class="mut">Un solo pago con tarjeta de crédito, débito, dinero en cuenta o efectivo (la preventa no tiene cuotas). Tus datos de contacto y facturación los cargás ahí. El pago es seguro: tus datos de tarjeta nunca pasan por nuestra página.</p></div></div>
+   <div class="ck2-b"><span class="ck2-n">${nPay}</span><div><b>¿Cómo pagás?</b><div class="env">
+    <button class="env-o ${TR?'':'on'}" data-paym="mp"><i></i><span><b>Mercado Pago</b><small>Tarjeta de crédito hasta 3 cuotas sin interés (6 y 12 con interés), débito, dinero en cuenta o efectivo. Tus datos los cargás ahí.</small></span><em>${ars(subMP)}</em></button>
+    <button class="env-o ${TR?'on':''}" data-paym="transferencia"><i></i><span><b>Transferencia bancaria · 15% off</b><small>Te damos los datos de la cuenta y confirmamos tu pedido cuando se acredita.</small></span><em>${ars(cart.reduce((a,l)=>a+((byId(l.id).transf||byId(l.id).price)||0)*l.q,0))}</em></button></div>
+    ${TR?`<div class="ck2-dt"><input id="bu_n" placeholder="Nombre y apellido" value="${esc(BUY.n)}" autocomplete="name"><input id="bu_e" type="email" placeholder="Mail" value="${esc(BUY.e)}" autocomplete="email"><input id="bu_t" inputmode="tel" placeholder="Teléfono / WhatsApp" value="${esc(BUY.t)}" autocomplete="tel"></div><p class="mut">Te mandamos los datos para transferir a ese mail.</p>`:''}</div></div>
   </div>
   <aside class="ck2-r"><b class="ck2-h">Tu pedido</b>
-   ${cart.map(l=>{const p=byId(l.id);return `<div class="ck2-i"><img src="${src(p.img)}" alt=""><div><b>${esc(title(p))}</b><small>${esc(p.colors[l.c]?p.colors[l.c][0]:'')} · ${l.q} u.</small></div><span>${ars((p.price||0)*l.q)}</span></div>`}).join('')}
+   ${cart.map(l=>{const p=byId(l.id);return `<div class="ck2-i"><img src="${src(p.img)}" alt=""><div><b>${esc(title(p))}</b><small>${esc(p.colors[l.c]?p.colors[l.c][0]:'')} · ${l.q} u.</small></div><span>${ars(pu(p)*l.q)}</span></div>`}).join('')}
    <button class="lnk" data-opencart>Editar carrito</button>
    <div class="env-r"><div><span>Productos</span><span>${ars(sub)}</span></div><div><span>Envío</span><span>${!z?'Calculalo con tu CP':ENV==='interior'?'A cotizar':env?ars(env):'Gratis'}</span></div><div class="env-t"><span>Total</span><span>${ars(tot)}</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(tot-tot/1.21))}</span></div></div>
-   <button class="buy" id="payMP" ${z?'':'disabled'}>${z?'Pagar con Mercado Pago':'Calculá tu envío para seguir'}</button><small class="safe">🔒 Pago seguro con Mercado Pago</small></aside></div>
+   <button class="buy" id="payMP" ${z&&okBuy?'':'disabled'}>${!z?'Calculá tu envío para seguir':TR?(okBuy?'Confirmar pedido con transferencia':'Completá tus datos para seguir'):'Pagar con Mercado Pago'}</button><small class="safe">${TR?'Reservamos tu pedido y te mandamos los datos de la cuenta':'🔒 Pago seguro con Mercado Pago'}</small></aside></div>
   <section class="ck2-pk"><img src="${src(FX('embalaje','pack'))}" alt="Embalaje de un producto FORMA Concept" loading="lazy"><div><span class="k">Cómo te llega</span><h2>Embalado para que llegue perfecto</h2>
    <ul><li>Caja de cartón reforzado con esquineros y protección en cada cara.</li><li>Cada pieza viaja envuelta por separado, con su etiqueta y código.</li><li>Si necesita armado, incluye herrajes e instrucciones. En CABA y GBA te lo podemos dejar armado.</li><li>Te avisamos por WhatsApp el día de entrega y la franja horaria.</li></ul></div></section></section>`;
+}
+function viewTransf(){
+  if(!TRF)return `<section class="ck2"><h1>Revisá tu mail</h1><p class="mut">Te mandamos los datos para transferir. Si no lo ves, revisá la carpeta de spam o escribinos por WhatsApp.</p><a class="buy" href="#tienda" style="display:inline-flex;align-items:center;justify-content:center;padding:0 32px;width:auto">Seguir mirando</a></section>`;
+  const D=[['Titular',TRF.titular],['CUIT',TRF.cuit],['Banco',TRF.banco],['Alias',TRF.alias],['CBU',TRF.cbu]].filter(x=>x[1]);
+  return `<section class="ck2"><h1>¡Listo! Reservamos tu pedido #${TRF.order}</h1>
+  <p>Transferí <b>${ars(TRF.total)}</b> dentro de las próximas <b>${TRF.horas||48} horas</b> y mandanos el comprobante respondiendo el mail que te enviamos o por WhatsApp. Cuando veamos la plata acreditada te confirmamos la compra.</p>
+  ${D.length?`<div class="ck2-tr">${D.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b><button class="lnk" data-copy="${esc(v)}">Copiar</button></div>`).join('')}<div><span>Concepto</span><b>Pedido ${TRF.order}</b></div></div>`:`<p class="mut">Te mandamos los datos de la cuenta por mail.</p>`}
+  <p class="mut">También te los mandamos por mail.</p><a class="buy" href="#tienda" style="display:inline-flex;align-items:center;justify-content:center;padding:0 32px;width:auto">Seguir mirando</a></section>`;
 }
 function drawEnvio(){
   const sub=cart.reduce((a,l)=>a+(byId(l.id).price||0)*l.q,0),env=ENV==='express'?ENV_EXP:0,tot=sub+env;
@@ -1011,6 +1029,7 @@ function render(){
   else if(h==='checkout'){html=viewCheckout()}
   else if(['terminos','privacidad','arrepentimiento'].includes(h)||h.startsWith('ayuda-')){html=viewLegal(h)}
   else if(h==='pro'){html=viewPro()}
+  else if(h==='transferencia'){html=viewTransf()}
   else if(h==='pro-catalogo'){html=isPro()?viewProCat():viewPro()}
   else{html=viewHome();home=true}
   document.body.classList.toggle('frm',h==='frm'||h.startsWith('frm/'));
@@ -1103,13 +1122,15 @@ document.addEventListener('click',e=>{
       cart=[];save();await contLoad();drawCart();toast('¡Reservado! Te avisamos cuando se complete el contenedor.')});return}
   if(a.dataset.rm){cart.splice(+a.dataset.rm,1);save();drawCart();return}
   if(a.id==='pay'){closeCart();location.hash='#checkout';return}
+  if(a.dataset.paym){PAYM=a.dataset.paym;render();return}
   if(a.dataset.env2){ENV=a.dataset.env2;render();return}
   if(a.hasAttribute('data-opencart')){openCart();return}
   if(a.dataset.env){ENV=a.dataset.env;drawEnvio();return}
-  if(a.id==='payMP'){a.disabled=true;a.textContent='Abriendo Mercado Pago…';const tot=cart.reduce((s,l)=>s+(byId(l.id).price||0)*l.q,0);track('inicio_checkout',{valor:tot});
-    (async()=>{const ss=sbInit()?(await sbInit().auth.getSession()).data.session:null;return fetch('/api/checkout',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},ss?{Authorization:'Bearer '+ss.access_token}:{}),body:JSON.stringify({buyer:{cp:CPV},envio:ENV,cp:CPV,visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0]}))})})})()
-      .then(r=>r.json()).then(d=>{if(d.url){location.href=d.url}else{toast(d.error||'No pudimos iniciar el pago.');a.disabled=false;a.textContent='Pagar con Mercado Pago'}})
-      .catch(()=>{toast('No pudimos iniciar el pago. Probá de nuevo.');a.disabled=false;a.textContent='Pagar con Mercado Pago'});return}
+  if(a.dataset.paym){PAYM=a.dataset.paym;render();return}
+  if(a.id==='payMP'){const TR=PAYM==='transferencia',lbl=TR?'Confirmar pedido con transferencia':'Pagar con Mercado Pago';a.disabled=true;a.textContent=TR?'Reservando tu pedido…':'Abriendo Mercado Pago…';const tot=cart.reduce((s,l)=>s+((TR&&byId(l.id).transf)||byId(l.id).price||0)*l.q,0);track('inicio_checkout',{valor:tot});
+    (async()=>{const ss=sbInit()?(await sbInit().auth.getSession()).data.session:null;return fetch('/api/checkout',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},ss?{Authorization:'Bearer '+ss.access_token}:{}),body:JSON.stringify({medio:TR?'transferencia':'mp',buyer:TR?{cp:CPV,nombre:BUY.n,email:BUY.e,telefono:BUY.t}:{cp:CPV},envio:ENV,cp:CPV,visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0]}))})})})()
+      .then(r=>r.json()).then(d=>{if(d.url){location.href=d.url}else if(d.transfer){TRF=d.transfer;track('compra_transferencia',{valor:d.transfer.total});cart=[];save();location.hash='#transferencia'}else{toast(d.error||'No pudimos iniciar el pago.');a.disabled=false;a.textContent=lbl}})
+      .catch(()=>{toast('No pudimos iniciar el pago. Probá de nuevo.');a.disabled=false;a.textContent=lbl});return}
   if(a.hasAttribute('data-back')){drawCart();return}
   if(a.id==='arrGo'){const v=k=>$('#ar_'+k).value.trim();const d={nombre:v('n'),email:v('e'),telefono:v('t'),pedido:v('p'),motivo:v('m')};
     if(!d.nombre||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)){toast('Completá tu nombre y email.');return}
@@ -1197,6 +1218,9 @@ addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
   else if(q==='pendiente'){cart=[];setTimeout(()=>toast('Tu pago está pendiente. Te avisamos cuando se acredite.'),600)}
   else setTimeout(()=>toast('El pago no se completó. Podés intentar de nuevo.'),600);
   try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}})();
+/* checkout: datos para pagar con transferencia (sin redibujar para no perder el foco) */
+document.addEventListener('input',e=>{const t=e.target;if(!t.id||!t.id.startsWith('bu_'))return;BUY[t.id.slice(3)]=t.value;const b=$('#payMP');if(!b)return;const ok=BUY.n.trim()&&/\S+@\S+\.\S+/.test(BUY.e)&&BUY.t.replace(/\D/g,'').length>=8&&zonaCP(CPV);b.disabled=!ok;b.textContent=ok?'Confirmar pedido con transferencia':'Completá tus datos para seguir'});
+document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('[data-copy]');if(!c)return;try{navigator.clipboard.writeText(c.dataset.copy);toast('Copiado')}catch(x){}});
 /* Aviso de cookies: medición propia y anónima; se puede rechazar. */
 (()=>{let c;try{c=localStorage.getItem('fc_consent')}catch(e){}if(c)return;
   const d=document.createElement('div');d.className='ck';d.setAttribute('role','dialog');d.setAttribute('aria-label','Cookies');

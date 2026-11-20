@@ -1,5 +1,6 @@
 // Un admin cambia el estado de un pedido. Si pasa a "en camino" o "entregado", se avisa al cliente por mail.
 import { sendMail, layout, esc } from './_mail.js';
+import { marcarPagado } from './_pagado.js';
 const SB = 'https://znzbwtewxpcpqtmjbmdw.supabase.co';
 const PUB = 'sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
 const ESTADOS = ['pendiente', 'pagado', 'en_camino', 'entregado', 'cancelado'];
@@ -15,6 +16,8 @@ export default async function handler(req, res) {
     const id = parseInt(body.id), estado = String(body.estado || '');
     if (!id || !ESTADOS.includes(estado)) return res.status(400).json({ error: 'Datos inválidos' });
     const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+    // Llegó una transferencia (o un pago que no avisó Mercado Pago): se marca pagado con todo lo que eso implica.
+    if (estado === 'pagado') { const [prev] = await (await fetch(`${SB}/rest/v1/orders?select=estado&id=eq.${id}`, { headers: H })).json(); if (prev && prev.estado === 'pendiente') { await marcarPagado(id); return res.status(200).json({ ok: true, mail: true }); } }
     const [o] = await (await fetch(`${SB}/rest/v1/orders?id=eq.${id}`, { method: 'PATCH', headers: H, body: JSON.stringify({ estado }) })).json();
     if (!o) return res.status(404).json({ error: 'Pedido no encontrado' });
     let mail = false;

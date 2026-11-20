@@ -270,29 +270,31 @@ function editProd(p){
 let CPRO=[];
 async function drawCatPro(){
   const [{data:cp},{data:pr}]=await Promise.all([sb.from('catalogo_pro').select('*').order('orden'),sb.from('products').select('id,tipo,nombre,img,precio_lista,colores,categoria')]);
-  CPRO=cp||[];if(!prods.length)prods=pr||[];const P=Object.fromEntries((pr||[]).map(p=>[p.id,p])),dp=ST.desc_pro??0.3;
+  const {data:pk}=await sb.rpc('pro_catalogo');const PK=Object.fromEntries((pk||[]).map(x=>[x.codigo,x])),dt=ST.desc_transf??0.15,PA=(ST.preventa_activa??1)>0;
+  const pubDe=l=>l?(PA?Math.ceil(l*(1-0.45)/1000)*1000:l):null,may=(pub,d)=>pub?Math.round(pub*(1-dt)*(1-d)/1000)*1000:null;
+  CPRO=cp||[];if(!prods.length)prods=pr||[];const P=Object.fromEntries((pr||[]).map(p=>[p.id,p])),dp=ST.regla_may??0.2;
   const sug=m=>{const c=m?costo(m.fob_usd,m.cbm):null;return c==null?null:Math.ceil(c*(1+ST.markup_venta)*(1+ST.iva)*ST.tc/1000)*1000};
-  let rows=(cp||[]).map(c=>{const m=byCod(c.codigo),p=P[c.codigo];const lista=c.precio_lista||p?.precio_lista||sug(m);const d=c.descuento??dp;const precio=lista?Math.round(lista*(1-d)/1000)*1000:null;const cA=m?costo(m.fob_usd,m.cbm)*ST.tc:null;const marg=precio&&cA?(precio/(1+ST.iva)-cA)/(precio/(1+ST.iva)):null;
-    return {c,m,p,lista,d,precio,marg,name:p?p.tipo+' '+p.nombre:m?.descripcion||c.codigo,cat:p?.categoria||m?.subcategoria||'',foto:p?src(p.img):m?.foto_url,cols:c.colores||(p?.colores||[]).map(x=>x[0]).join(', ')||m?.terminacion||''}});
+  let rows=(cp||[]).map(c=>{const m=byCod(c.codigo),p=P[c.codigo];const base=c.precio_lista||sug(m),lista=PK[c.codigo]?PK[c.codigo].lista:pubDe(base);const d=c.descuento??dp;const precio=may(lista,d);const cA=m?costo(m.fob_usd,m.cbm)*ST.tc:null;const marg=precio&&cA?(precio/(1+ST.iva)-cA)/(precio/(1+ST.iva)):null;
+    return {c,m,p,base,lista,d,precio,marg,name:p?p.tipo+' '+p.nombre:m?.descripcion||c.codigo,cat:p?.categoria||m?.subcategoria||'',foto:p?src(p.img):m?.foto_url,cols:c.colores||(p?.colores||[]).map(x=>x[0]).join(', ')||m?.terminacion||''}});
   rows=sortBy('cpro',rows,(r,k)=>({nombre:r.name,cat:r.cat,lista:r.lista,desc:r.d,precio:r.precio,marg:r.marg,moq:r.m?.moq,vis:r.c.activo?0:1}[k]));
   const old=document.getElementById('cpw');if(old)old.remove();
   $('#m').insertAdjacentHTML('beforeend',`<div id="cpw"><h3 style="margin:32px 0 10px">Catálogo profesional</h3>
-  <div class="bar"><label style="margin:0">Descuento general sobre precio de lista</label><input id="dpro" class="num" style="width:80px" value="${Math.round(dp*100)}" inputmode="numeric"> %<span class="sp"></span><span class="hint">Sumá productos desde la pestaña Maestro con "+ Pro". Tocá un título para ordenar.</span></div>
-  <div class="card wrap cp"><table><thead><tr><th></th>${thS('cpro','nombre','Producto')}${thS('cpro','cat','Categoría','hide-m')}${thS('cpro','lista','Lista','n')}${thS('cpro','desc','Desc. %','n')}${thS('cpro','precio','Precio pro','n')}${thS('cpro','marg','Margen','n')}${thS('cpro','moq','MOQ','n')}<th>Colores</th>${thS('cpro','vis','Visible')}<th></th></tr></thead><tbody>
+  <div class="bar"><label style="margin:0">Descuento mayorista sobre el precio público con transferencia</label><input id="dpro" class="num" style="width:80px" value="${Math.round(dp*100)}" inputmode="numeric"> %<span class="sp"></span><span class="hint">Sumá productos desde la pestaña Maestro con "+ Pro". Tocá un título para ordenar.</span></div>
+  <div class="card wrap cp"><table><thead><tr><th></th>${thS('cpro','nombre','Producto')}${thS('cpro','cat','Categoría','hide-m')}${thS('cpro','lista','Público hoy','n')}${thS('cpro','desc','Desc. %','n')}${thS('cpro','precio','Precio pro','n')}${thS('cpro','marg','Margen','n')}${thS('cpro','moq','MOQ','n')}<th>Colores</th>${thS('cpro','vis','Visible')}<th></th></tr></thead><tbody>
   ${rows.map(r=>`<tr class="${r.c.activo?'':'off'}"><td><img src="${esc(r.foto||'')}" alt=""></td><td><b>${esc(r.name)}</b><div class="hint">${esc(r.c.codigo)}${r.p?' · en tienda':''}</div></td><td class="hide-m">${esc(r.cat)}</td>
-   <td class="n"><input class="num n money" data-cl="${esc(r.c.codigo)}" value="${money(r.lista)}" inputmode="numeric"><div class="hint">${r.c.precio_lista?'fijado a mano':r.p?'de la tienda':'sugerido por costo'}</div></td>
+   <td class="n">${r.p?`<b>${ars(r.lista)}</b><div class="hint">de la tienda</div>`:`<input class="num n money" data-cl="${esc(r.c.codigo)}" value="${money(r.base)}" inputmode="numeric"><div class="hint">lista ${r.c.precio_lista?'fijada a mano':'sugerida por costo'} · público hoy ${ars(r.lista)}</div>`}</td>
    <td class="n"><input class="num n" style="width:64px" data-cd="${esc(r.c.codigo)}" value="${Math.round(r.d*100)}" inputmode="numeric"><div class="hint">${r.c.descuento!=null?'propio':'general'}</div></td>
    <td class="n"><b data-rp="${esc(r.c.codigo)}">${ars(r.precio)}</b></td><td class="n" data-rm="${esc(r.c.codigo)}">${r.marg==null?'—':`<span class="${r.marg<0.15?'neg':'pos'}">${pct(r.marg)}</span>`}</td><td class="n">${r.m?.moq??'—'}</td>
    <td class="colc" data-colp="c|${esc(r.c.codigo)}">${swatches(r.c.colores!=null?namesToCols(r.c.colores):[])}${r.c.colores==null?`<div class="hint">sin colores propios</div>`:''}<button class="lnk">Elegir</button></td>
    <td><input type="checkbox" data-ca="${esc(r.c.codigo)}" ${r.c.activo?'checked':''} style="width:auto"></td><td><button class="lnk" data-cx="${esc(r.c.codigo)}">Quitar</button></td></tr>`).join('')}</tbody></table></div>
-  <p class="hint">Precio pro = lista × (1 − descuento). Si no cargás lista, usa la de la tienda o la sugerida por costo. Editá lo que quieras y tocá <b>Guardar cambios</b>; los profesionales lo ven al instante.</p></div>`);
+  <p class="hint">Precio mayorista = precio que paga el público hoy, con el descuento por transferencia, menos el descuento mayorista. Así nunca queda por encima del público. Si el producto no está en la tienda, cargá su precio de lista. Editá lo que quieras y tocá <b>Guardar cambios</b>; los profesionales lo ven al instante.</p></div>`);
   bindSort(()=>drawCatPro());
-  $('#dpro').onchange=e=>{const v=(+e.target.value.replace(',','.'))/100;mark(e.target,'settings','key','desc_pro','value',v);ST.desc_pro=v;rows.forEach(r=>{if(r.c.descuento==null){RW[r.c.codigo].d=v;const i=document.querySelector(`[data-cd="${CSS.escape(r.c.codigo)}"]`);if(i)i.value=Math.round(v*100);recalc(r.c.codigo)}})};
-  const RW=Object.fromEntries(rows.map(r=>[r.c.codigo,{lista:r.lista,d:r.d,base:r.p?.precio_lista||sug(r.m),cA:r.m?costo(r.m.fob_usd,r.m.cbm)*ST.tc:null}]));
-  const recalc=cod=>{const x=RW[cod],pr=x.lista?Math.round(x.lista*(1-x.d)/1000)*1000:null,mg=pr&&x.cA?(pr/(1+ST.iva)-x.cA)/(pr/(1+ST.iva)):null;
+  $('#dpro').onchange=e=>{const v=(+e.target.value.replace(',','.'))/100;mark(e.target,'settings','key','regla_may','value',v);ST.regla_may=v;rows.forEach(r=>{if(r.c.descuento==null){RW[r.c.codigo].d=v;const i=document.querySelector(`[data-cd="${CSS.escape(r.c.codigo)}"]`);if(i)i.value=Math.round(v*100);recalc(r.c.codigo)}})};
+  const RW=Object.fromEntries(rows.map(r=>[r.c.codigo,{lista:r.lista,d:r.d,base:sug(r.m),cA:r.m?costo(r.m.fob_usd,r.m.cbm)*ST.tc:null}]));
+  const recalc=cod=>{const x=RW[cod],pr=may(x.lista,x.d),mg=pr&&x.cA?(pr/(1+ST.iva)-x.cA)/(pr/(1+ST.iva)):null;
     document.querySelector(`[data-rp="${CSS.escape(cod)}"]`).textContent=ars(pr);document.querySelector(`[data-rm="${CSS.escape(cod)}"]`).innerHTML=mg==null?'—':`<span class="${mg<0.15?'neg':'pos'}">${pct(mg)}</span>`};
-  $('#m').querySelectorAll('[data-cl]').forEach(i=>i.onchange=()=>{const c=i.dataset.cl,d=i.value.replace(/\D/g,''),v=d?+d:null;RW[c].lista=v||RW[c].base;i.value=money(RW[c].lista);mark(i,'catalogo_pro','codigo',c,'precio_lista',v);recalc(c)});
-  $('#m').querySelectorAll('[data-cd]').forEach(i=>i.onchange=()=>{const c=i.dataset.cd,t=i.value.trim(),v=t===''?null:(+t.replace(',','.'))/100;RW[c].d=v??(ST.desc_pro??0.3);i.value=Math.round(RW[c].d*100);mark(i,'catalogo_pro','codigo',c,'descuento',v);recalc(c)});
+  $('#m').querySelectorAll('[data-cl]').forEach(i=>i.onchange=()=>{const c=i.dataset.cl,d=i.value.replace(/\D/g,''),v=d?+d:null;RW[c].lista=pubDe(v||RW[c].base);i.value=money(v||RW[c].base);mark(i,'catalogo_pro','codigo',c,'precio_lista',v);recalc(c)});
+  $('#m').querySelectorAll('[data-cd]').forEach(i=>i.onchange=()=>{const c=i.dataset.cd,t=i.value.trim(),v=t===''?null:(+t.replace(',','.'))/100;RW[c].d=v??(ST.regla_may??0.2);i.value=Math.round(RW[c].d*100);mark(i,'catalogo_pro','codigo',c,'descuento',v);recalc(c)});
   bindColp();
   $('#m').querySelectorAll('[data-ca]').forEach(i=>i.onchange=()=>mark(i,'catalogo_pro','codigo',i.dataset.ca,'activo',i.checked));
   $('#m').querySelectorAll('[data-cx]').forEach(b=>b.onclick=async()=>{const {error}=await sb.from('catalogo_pro').delete().eq('codigo',b.dataset.cx);toast(error?'No se pudo quitar':'Quitado del catálogo profesional');drawCatPro()});
@@ -393,26 +395,25 @@ async function drawFotos(){
 
 /* ---------- profesionales: precios y mínimos (compran en la tienda) ---------- */
 async function drawProfPrecios(){
-  await Promise.all([loadProds(),loadMaster()]);
-  const dp=ST.desc_profesional??0.5, mp=ST.min_profesional??1;
-  const row=p=>{const d=p.pct_profesional??dp,pr=p.precio_lista?Math.round(p.precio_lista*(1-d)/1000)*1000:null,m=byCod(p.id),cA=m?costo(m.fob_usd,m.cbm)*ST.tc:null,mg=pr&&cA?(pr/(1+ST.iva)-cA)/(pr/(1+ST.iva)):null;return {d,pr,mg}};
+  await Promise.all([loadProds(),loadMaster()]);const {data:pca}=await sb.rpc('precios_admin');const PCA=Object.fromEntries((pca||[]).map(x=>[x.id,x]));
+  const dp=ST.regla_prof??0.10, mp=ST.min_profesional??1;
+  const row=p=>{const d=p.pct_profesional??dp,pub=PCA[p.id]?PCA[p.id].publico:null,pr=pub?Math.round(pub*(1-d)/1000)*1000:null,m=byCod(p.id),cA=m?costo(m.fob_usd,m.cbm)*ST.tc:null,mg=pr&&cA?(pr/(1+ST.iva)-cA)/(pr/(1+ST.iva)):null;return {d,pr,mg}};
   let L=sortBy('pprof',prods.filter(p=>p.activo),(p,k)=>({nombre:p.tipo+' '+p.nombre,cat:p.categoria,lista:p.precio_lista,pct:row(p).d,precio:row(p).pr,min:p.min_profesional??mp,marg:row(p).mg}[k]));
   $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Precios y mínimos para profesionales</b></div>
   <p class="hint" style="margin-bottom:12px">Arquitectos, interioristas, gastronomía y hotelería compran en la tienda en el momento, con este precio y desde esta cantidad mínima. Los mayoristas tienen su propio catálogo (pestaña Mayoristas).</p>
-  <div class="bar"><label style="margin:0">Descuento general sobre lista</label><input id="gdp" class="num" style="width:70px" value="${Math.round(dp*100)}" inputmode="numeric"> %
+  <div class="bar"><label style="margin:0">Descuento general sobre el precio público vigente</label><input id="gdp" class="num" style="width:70px" value="${Math.round(dp*100)}" inputmode="numeric"> %
    <label style="margin:0 0 0 16px">Mínimo general</label><input id="gmp" class="num" style="width:70px" value="${mp}" inputmode="numeric"> u.</div>
-  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('pprof','nombre','Producto')}${thS('pprof','cat','Categoría','hide-m')}${thS('pprof','lista','Lista','n')}<th class="n hide-m">Preventa público</th>${thS('pprof','pct','% profesional','n')}${thS('pprof','precio','Precio profesional','n')}${thS('pprof','marg','Margen','n')}${thS('pprof','min','Mínimo','n')}</tr></thead><tbody>
+  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('pprof','nombre','Producto')}${thS('pprof','cat','Categoría','hide-m')}${thS('pprof','lista','Lista','n')}<th class="n hide-m">Público hoy</th>${thS('pprof','pct','% sobre público','n')}${thS('pprof','precio','Precio profesional','n')}${thS('pprof','marg','Margen','n')}${thS('pprof','min','Mínimo','n')}</tr></thead><tbody>
   ${L.map(p=>{const r=row(p);return `<tr data-pp="${esc(p.id)}"><td><img src="${esc(src(p.img))}" alt=""></td><td><b>${esc(p.tipo)} ${esc(p.nombre)}</b><div class="hint">${esc(p.id)}</div></td><td class="hide-m">${esc(p.categoria)}</td>
-   <td class="n">${ars(p.precio_lista)}</td><td class="n hide-m">${ars(preP(p))}</td>
-   <td class="n"><input class="num n" style="width:64px" data-ppc value="${Math.round(r.d*100)}" inputmode="numeric"><div class="hint">${p.pct_profesional!=null?'propio':'general'}</div></td>
+   <td class="n">${ars(p.precio_lista)}</td><td class="n hide-m">${ars(PCA[p.id]&&PCA[p.id].publico)}</td>   <td class="n"><input class="num n" style="width:64px" data-ppc value="${Math.round(r.d*100)}" inputmode="numeric"><div class="hint">${p.pct_profesional!=null?'propio':'general'}</div></td>
    <td class="n"><b data-ppr>${ars(r.pr)}</b></td><td class="n" data-pmg>${r.mg==null?'—':`<span class="${r.mg<0.15?'neg':'pos'}">${pct(r.mg)}</span>`}</td>
    <td class="n"><input class="num n" style="width:64px" data-pmin value="${p.min_profesional??mp}" inputmode="numeric"><div class="hint">${p.min_profesional!=null?'propio':'general'}</div></td></tr>`}).join('')}</tbody></table></div>
-  <p class="hint">Precio profesional = lista × (1 − %). Conviene que sea menor que la preventa al público. Margen sin IVA sobre el costo puesto en Argentina; en rojo, menos de 15%. Tocá "Guardar cambios" abajo para publicar.</p>`;
+  <p class="hint">Precio profesional = precio que paga el público hoy (preventa o lista) × (1 − %). Así siempre queda por debajo del público. Si paga con transferencia tiene además el descuento por transferencia. Margen sin IVA sobre el costo puesto en Argentina; en rojo, menos de 15%. Tocá "Guardar cambios" abajo para publicar.</p>`;
   bindSort(drawProfPrecios);
   const upd=tr=>{const p=prods.find(x=>x.id===tr.dataset.pp),r=row(p);tr.querySelector('[data-ppr]').textContent=ars(r.pr);tr.querySelector('[data-pmg]').innerHTML=r.mg==null?'—':`<span class="${r.mg<0.15?'neg':'pos'}">${pct(r.mg)}</span>`};
   $('#m').querySelectorAll('[data-ppc]').forEach(i=>i.onchange=()=>{const tr=i.closest('tr'),p=prods.find(x=>x.id===tr.dataset.pp),t=i.value.trim(),v=t===''?null:Math.max(0,Math.min(90,+t.replace(',','.')))/100;p.pct_profesional=v;mark(i,'products','id',p.id,'pct_profesional',v);i.value=Math.round((v??dp)*100);upd(tr)});
   $('#m').querySelectorAll('[data-pmin]').forEach(i=>i.onchange=()=>{const tr=i.closest('tr'),p=prods.find(x=>x.id===tr.dataset.pp),t=i.value.replace(/\D/g,''),v=t===''?null:Math.max(1,+t);p.min_profesional=v;mark(i,'products','id',p.id,'min_profesional',v);i.value=v??mp});
-  $('#gdp').onchange=e=>{const v=(+e.target.value.replace(',','.'))/100;ST.desc_profesional=v;mark(e.target,'settings','key','desc_profesional','value',v);drawProfPrecios()};
+  $('#gdp').onchange=e=>{const v=(+e.target.value.replace(',','.'))/100;ST.regla_prof=v;mark(e.target,'settings','key','regla_prof','value',v);drawProfPrecios()};
   $('#gmp').onchange=e=>{const v=Math.max(1,+e.target.value.replace(/\D/g,'')||1);ST.min_profesional=v;mark(e.target,'settings','key','min_profesional','value',v);drawProfPrecios()};
 }
 /* ---------- menú del panel por secciones ---------- */
@@ -421,7 +422,7 @@ const GRUPOS=[['inicio','Inicio',[['inicio','Resumen']]],
  ['prof','Profesionales',[['pprecios','Precios y mínimos'],['pcuentas','Cuentas'],['ppedidos','Pedidos']]],
  ['may','Mayoristas',[['pro','Cuentas, contenedor y catálogo']]],
  ['cont','Contenido',[['frm','FRM Studio'],['fotos','Fotos de la página']]],
- ['gest','Gestión',[['maestro','Maestro de productos'],['rent','Precios y márgenes'],['eco','Contenedores'],['ecopar','Parámetros de importación'],['compras','Órdenes a proveedores']]]];
+ ['gest','Gestión',[['maestro','Maestro de productos'],['rent','Precios y reglas'],['eco','Contenedores'],['ecopar','Parámetros de importación'],['compras','Órdenes a proveedores']]]];
 const grupoDe=t=>(GRUPOS.find(g=>g[2].some(s=>s[0]===t))||GRUPOS[0]);
 function drawNav(){const g=grupoDe(tab);const n=document.getElementById('gnav'),s=document.getElementById('snav');if(!n)return;
   n.innerHTML=GRUPOS.map(x=>`<button data-g="${x[0]}" class="${x[0]===g[0]?'on':''}">${x[1]}</button>`).join('');
@@ -705,7 +706,7 @@ function bindPr(){
 }
 
 /* ---------- rentabilidad: cuánto queda de cada venta ---------- */
-const MEDIO={credit_card:'Tarjeta de crédito',debit_card:'Tarjeta de débito',prepaid_card:'Tarjeta prepaga',account_money:'Dinero en cuenta MP',ticket:'Efectivo (Rapipago / Pago Fácil)',bank_transfer:'Transferencia',atm:'Cajero',digital_currency:'Mercado Crédito',digital_wallet:'Billetera virtual'};
+const MEDIO={transferencia:'Transferencia directa',credit_card:'Tarjeta de crédito',debit_card:'Tarjeta de débito',prepaid_card:'Tarjeta prepaga',account_money:'Dinero en cuenta MP',ticket:'Efectivo (Rapipago / Pago Fácil)',bank_transfer:'Transferencia',atm:'Cajero',digital_currency:'Mercado Crédito',digital_wallet:'Billetera virtual'};
 const medioTxt=o=>(MEDIO[o.medio_pago]||o.medio_pago||'Mercado Pago')+(o.cuotas>1?` · ${o.cuotas} cuotas`:o.medio_pago==='credit_card'?' · 1 pago':'');
 const TX=()=>({IVA:ST.iva??0.21,COM:ST.comision_mp??0.043,ENV:ST.envio_costo||0,IIBB:ST.iibb??0.03,CHQ:ST.imp_cheque??0.006,GAN:ST.ganancias??0.30,FIJ:ST.gastos_fijos_mes||0,ADS:ST.ads_gasto||0});
 const CANAL={pub:'Público (tienda)',pro:'Profesionales',may:'Mayoristas (contenedor)'};
@@ -722,7 +723,7 @@ async function ventasRent(){
   const fr=[];pag.forEach(o=>(o.order_items||[]).forEach(i=>{if(i.costo_unit==null){const c=cuR(i.product_id);if(c!=null){i.costo_unit=Math.round(c);fr.push(sb.from('order_items').update({costo_unit:i.costo_unit}).eq('id',i.id))}}}));
   if(fr.length)await Promise.all(fr);
   const fin=(v)=>{v.iibb=v.venta*T.IIBB;v.chq=v.total*T.CHQ;v.g=v.venta-v.cprod-v.com-v.env-v.iibb-v.chq;v.m=v.venta?v.g/v.venta:null;return v};
-  const V=pag.map(o=>{const its=o.order_items||[];return fin({id:'#'+o.id,f:o.created_at,canal:o.canal==='profesional'?'pro':'pub',cli:o.nombre,det:its.map(i=>`${i.cantidad}× ${i.products?i.products.tipo+' '+i.products.nombre:i.product_id}`).join(', '),
+  const V=pag.map(o=>{const its=o.order_items||[];return fin({id:'#'+o.id,f:o.created_at,canal:o.canal==='profesional'?'pro':'pub',cli:o.nombre,det:its.map(i=>`${i.cantidad}× ${i.products?i.products.tipo+' '+i.products.nombre:i.product_id} a ${ars(i.precio)}${i.regla?' ('+i.regla+(i.precio_lista_momento?', lista '+ars(i.precio_lista_momento):'')+')':''}`).join(', '),
     medio:medioTxt(o),total:o.total,venta:o.total/(1+T.IVA),cprod:its.reduce((a,i)=>a+(i.costo_unit||0)*i.cantidad,0),falta:its.some(i=>i.costo_unit==null),
     com:o.comision_real!=null?+o.comision_real:o.total*T.COM,comReal:o.comision_real!=null,env:/gratis|express/i.test(o.envio||'')?T.ENV:0,est:EST_TXT[o.estado]})});
   (pp||[]).filter(r=>r.estado!=='cancelado').forEach(r=>{const its=r.items||[];let falta=false;const cprod=its.reduce((a,i)=>{const c=cuR(i.id||i.codigo);if(c==null){falta=true;return a}return a+c*i.q},0);
@@ -778,29 +779,54 @@ async function drawResultados(from){
    ['t_env','envio_costo','Costo promedio de un envío que no cobrás aparte (ARS)'],['t_fij','gastos_fijos_mes','Gastos fijos por mes (ARS)'],['t_ads','ads_gasto','Gasto en anuncios últimos 30 días (ARS)']]
    .forEach(([id,k,n,p])=>$('#'+id).onchange=e=>setS(k,p?num(e.target.value)/100:Math.round(num(e.target.value)),n));
 }
-/* simulador: cuánto queda de cada producto según quién lo compra */
+/* Precios y reglas: el precio de lista nace en Contenedores (o en Productos para los nacionales); todo lo demás sale de estas reglas */
 async function drawRent(){
   if(!prods.length)await loadProds();
   try{await ecoLoad();ECOC=ecoCostos()}catch(e){ECOC={}}
-  const {data:cp}=await sb.from('catalogo_pro').select('*');
-  const T=TX(),dP=ST.desc_profesional??0.5,dM=ST.desc_pro??0.3,CP=Object.fromEntries((cp||[]).map(c=>[c.codigo,c]));
-  /* margen = lo que queda de cada $100 sin IVA, ya descontados costo, comisión MP (no en mayorista), Ingresos Brutos e impuesto al cheque */
-  const mg=(precio,c,mp)=>{if(!precio||c==null)return null;const n=precio/(1+T.IVA);return (n-c-(mp?precio*T.COM:0)-n*T.IIBB-precio*T.CHQ)/n};
-  let S=prods.filter(p=>p.activo&&p.precio_lista).map(p=>{const c=cuR(p.id),pub=p.linea==='Nacional'?p.precio_lista:preP(p),pro=Math.round(p.precio_lista*(1-(p.pct_profesional??dP))/1000)*1000,k=CP[p.id],lm=k?(k.precio_lista||p.precio_lista):null,may=k&&lm?Math.round(lm*(1-(k.descuento??dM))/1000)*1000:null;
-    return {p,c,pub,mpub:mg(pub,c,1),pro,mpro:mg(pro,c,1),may,mmay:mg(may,c,0),mal:(pro>pub)||(may&&may>pub)}});
-  const malos=S.filter(r=>r.mal).length;
-  S=sortBy('rent',S,(r,k)=>({nombre:r.p.tipo+' '+r.p.nombre,costo:r.c,pub:r.mpub,pro:r.mpro,may:r.mmay}[k]));
-  const mc=x=>x==null?'':`<div class="${x<0.15?'neg':'pos'}">te queda ${pct(x)}</div>`;
-  $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Precios y márgenes</b></div>
-  <p class="hint" style="max-width:760px">Cada fila es un producto. Para cada tipo de cliente ves <b>el precio que paga</b> (con IVA) y abajo <b>qué % de ese precio sin IVA te queda</b> después de pagar el producto puesto en Argentina, la comisión de Mercado Pago, Ingresos Brutos e impuesto al cheque. Debajo de 15% está en rojo. Lo normal es que el precio baje de izquierda a derecha: público → profesional → mayorista.</p>
-  ${malos?`<div class="card pad" style="border-color:#c0392b;margin:10px 0"><b class="neg">${malos} productos tienen el precio al revés:</b> el profesional o el mayorista paga más caro que el público. Pasa porque la preventa al público tiene ${pctP({})}% de descuento sobre el precio de lista, y profesionales y mayoristas tienen menos descuento sobre ese mismo precio de lista. Las filas con el problema están marcadas.</div>`:''}
-  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('rent','nombre','Producto')}${thS('rent','costo','Te cuesta puesto en Argentina','n')}${thS('rent','pub','Público (preventa)','n')}${thS('rent','pro','Profesional','n')}${thS('rent','may','Mayorista','n')}</tr></thead><tbody>
-  ${S.map(r=>`<tr${r.mal?' style="background:rgba(192,57,43,.07)"':''}><td><img src="${esc(src(r.p.img))}" alt=""></td><td><b>${esc(r.p.tipo)} ${esc(r.p.nombre)}</b><div class="hint">${esc(r.p.id)}${r.p.linea==='Nacional'?' · nacional':''}</div>${r.mal?'<div class="hint neg">precio al revés</div>':''}</td>
-   <td class="n">${byCod(r.p.id)?ars(r.c)+'<div class="hint">sin IVA</div>':`<input class="num n" style="width:110px" data-cm="${esc(r.p.id)}" value="${r.p.costo_manual??''}" placeholder="cargá el costo" inputmode="numeric"><div class="hint">sin IVA, a mano</div>`}</td>
-   <td class="n">${ars(r.pub)}${mc(r.mpub)}</td><td class="n"><span class="${r.pro>r.pub?'neg':''}">${ars(r.pro)}</span>${mc(r.mpro)}</td><td class="n">${r.may?`<span class="${r.may>r.pub?'neg':''}">${ars(r.may)}</span>${mc(r.mmay)}`:'<span class="hint">no está en el catálogo</span>'}</td></tr>`).join('')}</tbody></table></div>
-  <p class="hint">Los precios salen de Productos (público), Profesionales → Precios y mínimos, y Mayoristas → catálogo. Los productos que no están en el Maestro, como los nacionales, necesitan que cargues su costo a mano. Los porcentajes de comisión e impuestos se cambian en Inicio.</p>`;
+  const [{data:pc},{data:ct},{data:hi}]=await Promise.all([sb.rpc('precios_admin'),sb.from('cobro_transf').select('*').eq('id',1).maybeSingle(),sb.from('precio_historial').select('*').order('fecha',{ascending:false}).limit(40)]);
+  const T=TX(),C3=(T.COM/1.21+0.1049)*1.21,PB=Object.fromEntries(prods.map(p=>[p.id,p])),D=ct||{};
+  /* margen = lo que queda de cada $100 sin IVA, descontados costo, comisión, Ingresos Brutos e impuesto al cheque */
+  const mg=(precio,c,com)=>{if(!precio||c==null)return null;const n=precio/(1+T.IVA);return (n-c-precio*com-n*T.IIBB-precio*T.CHQ)/n};
+  let S=(pc||[]).filter(x=>PB[x.id]&&PB[x.id].activo).map(x=>{const p=PB[x.id],c=cuR(x.id);return {p,x,c,F:[[x.publico,mg(x.publico,c,T.COM)],[x.publico,mg(x.publico,c,C3)],[x.transf,mg(x.transf,c,0)],[x.prof,mg(x.prof,c,T.COM)],[x.prof_transf,mg(x.prof_transf,c,0)],[x.may,mg(x.may,c,0)]]}});
+  S=sortBy('rent',S,(r,k)=>({nombre:r.p.tipo+' '+r.p.nombre,costo:r.c,pub:r.F[0][1],c3:r.F[1][1],tr:r.F[2][1],pro:r.F[3][1],may:r.F[5][1]}[k]));
+  const mc=x=>x==null?'':`<div class="${x<0.15?'neg':'pos'}">${pct(x)}</div>`;
+  const pin=(id,v,suf='%')=>`<input id="${id}" class="num" style="width:64px" value="${v}" inputmode="decimal"> ${suf}`;
+  const CAMPO={precio_lista:'Precio de lista',precio_preventa:'Precio de preventa fijo',pct_preventa:'% de preventa',pct_profesional:'% profesional propio',mayorista_lista:'Lista mayorista',mayorista_descuento:'% mayorista propio',regla_prof:'Regla: profesional',regla_may:'Regla: mayorista',desc_transf:'Regla: transferencia',preventa_activa:'Preventa activa',cuotas_sin_interes:'Cuotas sin interés',cuotas_max:'Máximo de cuotas'};
+  const hv=(c,v)=>v==null?'—':/^(pct|desc|regla|mayorista_descuento)/.test(c)?pct(+v):c==='preventa_activa'?(+v?'sí':'no'):/cuotas/.test(c)?v:ars(v);
+  $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Precios y reglas</b></div>
+  <p class="hint" style="max-width:820px">Cada producto tiene <b>un solo precio que se carga a mano: el de lista</b> (en Contenedores → Precios, o en Productos para los nacionales). Todos los demás salen de estas reglas, así nunca quedan al revés: público → profesional → mayorista. Cada venta guarda el precio y la regla que se usó ese día.</p>
+  <div class="g2d" style="align-items:start"><div class="card pad"><h4>Reglas</h4>
+   <div class="rw"><span><b>Preventa activa</b><div class="hint">Si la apagás, el público paga el precio de lista y todo se recalcula.</div></span><span><input type="checkbox" id="r_pa" ${(ST.preventa_activa??1)>0?'checked':''} style="width:auto"></span></div>
+   <div class="rw"><span>Transferencia: descuento sobre el precio público</span><span>${pin('r_dt',Math.round((ST.desc_transf??0.15)*100))}</span></div>
+   <div class="rw"><span>Profesional: descuento sobre el precio público</span><span>${pin('r_rp',Math.round((ST.regla_prof??0.10)*100))}</span></div>
+   <div class="rw"><span>Mayorista: descuento sobre el público con transferencia</span><span>${pin('r_rm',Math.round((ST.regla_may??0.20)*100))}</span></div>
+   <div class="rw"><span>Cuotas sin interés (las pagás vos)</span><span>${pin('r_cs',ST.cuotas_sin_interes??3,'')}</span></div>
+   <div class="rw"><span>Máximo de cuotas (las de más, con interés para el cliente)</span><span>${pin('r_cm',ST.cuotas_max??12,'')}</span></div>
+   <p class="hint">Las cuotas sin interés se activan en tu cuenta de Mercado Pago (Tu negocio → Costos y cuotas). Cuestan ${(C3*100).toFixed(1).replace('.',',')}% de la venta en 3 cuotas.</p></div>
+   <div class="card pad"><h4>Cuenta para transferencias</h4><p class="hint">Es lo que ve el cliente cuando elige pagar con transferencia (y le llega por mail).</p>
+   ${[['titular','Titular'],['cuit','CUIT'],['banco','Banco'],['alias','Alias'],['cbu','CBU / CVU']].map(([k,l])=>`<div class="rw"><span>${l}</span><input data-ct="${k}" value="${esc(D[k]||'')}" style="width:220px"></div>`).join('')}
+   <div class="rw"><span>Horas para pagar</span><input data-ct="horas" value="${D.horas??48}" class="num" style="width:64px" inputmode="numeric"></div>
+   ${D.alias||D.cbu?'':'<p class="hint neg">Cargá el alias o el CBU: sin eso el cliente no sabe a dónde transferir.</p>'}
+   <p class="hint">Cuando llega la plata, en Pedidos cambiás el estado a <b>Pagado</b>: se descuenta el stock y al cliente le llega el mail de confirmación.</p></div></div>
+  <h3 style="margin:22px 0 10px">Precio y margen de cada producto, según quién compra y cómo paga</h3>
+  <p class="hint" style="max-width:820px">Arriba el precio con IVA; abajo qué % del precio sin IVA te queda después del costo puesto en Argentina, la comisión, Ingresos Brutos e impuesto al cheque. En rojo, menos de 15%.</p>
+  <div class="card wrap"><table class="big"><thead><tr><th></th>${thS('rent','nombre','Producto')}<th class="n">Lista</th>${thS('rent','costo','Costo','n')}${thS('rent','pub','Público<br>Mercado Pago','n')}${thS('rent','c3','Público<br>3 cuotas s/int.','n')}${thS('rent','tr','Público<br>transferencia','n')}${thS('rent','pro','Profesional','n')}<th class="n">Profesional<br>transferencia</th>${thS('rent','may','Mayorista','n')}</tr></thead><tbody>
+  ${S.map(r=>`<tr><td><img src="${esc(src(r.p.img))}" alt=""></td><td><b>${esc(r.p.tipo)} ${esc(r.p.nombre)}</b><div class="hint">${esc(r.p.id)} · ${esc(r.x.regla)}${ECOC[r.p.id]?' · costo del contenedor':''}</div></td><td class="n">${ars(r.x.lista)}</td>
+   <td class="n">${ECOC[r.p.id]||byCod(r.p.id)?ars(r.c)+'<div class="hint">sin IVA</div>':`<input class="num n" style="width:100px" data-cm="${esc(r.p.id)}" value="${r.p.costo_manual??''}" placeholder="cargá el costo" inputmode="numeric"><div class="hint">a mano, sin IVA</div>`}</td>
+   ${r.F.map(([v,m])=>`<td class="n">${ars(v)}${mc(m)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <h3 style="margin:22px 0 10px">Últimos cambios de precio</h3>
+  ${(hi||[]).length?`<div class="card wrap"><table><thead><tr><th>Fecha</th><th>Producto / regla</th><th>Qué cambió</th><th class="n">Antes</th><th class="n">Después</th><th class="hide-m">Quién</th></tr></thead><tbody>${hi.map(h=>`<tr><td>${new Date(h.fecha).toLocaleString('es-AR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td>${esc(h.ref==='regla'?'—':(PB[h.ref]?PB[h.ref].tipo+' '+PB[h.ref].nombre:h.ref))}</td><td>${CAMPO[h.campo]||esc(h.campo)}</td><td class="n">${hv(h.campo,h.antes)}</td><td class="n">${hv(h.campo,h.despues)}</td><td class="hide-m hint">${esc(h.quien||'')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">Todavía no hubo cambios. Desde ahora queda registrado cada cambio de precio o de regla.</p>'}`;
   bindSort(drawRent);
-  $('#m').querySelectorAll('[data-cm]').forEach(i=>i.onchange=async()=>{const d=i.value.replace(/\D/g,''),v=d?+d:null;const p=prods.find(p=>p.id===i.dataset.cm);p.costo_manual=v;const {error}=await sb.from('products').update({costo_manual:v}).eq('id',p.id);toast(error?'No se pudo guardar':'Costo guardado');drawRent()});
+  const setS=async(k,v,n)=>{ST[k]=v;const {error}=await sb.from('settings').upsert({key:k,value:v,nota:n});toast(error?'No se pudo guardar':'Guardado: la tienda ya usa la regla nueva');drawRent()};
+  const num=s=>+String(s).replace(/[^0-9.,]/g,'').replace(',','.')||0;
+  $('#r_pa').onchange=e=>setS('preventa_activa',e.target.checked?1:0,'1 = la tienda vende con precio de preventa, 0 = precio de lista');
+  $('#r_dt').onchange=e=>setS('desc_transf',num(e.target.value)/100,'Descuento por pagar con transferencia');
+  $('#r_rp').onchange=e=>setS('regla_prof',num(e.target.value)/100,'Profesional: descuento sobre el precio público vigente');
+  $('#r_rm').onchange=e=>setS('regla_may',num(e.target.value)/100,'Mayorista: descuento sobre el precio público con transferencia');
+  $('#r_cs').onchange=e=>setS('cuotas_sin_interes',Math.round(num(e.target.value)),'Cuotas sin interés que paga FORMA');
+  $('#r_cm').onchange=e=>setS('cuotas_max',Math.max(1,Math.min(12,Math.round(num(e.target.value)))),'Máximo de cuotas');
+  $('#m').querySelectorAll('[data-ct]').forEach(i=>i.onchange=async()=>{const k=i.dataset.ct,v=k==='horas'?(Math.round(num(i.value))||48):i.value.trim()||null;const {error}=await sb.from('cobro_transf').update({[k]:v}).eq('id',1);toast(error?'No se pudo guardar':'Guardado')});
+  $('#m').querySelectorAll('[data-cm]').forEach(i=>i.onchange=async()=>{const d=i.value.replace(/\D/g,''),v=d?+d:null;const p=PB[i.dataset.cm];p.costo_manual=v;const {error}=await sb.from('products').update({costo_manual:v}).eq('id',p.id);toast(error?'No se pudo guardar':'Costo guardado');drawRent()});
 }
 
 /* ---------- pedidos ---------- */
@@ -827,6 +853,6 @@ function drawOrders(){
 }
 start();
 </script>
-<script src="eco-calc.js?v=3"></script><script src="eco-ui.js?v=3"></script>
+<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=4"></script>
 </body>
 </html>

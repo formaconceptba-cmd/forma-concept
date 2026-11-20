@@ -3,7 +3,7 @@
 const SB = 'https://znzbwtewxpcpqtmjbmdw.supabase.co';
 const PUB = 'sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
 const SITE = 'https://www.formaconceptba.com';
-const PRE = 0.45;
+import { sendMail, layout, tablaItems, ars, esc, ADMIN_MAIL } from './_mail.js';
 
 const sb = (path, opts = {}) => fetch(SB + '/rest/v1/' + path, {
   ...opts,
@@ -39,8 +39,11 @@ export default async function handler(req, res) {
     const tok = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
     if (tok) { const u = await fetch(SB + '/auth/v1/user', { headers: { apikey: PUB, Authorization: 'Bearer ' + tok } }); if (u.ok) { const uj = await u.json(); const [pp] = await (await sb(`profesionales?select=email,nombre,estudio,telefono,tipo,estado&email=eq.${encodeURIComponent(String(uj.email || '').toLowerCase())}`)).json(); if (pp && pp.estado === 'aprobado' && pp.tipo === 'profesional') { prof = pp; const st = await (await sb('settings?select=key,value&key=in.(desc_profesional,min_profesional)')).json(); for (const s of st) { if (s.key === 'desc_profesional') descProf = +s.value; if (s.key === 'min_profesional') minProf = +s.value } } } }
     const ids = [...new Set(lines.map(l => l.id))];
-    const pr = await sb(`products?select=id,tipo,nombre,linea,disponibilidad,precio_lista,precio_preventa,pct_preventa,pct_profesional,min_profesional,unidades,vendidas,activo&id=in.(${ids.map(encodeURIComponent).join(',')})`);
+    const pr = await sb(`products?select=id,tipo,nombre,linea,disponibilidad,precio_lista,min_profesional,unidades,vendidas,activo&id=in.(${ids.map(encodeURIComponent).join(',')})`);
     const prods = Object.fromEntries((await pr.json()).map(p => [p.id, p]));
+    // Todos los precios salen de una sola función de la base (reglas de precio), nunca del navegador.
+    const PC = Object.fromEntries((await (await sb('rpc/precios_calc', { method: 'POST', body: '{}' })).json()).map(x => [x.id, x]));
+    const transf = body.medio === 'transferencia';
     const items = [];
     for (const l of lines) {
       const p = prods[l.id];
@@ -48,22 +51,40 @@ export default async function handler(req, res) {
       const libre = (p.unidades || 0) - (p.vendidas || 0) - lines.filter(x => x.id === l.id && x !== l).reduce((a, x) => a + x.q, 0);
       if (l.q > libre) return res.status(409).json({ error: `No queda stock suficiente de ${p.tipo} ${p.nombre}.` });
       if (prof) { const mn = p.min_profesional || minProf || 1; const tot = lines.filter(x => x.id === l.id).reduce((s, x) => s + x.q, 0); if (tot < mn) return res.status(400).json({ error: `La compra mínima profesional de ${p.tipo} ${p.nombre} es de ${mn} unidades.` }); }
-      items.push({ p, q: l.q, color: l.color, precio: prof ? Math.round(p.precio_lista * (1 - (p.pct_profesional ?? descProf)) / 1000) * 1000 : p.linea === 'Nacional' ? p.precio_lista : (p.precio_preventa || Math.ceil(p.precio_lista * (1 - (p.pct_preventa ?? PRE)) / 1000) * 1000) });
+      const c = PC[l.id]; if (!c) return res.status(400).json({ error: 'Un producto ya no está disponible.' });
+      const precio = prof ? (transf ? c.prof_transf : c.prof) : (transf ? c.transf : c.publico);
+      items.push({ p, q: l.q, color: l.color, precio, lista: c.lista, regla: [prof ? 'profesional' : c.regla, transf ? 'transferencia' : ''].filter(Boolean).join(' + ') });
     }
     const ENVIOS = { gratis: 'Envío gratis (día a coordinar)', express: 'Envío express 24 h', retiro: 'Retiro en Buenos Aires', interior: 'Envío al interior (a cotizar)' };
     const cpN = parseInt(body.cp, 10), zona = cpN >= 1000 && cpN <= 9999 ? (cpN < 1500 ? 'caba' : cpN < 1900 ? 'gba' : 'int') : null;
     let envio = ENVIOS[body.envio] ? body.envio : 'gratis';
     if (zona === 'int' && (envio === 'gratis' || envio === 'express')) envio = 'interior';
     if (zona && zona !== 'int' && envio === 'interior') envio = 'gratis';
+    const ST = Object.fromEntries((await (await sb('settings?select=key,value&key=in.(envio_express,cuotas_max)')).json()).map(s => [s.key, +s.value]));
     let costoEnvio = 0;
-    if (envio === 'express') { const [s] = await (await sb('settings?select=value&key=eq.envio_express')).json(); costoEnvio = Math.round(+((s && s.value) || 35000)); }
+    if (envio === 'express') costoEnvio = Math.round(ST.envio_express || 35000);
+    if (transf && prof) { buyer.nombre = buyer.nombre || prof.nombre; buyer.email = buyer.email || prof.email; buyer.telefono = buyer.telefono || prof.telefono || ''; }
+    if (transf && (!buyer.nombre || !/\S+@\S+\.\S+/.test(buyer.email) || buyer.telefono.replace(/\D/g, '').length < 8)) return res.status(400).json({ error: 'Completá tu nombre, mail y teléfono para pagar con transferencia.' });
     const total = items.reduce((a, i) => a + i.precio * i.q, 0) + costoEnvio;
 
-    const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, ...(prof ? { email: buyer.email || prof.email, nombre: buyer.nombre || (prof.nombre + (prof.estudio ? ' (' + prof.estudio + ')' : '')), telefono: buyer.telefono || prof.telefono || '' } : {}), canal: prof ? 'profesional' : 'publico', envio: ENVIOS[envio], costo_envio: costoEnvio, total, visitante: clean(body.visitante, 64) || null }) });
+    const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, ...(prof ? { email: buyer.email || prof.email, nombre: buyer.nombre || (prof.nombre + (prof.estudio ? ' (' + prof.estudio + ')' : '')), telefono: buyer.telefono || prof.telefono || '' } : {}), canal: prof ? 'profesional' : 'publico', ...(transf ? { medio_pago: 'transferencia', cuotas: 1, comision_real: 0 } : {}), envio: ENVIOS[envio], costo_envio: costoEnvio, total, visitante: clean(body.visitante, 64) || null }) });
     if (!or.ok) throw new Error('orders ' + (await or.text()));
     const [order] = await or.json();
-    const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio }))) });
+    const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio, precio_lista_momento: i.lista, regla: i.regla }))) });
     if (!ir.ok) throw new Error('items ' + (await ir.text()));
+
+    // Transferencia: no pasa por Mercado Pago. Le damos los datos y lo confirmás en el panel cuando llega la plata.
+    if (transf) {
+      const [d] = await (await sb('cobro_transf?select=titular,cuit,banco,alias,cbu,horas&id=eq.1')).json();
+      const datos = d || {};
+      const its = items.map(i => ({ q: i.q, precio: i.precio, color: i.color, nombre: i.p.tipo + ' ' + i.p.nombre }));
+      const caja = `<table style="font-size:14px;line-height:1.7">${[['Titular', datos.titular], ['CUIT', datos.cuit], ['Banco', datos.banco], ['Alias', datos.alias], ['CBU', datos.cbu]].filter(x => x[1]).map(([k, v]) => `<tr><td style="color:#77756F;padding-right:14px">${k}</td><td><b>${esc(v)}</b></td></tr>`).join('')}</table>`;
+      try {
+        await sendMail({ to: buyer.email, subject: `Tu pedido #${order.id} · datos para transferir`, html: layout(`¡Gracias, ${esc(buyer.nombre.split(' ')[0])}! Reservamos tu pedido`, `<p style="font-size:14px;line-height:1.6">Transferí <b>${ars(total)}</b> a esta cuenta dentro de las próximas <b>${datos.horas || 48} horas</b> y respondé este mail con el comprobante (o mandalo por WhatsApp). Cuando la veamos acreditada te confirmamos la compra.</p>${caja}<p style="font-size:14px">En el concepto poné: <b>Pedido ${order.id}</b></p>${tablaItems(its)}`) });
+        await sendMail({ to: ADMIN_MAIL, subject: `Pedido #${order.id} por transferencia · ${ars(total)} (esperando el pago)`, html: layout(`Pedido #${order.id} por transferencia`, `<p style="font-size:14px">${esc(buyer.nombre)} · ${esc(buyer.email)} · ${esc(buyer.telefono)}<br>Cuando llegue la plata, marcalo como <b>Pagado</b> en el panel.</p>${tablaItems(its)}<p><a href="https://www.formaconceptba.com/admin">Abrir el panel</a></p>`) });
+      } catch (e) { console.error('mail', e); }
+      return res.status(200).json({ transfer: { order: order.id, total, ...datos } });
+    }
 
     const [nom, ...ape] = (buyer.nombre || '').split(' ');
     const mp = await fetch('https://api.mercadopago.com/checkout/preferences', {
@@ -76,7 +97,7 @@ export default async function handler(req, res) {
         back_urls: { success: SITE + '/?pago=ok', pending: SITE + '/?pago=pendiente', failure: SITE + '/?pago=error' },
         auto_return: 'approved',
         notification_url: SITE + '/api/mp-webhook',
-        payment_methods: { installments: 1 },
+        payment_methods: { installments: Math.max(1, Math.min(12, ST.cuotas_max || 12)), default_installments: 1 },
         statement_descriptor: 'FORMA CONCEPT'
       })
     });
