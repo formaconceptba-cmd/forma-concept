@@ -16,7 +16,8 @@ function packCalc(m){const K=Array.isArray(m.cajas_pack)?m.cajas_pack:[];if(!K.l
 function alertasM(m){const A=[],p=+m.piezas_por_caja||1,c=+m.cajas_por_unidad||1;
   if(p>1&&c>1)A.push({v:'Packing',g:'bad',t:'Piezas por caja y cajas por producto no pueden ser las dos mayores que 1'});
   const pc=packCalc(m);
-  if(pc&&m.cbm>0){const d=Math.abs(m.cbm-pc.cbm)/pc.cbm;if(d>.05)A.push({v:'V1',g:'bad',t:`m³ cargado ${m.cbm}, según las cajas da ${pc.cbm.toFixed(3)} por pieza (desvío ${Math.round(d*100)}%)`,fix:Math.round(pc.cbm*1000)/1000})}
+  /* V1: se compara contra el calculado redondeado a los mismos decimales que el cargado (0,0655 → 0,07), con 8% de tolerancia */
+  if(pc&&m.cbm>0){const dec=Math.min(4,(String(m.cbm).split('.')[1]||'').length),cr=Math.round(pc.cbm*10**dec)/10**dec,d=cr>0?Math.abs(m.cbm-cr)/cr:Math.abs(m.cbm-pc.cbm)/pc.cbm;if(d>.08)A.push({v:'V1',g:'bad',t:`m³ cargado ${m.cbm}, según las cajas da ${pc.cbm.toFixed(3)} por pieza (desvío ${Math.round(d*100)}%)`,fix:Math.round(pc.cbm*1000)/1000})}
   const D=dimsMM(m.medidas);
   if(!D)A.push({v:'V4',g:'warn',t:'Medidas incompletas: hacen falta ancho × profundidad × alto en mm'});
   else{const mx=Math.max(...D),mn=Math.min(...D);
@@ -84,7 +85,7 @@ function v3Orden(pe,r){
       if(!pack&&K.every(k=>cbmCaja(k)))pack=[...K].sort((a,b)=>(a.orden||0)-(b.orden||0)).map(k=>({parte:k.parte==='COMPLETA'?'UNICA':k.parte,largo_cm:+k.largo_cm,ancho_cm:+k.ancho_cm,alto_cm:+k.alto_cm,peso_bruto_kg:k.peso_bruto!=null?+k.peso_bruto:null}))}
     const cbmM=(+m.cbm||0)*it.cant,difPack=(m.piezas_por_caja!=null&&+m.piezas_por_caja!==p)||(m.cajas_por_unidad!=null&&+m.cajas_por_unidad!==c);
     const dev=completo&&cbmO>0?(cbmM-cbmO)/cbmO:null;
-    if((dev!=null&&Math.abs(dev)>.05)||difPack)out.push({m,cant:it.cant,uds,cbmO:completo?cbmO:null,cbmM,dev,p,c,pack,difPack,cbmPieza:completo&&uds?cbmO/uds:null})}
+    if((dev!=null&&Math.abs(dev)>.08)||difPack)out.push({m,cant:it.cant,uds,cbmO:completo?cbmO:null,cbmM,dev,p,c,pack,difPack,cbmPieza:completo&&uds?cbmO/uds:null})}
   return out}
 function v3Html(pe,r){const L=v3Orden(pe,r);if(!L.length)return '';
   return `<div class="card pad ibad" style="margin-bottom:12px"><b>El packing de la orden no coincide con el Maestro</b><p class="hint">La orden manda: es lo que el proveedor va a mandar. Si actualizás, cambia el m³ por pieza del Maestro y con eso el flete prorrateado de <b>todos</b> los productos del pedido.</p>

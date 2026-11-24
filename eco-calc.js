@@ -2,7 +2,7 @@
    Entra (pedido, catálogo, parámetros, aranceles por subcategoría) y sale todo. Sin efectos. */
 const ARANCEL_DEF=0.235;
 const SUBCATS=['Sillas madera','Sillas metal','Sillas plástico','Mesas madera','Mesas metal','Mesas plástico','Muebles madera','Muebles metal','Muebles plástico','Sillones y sofás','Camas'];
-const PAR_DEF={tc:1540,flete20:4500,cbm20:28,flete40:4500,cbm40:60,fleteHQ:4500,cbmHQ:73,
+const PAR_DEF={tc:1540,flete20:4500,cbm20:28,flete40:4500,cbm40:60,fleteHQ:4500,cbmHQ:68,contHQ:0,origenUSD:0,
   seguroPct:0.02,honorariosPct:0.015,despachoFijo:400,terminal:500,transporte:600,verificacion:1000,descarga:0,
   diasFiscal:0,almacenajeDia:1.2,resguardo:500,
   galponMes:14.61,factorStock:0.5,recepcionARS:500000,movimientoARS:6500,vecesMov:1,prepPedidos:0,seguroDeposito:0,
@@ -16,6 +16,7 @@ const PAR_DEF={tc:1540,flete20:4500,cbm20:28,flete40:4500,cbm40:60,fleteHQ:4500,
   objetivo:0.25,costoOportunidad:0.08,retornoMinProd:0.3,margenMinProd:0.45,markupDefault:0.8};
 
 function contenedores(cbm,p){
+  if (p.contHQ>0) return {n20:0,n40:0,nHQ:+p.contHQ};
   if (cbm<=0) return {n20:0,n40:0,nHQ:0};
   let nHQ=Math.floor(cbm/p.cbmHQ), resto=cbm-nHQ*p.cbmHQ, n20=0, n40=0;
   if (resto>1e-9){
@@ -57,7 +58,8 @@ function calcular(pedido,cat,parBase,aranceles){
 
   const c=contenedores(cbm,p), nCont=c.n20+c.n40+c.nHQ;
   const capacidad=c.n20*p.cbm20+c.n40*p.cbm40+c.nHQ*p.cbmHQ;
-  const flete=c.n20*p.flete20+c.n40*p.flete40+c.nHQ*p.fleteHQ;
+  const flete=c.n20*p.flete20+c.n40*p.flete40+c.nHQ*p.fleteHQ+(+p.origenUSD||0);
+  const sobra=capacidad>0&&cbm>capacidad?cbm-capacidad:0;
   const ocupacion=capacidad>0?cbm/capacidad:0;
 
   const despachoFijo=p.despachoFijo+p.verificacion+(p.terminal+p.transporte+p.descarga)*nCont;
@@ -186,7 +188,7 @@ function calcular(pedido,cat,parBase,aranceles){
     despachoFijo,fiscal,seguro,honorarios,cif,arancel,imprevistos,costoFinal,
     creditoIva,percepGanancias,creditoTotal,desembolso,
     venta,margenBruto,markupEfectivo,margenPctPrecio,
-    galpon,recepcion,ventasEst,g,gastos,iibbVenta,baseImponible,impGanancias,
+    sobra,galpon,recepcion,ventasEst,g,gastos,iibbVenta,baseImponible,impGanancias,
     flujo,pico,cajaFinal,resultado,ciclo,diaCobro,retorno,anualizado,cc,gvar,
     debitoIva,saldoIva,markupMinIva,diaNac,diasAcred,costoOport,rotacionInv};
 }
@@ -194,6 +196,7 @@ function calcular(pedido,cat,parBase,aranceles){
 /* Alertas del pedido (sección 6), de más grave a menos */
 function alertasPedido(r){
   const p=r.p,A=[];
+  if(r.sobra>0)A.push({g:'bad',t:`El pedido no entra: ${r.cbm.toFixed(2).replace('.',',')} m³ en ${r.capacidad.toFixed(0)} m³ contratados (${Math.round(r.ocupacion*100)}%). Sobran ${r.sobra.toFixed(2).replace('.',',')} m³: sacá productos en la pestaña Productos (ordená por "m³ por US$ de margen").`});
   if(r.cbm>0){const c=contenedores(r.cbm,p);const exceso=r.cbm-Math.floor(r.cbm/p.cbmHQ)*p.cbmHQ;
     if(c.nHQ+c.n40+c.n20>1&&exceso>1e-9&&exceso<=p.cbm20*0.25){const f=c.n20?p.flete20:c.n40?p.flete40:p.fleteHQ,tA=r.cif>0?r.arancel/r.cif:ARANCEL_DEF;r._desborde=true;
       A.push({g:'bad',t:`El volumen se pasó del contenedor por ${exceso.toFixed(2).replace('.',',')} m³ y estás pagando otro contenedor entero (unos US$ ${Math.round((f*(1+tA)+p.terminal+p.transporte+p.descarga)*(1+p.imprevistos)).toLocaleString('es-AR')} más). Sacá ${exceso.toFixed(2).replace('.',',')} m³ y entra en uno.`})}}
