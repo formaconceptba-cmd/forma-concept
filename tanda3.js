@@ -14,6 +14,7 @@ function puedePublicar(p){if(!p||p.linea==='Nacional')return null;const V=varsDe
 
 /* ---- Tienda → Productos: colores desde las variantes, y no dejar publicar lo que no está en un pedido ---- */
 if(typeof drawProds==='function'){const _dp=drawProds;drawProds=function(){const r=_dp.apply(this,arguments);t3Prods();return r}}
+const addColorRow=(p,nc)=>`<tr class="vrow"><td></td><td colspan="${nc-1}" style="padding:4px 0 10px"><button type="button" class="btn" data-ncol="${esc(p.id)}">+ Color</button></td></tr>`;
 async function t3Prods(){await loadEnPedido();const m=$('#m');if(!m)return;
   m.querySelectorAll('tr[data-id]').forEach(tr=>{const p=prods.find(x=>x.id===tr.dataset.id);if(!p)return;const td=tr.querySelector('td.colc'),V=varsDe(p.id);
     if(td&&V.length){td.outerHTML=`<td><div class="hint">${V.length} color${V.length>1?'es':''} ↓</div></td>`;
@@ -25,10 +26,11 @@ async function t3Prods(){await loadEnPedido();const m=$('#m');if(!m)return;
          <span style="display:flex;align-items:center;gap:6px;min-width:170px"><i style="width:14px;height:14px;border-radius:50%;background:${esc(colHex(v.color))};border:1px solid rgba(0,0,0,.15);display:inline-block"></i><b>${esc(p.nombre||'')} · ${esc(colNom(v.color))}</b></span>
          <span class="hint" style="min-width:150px">${en?(s.con_datos?`Stock: <b>${s.disponible}</b>`:'En pedido'):'<span class="neg">No está en ningún pedido</span>'}</span>
          <button type="button" class="lnk" data-vfot="${esc(v.sku)}">Fotos (${F.length})</button>
-         <label style="margin:0 0 0 auto;display:flex;gap:6px;align-items:center;white-space:nowrap" title="${en?'Mostrar este color en la tienda':'Para publicarlo tiene que estar en un pedido'}"><input type="checkbox" data-vpub="${esc(v.sku)}" ${pub&&en?'checked':''} ${en?'':'disabled'} style="width:auto"> Publicado</label></div></td></tr>`}).join(''))}    else if(td&&p.linea!=='Nacional')td.insertAdjacentHTML('beforeend','<div class="hint neg">Nombres viejos: no son colores FORMA</div>');
+         <label style="margin:0 0 0 auto;display:flex;gap:6px;align-items:center;white-space:nowrap" title="${en?'Mostrar este color en la tienda':'Para publicarlo tiene que estar en un pedido'}"><input type="checkbox" data-vpub="${esc(v.sku)}" ${pub&&en?'checked':''} ${en?'':'disabled'} style="width:auto"> Publicado</label></div></td></tr>`}).join('')+addColorRow(p,nc))}    else if(td&&p.linea!=='Nacional'){td.insertAdjacentHTML('beforeend','<div class="hint neg">Sin colores FORMA</div>');if(byCod(p.id))tr.insertAdjacentHTML('afterend',addColorRow(p,tr.cells.length))}
     const ck=tr.querySelector('[data-f="activo"]');
     if(ck)tr.addEventListener('change',e=>{if(e.target!==ck||!ck.checked)return;const why=puedePublicar(p);if(why){e.stopPropagation();ck.checked=false;toast(why)}},true)});
   m.querySelectorAll('[data-vcol]').forEach(b=>b.onclick=()=>abrirVariantes(b.dataset.vcol));
+  m.querySelectorAll('[data-ncol]').forEach(b=>b.onclick=()=>nuevoColor(prods.find(x=>x.id===b.dataset.ncol)));
   m.querySelectorAll('[data-vpub]').forEach(c=>c.onchange=async()=>{const v=VARS.find(x=>x.sku===c.dataset.vpub);const {error}=await sb.from('variantes').update({publicado:c.checked}).eq('sku',v.sku);if(error){c.checked=!c.checked;return toast('No se pudo guardar')}v.publicado=c.checked;c.closest('tr').classList.toggle('off',!c.checked);toast(c.checked?colNom(v.color)+' publicado en la tienda':colNom(v.color)+' sacado de la tienda')});
   m.querySelectorAll('[data-vfot]').forEach(b=>b.onclick=()=>{const v=VARS.find(x=>x.sku===b.dataset.vfot),p=prods.find(x=>x.id===v.codigo_master)||{id:v.codigo_master};const d=document.createElement('dialog');d.style.maxWidth='640px';d.innerHTML=`<div class="dh"><h2>Fotos · ${esc(p.nombre||p.id)} ${esc(colNom(v.color))}</h2><button class="btn" data-x>Listo</button></div><div class="db"><div id="vcol"></div></div>`;document.body.appendChild(d);d.querySelector('[data-x]').onclick=()=>{d.close();d.remove();drawProds()};d.showModal();pintarVCol(d,p,v.sku)});
   const mal=prods.filter(p=>p.activo&&puedePublicar(p));
@@ -208,4 +210,40 @@ async function pintarVCol(d,p,solo){
     if(await guardar(v,F))toast('Fotos de '+colNom(v.color)+' guardadas');pintarVCol(d,p,solo)});
   w.querySelectorAll('[data-vfx]').forEach(b=>b.onclick=async()=>{const [s,i]=b.dataset.vfx.split('|');const v=VARS.find(x=>x.sku===s);const F=[...v.fotos];F.splice(+i,1);if(await guardar(v,F))pintarVCol(d,p,solo)});
   w.querySelectorAll('[data-vfm]').forEach(b=>b.onclick=async()=>{const [s,i]=b.dataset.vfm.split('|');const v=VARS.find(x=>x.sku===s);const F=[...v.fotos];const k=+i;[F[k-1],F[k]]=[F[k],F[k-1]];if(await guardar(v,F))pintarVCol(d,p,solo)});
+}
+
+/* ---- Tienda → Productos: "+ Color" en un solo paso (crea el código, copia las cajas, lo suma al contenedor y sube fotos) ---- */
+async function nuevoColor(p){
+  if(!VARS.length||!PAL.length)await loadSkus();
+  const m=byCod(p.id);if(!m)return toast('Este producto no está en el Maestro: no se le pueden crear colores');
+  const V=varsDe(p.id),libres=PAL.filter(c=>c.activo&&!VARS.some(v=>v.codigo_master===p.id&&v.color===c.codigo));
+  const {data:peds}=await sb.from('eco_pedidos').select('id,nombre,estado').neq('estado','cerrado').order('created_at');
+  const pz=+m.piezas_por_caja||1;
+  const d=document.createElement('dialog');d.style.maxWidth='560px';document.body.appendChild(d);
+  d.innerHTML=`<div class="dh"><h2>Nuevo color · ${esc(p.tipo+' '+p.nombre)}</h2><button class="btn" data-x>Cerrar</button></div><div class="db" id="ncb">
+   <label>Color</label><select id="ncc"><option value="">Elegí el color…</option>${libres.map(c=>`<option value="${c.codigo}">${esc(c.nombre)}</option>`).join('')}</select>
+   <div class="hint" style="margin-top:4px">¿No está el color? Se agrega en Administración → Colores FORMA.</div>
+   <label style="margin-top:12px">¿En qué contenedor viene?</label><select id="ncp"><option value="">Todavía no sé (no se puede publicar hasta cargarlo)</option>${(peds||[]).map(x=>`<option value="${x.id}">${esc(x.nombre)}</option>`).join('')}</select>
+   <label style="margin-top:12px">¿Cuántas cajas vienen?</label><input id="ncn" class="num" inputmode="numeric" placeholder="ej. 10">
+   <div class="hint" style="margin-top:4px">${pz>1?`Cada caja trae ${pz} unidades (se vende la caja completa).`:V.some(v=>CAJAS.filter(k=>k.sku===v.sku).length>1)?'Cada unidad viene en 2 cajas (tapa y base): poné cuántas unidades vienen.':'1 unidad por caja.'} Se suma al contenedor y a su packing list.</div>
+   <label style="margin:14px 0 0;display:flex;gap:8px;align-items:center"><input type="checkbox" id="ncpub" checked style="width:auto"> Publicarlo en la tienda</label>
+   <div class="bar" style="margin-top:14px"><span class="hint neg" id="nce"></span><span class="sp"></span><button class="btn dk" id="ncok">Crear color</button></div></div>`;
+  d.querySelector('[data-x]').onclick=()=>{d.close();d.remove();drawProds()};d.showModal();
+  d.querySelector('#ncok').onclick=async()=>{const c=d.querySelector('#ncc').value,pid=+d.querySelector('#ncp').value||null,n=Math.round(pnum(d.querySelector('#ncn').value)||0),e=d.querySelector('#nce');
+    if(!c)return e.textContent='Elegí el color';if(pid&&!(n>0))return e.textContent='Poné cuántas cajas vienen';
+    const b=d.querySelector('#ncok');b.disabled=true;b.textContent='Creando…';
+    const base=V[0],KB=base?CAJAS.filter(k=>k.sku===base.sku):[];
+    const {data:nv,error}=await sb.from('variantes').insert({sku:'',codigo_master:p.id,color:c,descripcion:(base&&base.descripcion)||m.descripcion||null,orden:VARS.filter(v=>v.codigo_master===p.id).length+1,publicado:d.querySelector('#ncpub').checked}).select().single();
+    if(error){b.disabled=false;b.textContent='Crear color';return e.textContent='No se pudo crear: '+error.message}
+    /* las cajas se copian de otro color del mismo producto (mismas medidas); si no hay, una caja completa */
+    const filas=(KB.length?KB:[{parte:'COMPLETA',piezas:pz,orden:1}]).map(k=>({sku_caja:'',sku:nv.sku,parte:k.parte,piezas:k.piezas,largo_cm:k.largo_cm??null,ancho_cm:k.ancho_cm??null,alto_cm:k.alto_cm??null,peso_bruto:k.peso_bruto??null,peso_neto:k.peso_neto??null,orden:k.orden||1}));
+    const {data:nk,error:ek}=await sb.from('cajas').insert(filas).select();if(ek)toast('El color se creó pero no sus cajas: revisalo en Colores y cajas');
+    if(pid&&n>0&&nk){await sb.from('eco_ingreso').upsert(nk.map(k=>({pedido_id:pid,sku_caja:k.sku_caja,cajas:n})));
+      /* el contenedor cuenta piezas: suma las de este color */
+      const {data:it}=await sb.from('eco_items').select('id,cant').eq('pedido_id',pid).eq('codigo',p.id).maybeSingle();const piezas=n*(nk.find(k=>k.parte==='COMPLETA')||nk[0]).piezas;
+      if(it)await sb.from('eco_items').update({cant:(+it.cant||0)+piezas}).eq('id',it.id);else await sb.from('eco_items').insert({pedido_id:pid,codigo:p.id,cant:piezas,orden:99});
+      if(typeof ECO!=='undefined'&&ECO.ped)ECO.ped=[]}
+    await loadSkus();await loadEnPedido();
+    const nom=colNom(c);d.querySelector('#ncb').innerHTML=`<p class="pos" style="margin-top:0"><b>${esc(nom)} creado</b> (código ${esc(nv.sku)})${pid&&n>0?` y sumado al contenedor: ${n} caja${n>1?'s':''}.`:'. Cuando sepas en qué contenedor viene, cargá sus cajas en Contenedores → Ingreso y packing list.'}</p><h4 style="margin:12px 0 6px">Fotos de ${esc(nom)}</h4><div id="vcol"></div>`;
+    pintarVCol(d,p,nv.sku)};
 }
