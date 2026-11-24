@@ -121,7 +121,7 @@ function ecoIngresoV(pe,r){
   const filas=V.flatMap(v=>CAJAS.filter(k=>k.sku===v.sku).map(k=>({v,k,c:cj(k.sku_caja)}))).sort(ordPack);
   const tc=filas.reduce((a,x)=>a+(x.c||0),0),tp=filas.reduce((a,x)=>a+(x.c||0)*x.k.piezas,0),tcbm=filas.reduce((a,x)=>a+(x.c&&cbmCaja(x.k)?x.c*cbmCaja(x.k):0),0);
   const sinVar=r.items.filter(i=>!V.some(v=>v.codigo_master===i.codigo));
-  return `<p class="hint" style="max-width:820px">Las cajas que llegan, por SKU de caja. Esto arma el packing list de ingreso para Pailos y, cuando el contenedor pasa a <b>Recibido</b>, entra al stock. Mientras está Confirmado o En tránsito cuenta como stock en camino.</p>
+  return `${typeof v3Html==='function'?v3Html(pe,r):''}<p class="hint" style="max-width:820px">Las cajas que llegan, por SKU de caja. Esto arma el packing list de ingreso para Pailos y, cuando el contenedor pasa a <b>Recibido</b>, entra al stock. Mientras está Confirmado o En tránsito cuenta como stock en camino.</p>
   ${sinVar.length?`<div class="card pad iwarn" style="margin-bottom:10px">Sin variantes de color (no van al packing list): ${sinVar.map(i=>esc(i.codigo)).join(', ')}. Creálas desde el Maestro.</div>`:''}
   <div class="kps">${[['Líneas',filas.filter(x=>x.c).length],['Cajas',tc],['Piezas',tp],['CBM (con medida)',eN(tcbm,2)]].map(([t,v])=>`<div class="card kp"><span>${t}</span><b>${v}</b></div>`).join('')}</div>
   <div class="bar"><span class="sp"></span><button class="btn dk" id="pkx">Exportar packing list para Pailos (.xlsx)</button></div>
@@ -131,7 +131,7 @@ function ecoIngresoV(pe,r){
    <td class="n">${cbmCaja(x.k)&&x.c?eN(x.c*cbmCaja(x.k),3):'<span class="hint">pendiente</span>'}</td><td class="n">${x.k.peso_bruto??'<span class="hint">pendiente</span>'}</td></tr>`).join('')}
   <tr class="tot"><td><b>TOTAL</b></td><td></td><td></td><td></td><td></td><td class="n"><b>${tc}</b></td><td class="n">${tp}</td><td></td><td class="n">${eN(tcbm,2)}</td><td></td></tr></tbody></table></div>`;
 }
-function bindIngreso(pe){
+function bindIngreso(pe,r){if(typeof bindV3==='function')bindV3(pe,r);
   $('#m').querySelectorAll('[data-ing]').forEach(i=>i.onchange=async()=>{const n=Math.max(0,Math.round(pnum(i.value)||0)),k=i.dataset.ing;const {error}=await sb.from('eco_ingreso').upsert({pedido_id:pe.id,sku_caja:k,cajas:n});if(error)return toast('No se pudo guardar');const x=ECO.ing.find(z=>z.pedido_id===pe.id&&z.sku_caja===k);if(x)x.cajas=n;else ECO.ing.push({pedido_id:pe.id,sku_caja:k,cajas:n});drawEcoPedido()});
   $('#pkx').onclick=()=>exportarPacking(pe);
 }
