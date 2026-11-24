@@ -13,6 +13,8 @@ const colHex=c=>(PAL.find(x=>x.codigo===c)||{}).hex||'#cfc8bd';
 const dot=c=>`<i style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${esc(colHex(c))};border:1px solid rgba(0,0,0,.15);vertical-align:-1px;margin-right:6px"></i>`;
 const skuPrev=(cod,col)=>{const a=(cod.match(/^([A-Z]{3})/)||[])[1],n=(cod.match(/-(\d{3,})-/)||[])[1];return a&&n&&col?`${a}-${n}-${col}`:'—'};
 const cajaPrev=(sku,parte)=>parte==='COMPLETA'?sku:parte==='TAPA'?sku+'-T':parte==='BASE'?sku+'-B':sku+'-'+String(parte||'').slice(0,1).toUpperCase();
+/* mismo orden que el packing list de referencia: sillas, después mesas; por número; por color; tapa antes que base */
+const ordPack=(a,b)=>{const k=x=>[/^SIL/.test(x.v.sku)?0:/^MES/.test(x.v.sku)?1:2,+((x.v.sku.match(/-(d+)-/)||[])[1]||0),x.v.color,{COMPLETA:0,TAPA:1,BASE:2}[x.k.parte]??3];const A=k(a),B=k(b);for(let i=0;i<4;i++){if(A[i]<B[i])return -1;if(A[i]>B[i])return 1}return 0};
 const cbmCaja=k=>k.largo_cm&&k.ancho_cm&&k.alto_cm?k.largo_cm*k.ancho_cm*k.alto_cm/1e6:null;
 
 /* ===== Administración → Colores FORMA ===== */
@@ -116,7 +118,7 @@ async function importarStock(){
 /* ===== Contenedores → pedido → Ingreso y packing list ===== */
 function ecoIngresoV(pe,r){
   const cods=new Set(r.items.map(i=>i.codigo)),V=VARS.filter(v=>cods.has(v.codigo_master)),ING=ECO.ing.filter(x=>x.pedido_id===pe.id),cj=k=>(ING.find(x=>x.sku_caja===k)||{}).cajas;
-  const filas=V.flatMap(v=>CAJAS.filter(k=>k.sku===v.sku).map(k=>({v,k,c:cj(k.sku_caja)})));
+  const filas=V.flatMap(v=>CAJAS.filter(k=>k.sku===v.sku).map(k=>({v,k,c:cj(k.sku_caja)}))).sort(ordPack);
   const tc=filas.reduce((a,x)=>a+(x.c||0),0),tp=filas.reduce((a,x)=>a+(x.c||0)*x.k.piezas,0),tcbm=filas.reduce((a,x)=>a+(x.c&&cbmCaja(x.k)?x.c*cbmCaja(x.k):0),0);
   const sinVar=r.items.filter(i=>!V.some(v=>v.codigo_master===i.codigo));
   return `<p class="hint" style="max-width:820px">Las cajas que llegan, por SKU de caja. Esto arma el packing list de ingreso para Pailos y, cuando el contenedor pasa a <b>Recibido</b>, entra al stock. Mientras está Confirmado o En tránsito cuenta como stock en camino.</p>
@@ -135,7 +137,7 @@ function bindIngreso(pe){
 }
 async function exportarPacking(pe){
   await loadXLSX();const {data:emp}=await sb.from('empresa_datos').select('*').eq('id',1).maybeSingle();const P=pe.packing||{},r=ecoCalc(pe),cods=new Set(r.items.map(i=>i.codigo));
-  const filas=VARS.filter(v=>cods.has(v.codigo_master)).flatMap(v=>CAJAS.filter(k=>k.sku===v.sku).map(k=>({v,k,c:(ECO.ing.find(x=>x.pedido_id===pe.id&&x.sku_caja===k.sku_caja)||{}).cajas||0}))).filter(x=>x.c>0);
+  const filas=VARS.filter(v=>cods.has(v.codigo_master)).flatMap(v=>CAJAS.filter(k=>k.sku===v.sku).map(k=>({v,k,c:(ECO.ing.find(x=>x.pedido_id===pe.id&&x.sku_caja===k.sku_caja)||{}).cajas||0}))).filter(x=>x.c>0).sort(ordPack);
   const md=k=>cbmCaja(k)?[k.largo_cm,k.ancho_cm,k.alto_cm].map(n=>String(+n).replace('.',',')).join('×').replace(/,/g,'.'):'pendiente';
   const A=[['FORMA Concept · Packing list de ingreso'],['Contenedor',P.contenedor||pe.nombre],['Importador',(emp||{}).importador||''],['Contacto',(emp||{}).contacto||''],['Estado',P.estado||''],['ETA',P.eta||'A confirmar'],[],
     ['Código (SKU)','Descripción','Color','Parte','Unidades\npor caja','Cantidad\nde cajas','Total\npiezas','Medida caja (cm)','CBM total','Peso bruto\npor caja (kg)'],
@@ -153,7 +155,7 @@ async function ingresarAlStock(pe){
 
 /* ===== Pedidos → orden de despacho para Pailos ===== */
 async function pintarDespachos(){
-  const pag=(orders||[]).filter(o=>o.estado!=='pendiente'&&o.estado!=='cancelado');if(!pag.length)return;
+  const pag=(orders||[]).filter(o=>o.estado!=='pendiente'&&o.estado!=='cancelado');if(!pag.length){197609'#m').insertAdjacentHTML('beforeend','<h3 style="margin:30px 0 10px">Órdenes de despacho para Pailos</h3><p class="hint">Cuando entre un pedido pagado, acá aparece la orden con las cajas que saca Pailos (una mesa en 2 cajas = tapa + base).</p>');return}
   const {data:D}=await sb.from('despachos').select('*,despacho_items(*)').in('order_id',pag.map(o=>o.id));const byO=Object.fromEntries((D||[]).map(d=>[d.order_id,d]));
   const EST={pendiente:'Pendiente (definir fecha)',programado:'Fecha acordada con el cliente',enviado:'Enviada a Pailos',despachado:'Despachado',entregado:'Entregado',cancelado:'Cancelado'};
   $('#m').insertAdjacentHTML('beforeend',`<h3 style="margin:30px 0 10px">Órdenes de despacho para Pailos</h3><p class="hint" style="max-width:820px">Cada pedido pagado se traduce a las cajas que saca Pailos (una mesa en 2 cajas = tapa + base) y se descuenta del stock. Vos acordás el día con el cliente y le decís a Pailos cuándo entregar.</p>
