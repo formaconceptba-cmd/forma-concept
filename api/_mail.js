@@ -12,13 +12,13 @@ export function layout(titulo, cuerpo) {
 export function tablaItems(items) {
   return `<table style="width:100%;border-collapse:collapse;font-size:14px">${items.map(i => `<tr><td style="padding:8px 0;border-bottom:1px solid #DDDBD6">${i.q} × ${esc(i.nombre)}${i.color ? ' · ' + esc(i.color) : ''}</td><td style="padding:8px 0;border-bottom:1px solid #DDDBD6;text-align:right">${ars(i.precio * i.q)}</td></tr>`).join('')}</table>`;
 }
-export async function sendMail({ to, subject, html, replyTo }) {
+export async function sendMail({ to, subject, html, replyTo, attachments }) {
   const RK = process.env.RESEND_API_KEY;
   if (!RK || !to) return { ok: false, skipped: true };
   try {
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST', headers: { Authorization: 'Bearer ' + RK, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: 'FORMA Concept <hola@formaconceptba.com>', to: Array.isArray(to) ? to : [to], reply_to: replyTo || ADMIN_MAIL, subject, html })
+      body: JSON.stringify({ from: 'FORMA Concept <hola@formaconceptba.com>', to: Array.isArray(to) ? to : [to], reply_to: replyTo || ADMIN_MAIL, subject, html, ...(attachments ? { attachments } : {}) })
     });
     if (!r.ok) console.error('resend', await r.text());
     return { ok: r.ok };

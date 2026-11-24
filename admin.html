@@ -569,7 +569,7 @@ const ppro=m=>{const c=costo(m.fob_usd,m.cbm);return c==null?null:Math.ceil(c*(1
 const byCod=c=>master.find(m=>m.codigo===c);
 const uniq=k=>[...new Set(master.map(m=>m[k]).filter(Boolean))].sort();
 
-function drawMaster(){
+function drawMasterViejo(){
   let L=master.filter(m=>(!MF.prov||m.proveedor===MF.prov)&&(!MF.cat||m.subcategoria===MF.cat)&&(!MF.mat||m.material===MF.mat)&&(!MF.est||m.estado===MF.est)
     &&(!MF.q||[m.codigo,m.descripcion,m.cod_proveedor,m.material,m.medidas,m.familia].join(' ').toLowerCase().includes(MF.q.toLowerCase())));
   const val=m=>({costo:costo(m.fob_usd,m.cbm),pro:ppro(m)}[MF.sort]??m[MF.sort]);
@@ -859,6 +859,6 @@ function drawOrders(){
 }
 start();
 </script>
-<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=6"></script><script src="inicio.js?v=6"></script><script src="marketing.js?v=1"></script>
+<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=6"></script><script src="inicio.js?v=6"></script><script src="marketing.js?v=1"></script><script src="maestro.js?v=1"></script>
 </body>
 </html>
