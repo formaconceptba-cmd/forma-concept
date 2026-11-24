@@ -299,8 +299,8 @@ async function drawCatPro(){
   const {data:pk}=await sb.rpc('pro_catalogo');const PK=Object.fromEntries((pk||[]).map(x=>[x.codigo,x])),dt=ST.desc_transf??0.15,PA=(ST.preventa_activa??1)>0;
   const pubDe=l=>l?(PA?Math.ceil(l*(1-0.45)/1000)*1000:l):null,may=(pub,d)=>pub?Math.round(pub*(1-dt)*(1-d)/1000)*1000:null;
   CPRO=cp||[];if(!prods.length)prods=pr||[];const P=Object.fromEntries((pr||[]).map(p=>[p.id,p])),dp=ST.regla_may??0.2;
-  const sug=m=>{const c=m?costoV(m):null;return c==null?null:Math.ceil(c*(1+ST.markup_venta)*(1+ST.iva)*ST.tc/1000)*1000};
-  let rows=(cp||[]).map(c=>{const m=byCod(c.codigo),p=P[c.codigo];const base=c.precio_lista||sug(m),lista=PK[c.codigo]?PK[c.codigo].lista:pubDe(base);const d=c.descuento??dp;const precio=may(lista,d);const cA=m?costoV(m)*ST.tc:null;const marg=precio&&cA?(precio/(1+ST.iva)-cA)/(precio/(1+ST.iva)):null;
+  const sug=m=>{const c=m?costo(m.fob_usd,m.cbm):null;return c==null?null:Math.ceil(c*(1+ST.markup_venta)*(1+ST.iva)*ST.tc/1000)*1000};
+  let rows=(cp||[]).map(c=>{const m=byCod(c.codigo),p=P[c.codigo];const base=c.precio_lista||sug(m),lista=PK[c.codigo]?PK[c.codigo].lista:pubDe(base);const d=c.descuento??dp;const precio=may(lista,d);const cA=m?costo(m.fob_usd,m.cbm)*ST.tc:null;const marg=precio&&cA?(precio/(1+ST.iva)-cA)/(precio/(1+ST.iva)):null;
     return {c,m,p,base,lista,d,precio,marg,name:p?p.tipo+' '+p.nombre:m?.descripcion||c.codigo,cat:p?.categoria||m?.subcategoria||'',foto:p?src(p.img):m?.foto_url,cols:c.colores||(p?.colores||[]).map(x=>x[0]).join(', ')||m?.terminacion||''}});
   rows=sortBy('cpro',rows,(r,k)=>({nombre:r.name,cat:r.cat,lista:r.lista,desc:r.d,precio:r.precio,marg:r.marg,moq:r.m?.moq,vis:r.c.activo?0:1}[k]));
   const old=document.getElementById('cpw');if(old)old.remove();
@@ -316,7 +316,7 @@ async function drawCatPro(){
   <p class="hint">Precio mayorista = precio que paga el público hoy, con el descuento por transferencia, menos el descuento mayorista. Así nunca queda por encima del público. Si el producto no está en la tienda, cargá su precio de lista. Editá lo que quieras y tocá <b>Guardar cambios</b>; los profesionales lo ven al instante.</p></div>`);
   bindSort(()=>drawCatPro());
   $('#dpro').onchange=e=>{const v=(+e.target.value.replace(',','.'))/100;mark(e.target,'settings','key','regla_may','value',v);ST.regla_may=v;rows.forEach(r=>{if(r.c.descuento==null){RW[r.c.codigo].d=v;const i=document.querySelector(`[data-cd="${CSS.escape(r.c.codigo)}"]`);if(i)i.value=Math.round(v*100);recalc(r.c.codigo)}})};
-  const RW=Object.fromEntries(rows.map(r=>[r.c.codigo,{lista:r.lista,d:r.d,base:sug(r.m),cA:r.m?costoV(r.m)*ST.tc:null}]));
+  const RW=Object.fromEntries(rows.map(r=>[r.c.codigo,{lista:r.lista,d:r.d,base:sug(r.m),cA:r.m?costo(r.m.fob_usd,r.m.cbm)*ST.tc:null}]));
   const recalc=cod=>{const x=RW[cod],pr=may(x.lista,x.d),mg=pr&&x.cA?(pr/(1+ST.iva)-x.cA)/(pr/(1+ST.iva)):null;
     document.querySelector(`[data-rp="${CSS.escape(cod)}"]`).textContent=ars(pr);document.querySelector(`[data-rm="${CSS.escape(cod)}"]`).innerHTML=mg==null?'—':`<span class="${mg<0.15?'neg':'pos'}">${pct(mg)}</span>`};
   $('#m').querySelectorAll('[data-cl]').forEach(i=>i.onchange=()=>{const c=i.dataset.cl,d=i.value.replace(/\D/g,''),v=d?+d:null;RW[c].lista=pubDe(v||RW[c].base);i.value=money(v||RW[c].base);mark(i,'catalogo_pro','codigo',c,'precio_lista',v);recalc(c)});
