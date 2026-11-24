@@ -190,7 +190,7 @@ async function drawImportar(){
       const f={cod_proveedor:tx('cod_proveedor')||null,descripcion:tx('descripcion')||null,fob_usd:pnum(g('fob_usd')),cbm:pnum(g('cbm')),moq:pnum(g('moq')),peso_kg:pnum(g('peso_kg')),medidas:tx('medidas')||null,material:tx('material')||null,terminacion:tx('terminacion')||null,familia:tx('familia')||null,lead_dias:pnum(g('lead_dias')),foto_url:tx('foto_url')||null,observaciones:tx('observaciones')||null};
       const k1=parseCaja(tx('caja1_med')),k2=parseCaja(tx('caja2_med')),cc=pnum(g('cbm_caja'));
       /* fila de continuación (proformas tipo Rudi: la 2ª caja de la mesa va en la fila de abajo, sin código ni precio) */
-      if(!f.cod_proveedor&&!f.descripcion&&f.fob_usd==null){const prev=filas[filas.length-1];if(prev&&(k1||cc)){prev.aux.K.push(k1?{...k1,peso_bruto_kg:pnum(g('caja1_peso'))}:{cbm:cc});}return}
+      if(!f.cod_proveedor&&!f.descripcion&&f.fob_usd==null){const prev=filas[filas.length-1];if(prev&&(k1||cc)){prev.aux.K.push(k1?{...k1,peso_bruto_kg:pnum(g('caja1_peso'))}:{cbm:cc});const cb=pnum(g('cbm')),ct=pnum(g('cbm_total'));if(cb!=null&&prev.f.cbm!=null)prev.f.cbm+=cb;if(ct!=null&&prev.aux.cbmT!=null)prev.aux.cbmT+=ct}return}
       const K=[];if(k1)K.push({...k1,peso_bruto_kg:pnum(g('caja1_peso'))});else if(cc)K.push({cbm:cc});if(k2)K.push({...k2,peso_bruto_kg:pnum(g('caja2_peso'))});
       filas.push({fila,f,r,aux:{K,cant:pnum(g('cantidad')),cbmT:pnum(g('cbm_total')),pz:pnum(g('piezas_por_caja')),cj:pnum(g('cajas_por_unidad')),pk:tx('packing_txt'),up:tx('unidad_precio'),arm:tx('armado'),sv:tx('subcategoria'),inc:tx('incoterm')}})});
     S.filas=filas.map(({fila,f,aux})=>{const E=[],W=[];
@@ -206,24 +206,25 @@ async function drawImportar(){
       if(f.unidad_precio==='CAJA'&&f.fob_usd>0&&(p||1)>1){f.fob_usd=Math.round(f.fob_usd/p*100)/100;W.push(`FOB venía por caja: dividido por ${p}`)}
       /* m³: siempre por pieza. Desde las cajas = (Σ cajas) / piezas por caja */
       const vols=aux.K.map(k=>volK(k)||k.cbm||null),pcC=vols.length&&vols.every(v=>v)?vols.reduce((a,b)=>a+b,0)/(p||1):null;
-      if(f.cbm!=null&&aux.cant>1&&pcC){const a=Math.abs(f.cbm-pcC)/pcC,b=Math.abs(f.cbm/aux.cant-pcC)/pcC;if(b<a&&b<.1){f.cbm=f.cbm/aux.cant;W.push('el m³ venía como total de la línea: dividido por la cantidad')}}
+      if(f.cbm!=null&&aux.cant>1&&pcC){const a=Math.abs(f.cbm-pcC)/pcC,b=Math.abs(f.cbm/aux.cant-pcC)/pcC;if(b<a&&b<.5){f.cbm=f.cbm/aux.cant;W.push('el m³ venía como total de la línea: dividido por la cantidad')}}
       if(f.cbm==null&&aux.cbmT&&aux.cant>0){f.cbm=aux.cbmT/aux.cant;W.push('m³ por pieza = total de la línea / cantidad')}
       if(f.cbm==null&&pcC){f.cbm=pcC;W.push('m³ calculado desde las cajas')}
       if(f.cbm!=null)f.cbm=Math.round(f.cbm*1000)/1000;if(f.moq!=null)f.moq=Math.round(f.moq);if(f.lead_dias!=null)f.lead_dias=Math.round(f.lead_dias);
       const a=(aux.arm||aux.pk).toUpperCase();f.armado=/KD|KNOCK/.test(a)?'KD':/ASSEMBL|ARMADO/.test(a)?'ARMADO':null;
       if(aux.inc)f.incoterm=aux.inc.toUpperCase().slice(0,3);
       const sm=subs.find(x=>x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')===aux.sv.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));f.subcategoria=sm||S.def.subcategoria||null;
-      if(!f.descripcion)E.push('sin descripción');if(!(f.fob_usd>0))E.push('FOB inválido');if(!(f.cbm>0))E.push('m³ inválido');if(!f.subcategoria)E.push(aux.sv?`subcategoría "${aux.sv}" no está en la lista`:'sin subcategoría');
+      const k=(f.cod_proveedor||'').toUpperCase(),ex=k?master.find(m=>m.proveedor===S.prov&&(m.cod_proveedor||'').toUpperCase()===k):null;
+      /* si ya existe en el Maestro no hace falta que el archivo traiga descripción ni subcategoría */
+      if(!f.descripcion&&!ex)E.push('sin descripción');if(!(f.fob_usd>0))E.push('FOB inválido');if(!(f.cbm>0))E.push('m³ inválido');if(!f.subcategoria&&!ex)E.push(aux.sv?`subcategoría "${aux.sv}" no está en la lista`:'sin subcategoría');
       if(f.cbm>5)W.push('m³ muy alto: ¿no estará en otra unidad?');if(f.fob_usd>3000)W.push('FOB muy alto');
-      const k=(f.cod_proveedor||'').toUpperCase();let rep=false;if(k){if(vistos[k]){rep=true;E.push('repetido (otro color de la fila '+vistos[k]+'): se carga una vez')}else vistos[k]=fila}
-      const ex=k?master.find(m=>m.proveedor===S.prov&&(m.cod_proveedor||'').toUpperCase()===k):null;
-      const AL=rep?[]:alertasM(f);
+      let rep=false;if(k){if(vistos[k]){rep=true;E.push('repetido (otro color de la fila '+vistos[k]+'): se carga una vez')}else vistos[k]=fila}
+      const AL=rep?[]:alertasM(ex?{...ex,...Object.fromEntries(Object.entries(f).filter(([,v])=>v!=null))}:f);
       return {fila,f,E,W,AL,ex,ok:!E.length}})}
   const F=S.filas,nN=F.filter(x=>x.ok&&!x.ex).length,nA=F.filter(x=>x.ok&&x.ex).length,nE=F.filter(x=>x.E.length).length;
   const dif=(a,b)=>a!=null&&b!=null&&+a!==+b?`<div class="hint">antes ${a}</div>`:'';
   $('#m').innerHTML=back+`<div class="kps">${[['Productos nuevos',nN],['Ya existen (se actualizan)',nA],['Con errores (no entran)',nE]].map(([t,v])=>`<div class="card kp"><span>${t}</span><b>${v}</b></div>`).join('')}</div>
    <div class="card wrap"><table><thead><tr><th><input type="checkbox" id="iall" checked style="width:auto"></th><th>Fila</th><th>Acción</th><th>Código prov.</th><th>Descripción</th><th>Subcategoría</th><th class="n">FOB</th><th class="n">m³</th><th class="n">MOQ</th><th>Packing</th><th>Alertas y avisos</th></tr></thead><tbody>
-   ${F.map((x,i)=>`<tr${x.E.length?' style="background:rgba(227,73,72,.07)"':''}><td><input type="checkbox" data-iok="${i}" ${x.ok?'checked':'disabled'} style="width:auto"></td><td class="hint">${x.fila}</td><td>${x.E.length?'<b class="neg">no entra</b>':x.ex?`actualiza <span class="hint">${esc(x.ex.codigo)}</span>`:'<b class="pos">nuevo</b>'}</td><td>${esc(x.f.cod_proveedor||'')}</td><td>${esc(x.f.descripcion||'')}</td><td>${esc(x.f.subcategoria||'')}</td>
+   ${F.map((x,i)=>`<tr${x.E.length?' style="background:rgba(227,73,72,.07)"':''}><td><input type="checkbox" data-iok="${i}" ${x.ok?'checked':'disabled'} style="width:auto"></td><td class="hint">${x.fila}</td><td>${x.E.length?'<b class="neg">no entra</b>':x.ex?`actualiza <span class="hint">${esc(x.ex.codigo)}</span>`:'<b class="pos">nuevo</b>'}</td><td>${esc(x.f.cod_proveedor||'')}</td><td>${esc(x.f.descripcion||(x.ex?x.ex.descripcion:''))}</td><td>${esc(x.f.subcategoria||(x.ex?x.ex.subcategoria:''))}</td>
     <td class="n">${x.f.fob_usd??'—'}${x.ex?dif(x.ex.fob_usd,x.f.fob_usd):''}</td><td class="n">${x.f.cbm??'—'}${x.ex?dif(x.ex.cbm,x.f.cbm):''}</td><td class="n">${x.f.moq??'—'}</td><td class="hint">${esc(packTxt(x.f))}${x.f.cajas_pack?'<div>'+x.f.cajas_pack.map(k=>k.largo_cm+'×'+k.ancho_cm+'×'+k.alto_cm).join(' + ')+' cm</div>':''}</td><td class="hint">${[...x.E.map(e=>`<span class="neg">${esc(e)}</span>`),...(x.AL||[]).map(a=>`<span class="${a.g==='bad'?'neg':''}"><b>${a.v}</b> ${a.t}</span>`),...x.W.map(esc)].join(' · ')}</td></tr>`).join('')}</tbody></table></div>
    <p class="hint">Los nuevos reciben su código solo (prefijo de la subcategoría + número correlativo + ${esc(prov3(S.prov))}). En los que ya existen se actualizan FOB, m³, MOQ, peso, medidas y packing, y queda en el historial. FOB y m³ quedan siempre <b>por pieza</b>. Los que tienen alerta se pueden cargar igual: quedan marcados en el Maestro.</p>
    <div class="bar"><button class="btn" id="iprev">← Cambiar el mapeo</button><span class="sp"></span><button class="btn dk" id="igo2">Confirmar e importar</button></div>`;
