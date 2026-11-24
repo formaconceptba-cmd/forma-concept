@@ -45,10 +45,10 @@ export async function plantilla(clave, vars = {}) {
   return { subject: txt(p.asunto), html: layout(esc(txt(pars[0] || '')), html) };
 }
 // Manda con plantilla; si no hay plantilla, con el respaldo { subject, html }.
-export async function sendPlantilla(clave, to, vars, respaldo) {
+export async function sendPlantilla(clave, to, vars, respaldo, attachments) {
   if (!to) return { ok: false };
   const t = await plantilla(clave, vars);
   if (t && t.skip) return { ok: false, skipped: true };
   const m = t || respaldo; if (!m) return { ok: false };
-  return sendMail({ to, subject: m.subject, html: m.html });
+  return sendMail({ to, subject: m.subject, html: m.html, ...(attachments ? { attachments } : {}) });
 }
