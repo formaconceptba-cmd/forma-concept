@@ -209,6 +209,7 @@ async function drawImportar(){
       if(f.cbm!=null&&aux.cant>1&&pcC){const a=Math.abs(f.cbm-pcC)/pcC,b=Math.abs(f.cbm/aux.cant-pcC)/pcC;if(b<a&&b<.5){f.cbm=f.cbm/aux.cant;W.push('el m³ venía como total de la línea: dividido por la cantidad')}}
       if(f.cbm==null&&aux.cbmT&&aux.cant>0){f.cbm=aux.cbmT/aux.cant;W.push('m³ por pieza = total de la línea / cantidad')}
       if(f.cbm==null&&pcC){f.cbm=pcC;W.push('m³ calculado desde las cajas')}
+      if(f.peso_kg==null&&f.cajas_pack){const pc=packCalc(f);if(pc&&pc.peso)f.peso_kg=Math.round(pc.peso*10)/10}
       if(f.cbm!=null)f.cbm=Math.round(f.cbm*1000)/1000;if(f.moq!=null)f.moq=Math.round(f.moq);if(f.lead_dias!=null)f.lead_dias=Math.round(f.lead_dias);
       const a=(aux.arm||aux.pk).toUpperCase();f.armado=/KD|KNOCK/.test(a)?'KD':/ASSEMBL|ARMADO/.test(a)?'ARMADO':null;
       if(aux.inc)f.incoterm=aux.inc.toUpperCase().slice(0,3);
