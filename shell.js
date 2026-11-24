@@ -51,8 +51,8 @@ window.shell=function(){
    <div class="tn-back" id="tnbk"></div>
    <div class="tn-main"><header class="tn-top"><button class="tn-hb" id="tnhb" aria-label="Menú">☰</button><span class="sp"></span><a class="tn-a hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn hide-m" id="chp">Cambiar contraseña</button><button class="btn" id="out">Salir</button></header>
    <div class="tn-ph"><h1 id="tnt"></h1></div><main id="m"></main></div></div>`;
-  document.getElementById('tnhb').onclick=()=>document.body.classList.toggle('tn-open');document.getElementById('tnbk').onclick=cerrarMenu};
+  document.getElementById('tnhb').onclick=()=>document.body.classList.toggle('tn-open');document.getElementById('tnbk').onclick=cerrarMenu;
+  $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};$('#chp').onclick=()=>viewNewPass();draw()};
 /* si el panel ya se dibujó con la estructura vieja, se rearma */
-if(typeof user!=='undefined'&&user&&document.querySelector('header')&&!document.querySelector('.tn')){window.shell();
-  $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};$('#chp').onclick=()=>viewNewPass();draw()}
+if(typeof user!=='undefined'&&user&&document.querySelector('header')&&!document.querySelector('.tn')){window.shell()}
 })();
