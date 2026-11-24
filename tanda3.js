@@ -215,7 +215,7 @@ async function pintarVCol(d,p,solo){
 /* ---- Tienda → Productos: "+ Color" en un solo paso (crea el código, copia las cajas, lo suma al contenedor y sube fotos) ---- */
 async function nuevoColor(p){
   if(!VARS.length||!PAL.length)await loadSkus();
-  const m=byCod(p.id);if(!m)return toast('Este producto no está en el Maestro: no se le pueden crear colores');
+  if(!master.length||master[0].piezas_por_caja===undefined)await loadMaster();const m=byCod(p.id);if(!m)return toast('Este producto no está en el Maestro: no se le pueden crear colores');
   const V=varsDe(p.id),libres=PAL.filter(c=>c.activo&&!VARS.some(v=>v.codigo_master===p.id&&v.color===c.codigo));
   const {data:peds}=await sb.from('eco_pedidos').select('id,nombre,estado').neq('estado','cerrado').order('created_at');
   const pz=+m.piezas_por_caja||1;
