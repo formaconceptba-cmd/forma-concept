@@ -155,7 +155,7 @@ async function ingresarAlStock(pe){
 
 /* ===== Pedidos → orden de despacho para Pailos ===== */
 async function pintarDespachos(){
-  const pag=(orders||[]).filter(o=>o.estado!=='pendiente'&&o.estado!=='cancelado');if(!pag.length){197609'#m').insertAdjacentHTML('beforeend','<h3 style="margin:30px 0 10px">Órdenes de despacho para Pailos</h3><p class="hint">Cuando entre un pedido pagado, acá aparece la orden con las cajas que saca Pailos (una mesa en 2 cajas = tapa + base).</p>');return}
+  const pag=(orders||[]).filter(o=>o.estado!=='pendiente'&&o.estado!=='cancelado');if(!pag.length){$('#m').insertAdjacentHTML('beforeend','<h3 style="margin:30px 0 10px">Órdenes de despacho para Pailos</h3><p class="hint">Cuando entre un pedido pagado, acá aparece la orden con las cajas que saca Pailos (una mesa en 2 cajas = tapa + base).</p>');return}
   const {data:D}=await sb.from('despachos').select('*,despacho_items(*)').in('order_id',pag.map(o=>o.id));const byO=Object.fromEntries((D||[]).map(d=>[d.order_id,d]));
   const EST={pendiente:'Pendiente (definir fecha)',programado:'Fecha acordada con el cliente',enviado:'Enviada a Pailos',despachado:'Despachado',entregado:'Entregado',cancelado:'Cancelado'};
   $('#m').insertAdjacentHTML('beforeend',`<h3 style="margin:30px 0 10px">Órdenes de despacho para Pailos</h3><p class="hint" style="max-width:820px">Cada pedido pagado se traduce a las cajas que saca Pailos (una mesa en 2 cajas = tapa + base) y se descuenta del stock. Vos acordás el día con el cliente y le decís a Pailos cuándo entregar.</p>
