@@ -128,7 +128,7 @@ async function drawImportar(){
     $('#mback').onclick=()=>{MVIEW='lista';IMP=null;drawMaster()};
     $('#igo').onclick=async()=>{const prov=$('#ip').value.trim().toUpperCase(),f=$('#if').files[0];
       if(!/^PROV-[A-Z]{3}-[A-Z0-9]{3}$/.test(prov))return $('#ie').textContent='El proveedor tiene que tener la forma PROV-CHN-ABC.';if(!f)return $('#ie').textContent='Elegí el archivo.';
-      try{await loadXLSX();const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const A=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+      try{await loadXLSX();const wb=XLSX.read(await f.arrayBuffer(),{type:'array',raw:/.csv$/i.test(f.name)});const ws=wb.Sheets[wb.SheetNames[0]];const A=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
         const {data:mp}=await sb.from('import_mapeo').select('*').eq('proveedor',prov).maybeSingle();
         /* fila de encabezados: la guardada, o la que más se parece a nombres de columnas conocidos */
         let hr=mp&&mp.fila_encabezado!=null?mp.fila_encabezado:0,best=-1;if(!mp)A.slice(0,20).forEach((r,i)=>{const s=r.filter(c=>String(c).trim()).length+3*r.filter(c=>IMPC.some(([, ,syn])=>syn.some(w=>String(c).toLowerCase().includes(w)))).length;if(s>best){best=s;hr=i}});
