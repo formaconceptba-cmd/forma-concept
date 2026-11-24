@@ -8,7 +8,7 @@ async function loadEnPedido(){if(!CAJAS.length||!PAL.length)await loadSkus();con
 const varsDe=id=>VARS.filter(v=>v.codigo_master===id&&v.estado!=='discontinuado');
 /* un producto sólo se publica si tiene al menos un color FORMA que esté en un pedido (los nacionales no aplican) */
 function puedePublicar(p){if(!p||p.linea==='Nacional')return null;const V=varsDe(p.id);
-  if(V.length)return V.some(v=>ENPED.has(v.sku))?null:'Ninguno de sus colores está en un pedido: no se puede publicar.';
+  if(V.length)return V.some(v=>ENPED.has(v.sku)&&v.publicado!==false)?null:'Ningún color publicado de este producto está en un pedido: publicá al menos uno.';
   if((p.colores||[]).some(c=>c[0]==='A definir'))return 'Tiene el color "A definir": no se puede publicar.';
   return 'No tiene colores FORMA en ningún pedido (Maestro → Colores y cajas): no se puede publicar.'}
 
@@ -16,12 +16,21 @@ function puedePublicar(p){if(!p||p.linea==='Nacional')return null;const V=varsDe
 if(typeof drawProds==='function'){const _dp=drawProds;drawProds=function(){const r=_dp.apply(this,arguments);t3Prods();return r}}
 async function t3Prods(){await loadEnPedido();const m=$('#m');if(!m)return;
   m.querySelectorAll('tr[data-id]').forEach(tr=>{const p=prods.find(x=>x.id===tr.dataset.id);if(!p)return;const td=tr.querySelector('td.colc'),V=varsDe(p.id);
-    if(td&&V.length){const en=V.filter(v=>ENPED.has(v.sku)),fuera=V.filter(v=>!ENPED.has(v.sku));
-      td.outerHTML=`<td><div class="sw">${V.map(v=>`<i title="${esc(colNom(v.color))}${ENPED.has(v.sku)?'':' · no está en ningún pedido'}" style="background:${esc(colHex(v.color))};${ENPED.has(v.sku)?'':'opacity:.25'}"></i>`).join('')}</div><div class="hint">${en.map(v=>esc(colNom(v.color))).join(', ')||'—'}</div>${fuera.length?`<div class="hint neg">Sin pedido (no se muestran): ${fuera.map(v=>esc(colNom(v.color))).join(', ')}</div>`:''}<button class="lnk" data-vcol="${esc(p.id)}">Colores y cajas</button></td>`}
-    else if(td&&p.linea!=='Nacional')td.insertAdjacentHTML('beforeend','<div class="hint neg">Nombres viejos: no son colores FORMA</div>');
+    if(td&&V.length){td.outerHTML=`<td><div class="hint">${V.length} color${V.length>1?'es':''} ↓</div></td>`;
+      /* una fila por color, debajo del producto: foto, stock, fotos y publicado */
+      const nc=tr.cells.length;
+      tr.insertAdjacentHTML('afterend',V.map(v=>{const en=ENPED.has(v.sku),s=STKV[v.sku]||{},F=Array.isArray(v.fotos)?v.fotos:[],pub=v.publicado!==false;
+        return `<tr class="vrow${pub&&en?'':' off'}"><td></td><td colspan="${nc-1}" style="padding-top:6px;padding-bottom:6px"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+         <img src="${esc(F[0]||src(p.img))}" alt="" style="width:46px;height:46px;object-fit:cover;background:#eee">
+         <span style="display:flex;align-items:center;gap:6px;min-width:170px"><i style="width:14px;height:14px;border-radius:50%;background:${esc(colHex(v.color))};border:1px solid rgba(0,0,0,.15);display:inline-block"></i><b>${esc(p.nombre||'')} · ${esc(colNom(v.color))}</b></span>
+         <span class="hint" style="min-width:150px">${en?(s.con_datos?`Stock: <b>${s.disponible}</b>`:'En pedido'):'<span class="neg">No está en ningún pedido</span>'}</span>
+         <button type="button" class="lnk" data-vfot="${esc(v.sku)}">Fotos (${F.length})</button>
+         <label style="margin:0 0 0 auto;display:flex;gap:6px;align-items:center;white-space:nowrap" title="${en?'Mostrar este color en la tienda':'Para publicarlo tiene que estar en un pedido'}"><input type="checkbox" data-vpub="${esc(v.sku)}" ${pub&&en?'checked':''} ${en?'':'disabled'} style="width:auto"> Publicado</label></div></td></tr>`}).join(''))}    else if(td&&p.linea!=='Nacional')td.insertAdjacentHTML('beforeend','<div class="hint neg">Nombres viejos: no son colores FORMA</div>');
     const ck=tr.querySelector('[data-f="activo"]');
     if(ck)tr.addEventListener('change',e=>{if(e.target!==ck||!ck.checked)return;const why=puedePublicar(p);if(why){e.stopPropagation();ck.checked=false;toast(why)}},true)});
   m.querySelectorAll('[data-vcol]').forEach(b=>b.onclick=()=>abrirVariantes(b.dataset.vcol));
+  m.querySelectorAll('[data-vpub]').forEach(c=>c.onchange=async()=>{const v=VARS.find(x=>x.sku===c.dataset.vpub);const {error}=await sb.from('variantes').update({publicado:c.checked}).eq('sku',v.sku);if(error){c.checked=!c.checked;return toast('No se pudo guardar')}v.publicado=c.checked;c.closest('tr').classList.toggle('off',!c.checked);toast(c.checked?colNom(v.color)+' publicado en la tienda':colNom(v.color)+' sacado de la tienda')});
+  m.querySelectorAll('[data-vfot]').forEach(b=>b.onclick=()=>{const v=VARS.find(x=>x.sku===b.dataset.vfot),p=prods.find(x=>x.id===v.codigo_master)||{id:v.codigo_master};const d=document.createElement('dialog');d.style.maxWidth='640px';d.innerHTML=`<div class="dh"><h2>Fotos · ${esc(p.nombre||p.id)} ${esc(colNom(v.color))}</h2><button class="btn" data-x>Listo</button></div><div class="db"><div id="vcol"></div></div>`;document.body.appendChild(d);d.querySelector('[data-x]').onclick=()=>{d.close();d.remove();drawProds()};d.showModal();pintarVCol(d,p,v.sku)});
   const mal=prods.filter(p=>p.activo&&puedePublicar(p));
   if(mal.length)m.insertAdjacentHTML('afterbegin',`<div class="card pad ibad" style="margin-bottom:12px"><b>${mal.length} producto${mal.length>1?'s':''} publicado${mal.length>1?'s':''} sin colores en un pedido</b><p class="hint" style="margin:4px 0 0">${mal.map(p=>esc(p.tipo+' '+p.nombre)+' ('+esc(p.id)+')').join(' · ')}. Cargales los colores FORMA desde Maestro → Colores y cajas, o despublicalos.</p></div>`)}
 
@@ -181,11 +190,11 @@ async function drawEnvios(){
 
 /* ---- Tienda → Editar producto: colores FORMA (de Colores y cajas) con su galería de fotos.
    Los colores no se escriben a mano: salen de las variantes del Maestro. La tienda muestra las fotos del color elegido. ---- */
-async function pintarVCol(d,p){
+async function pintarVCol(d,p,solo){
   const w=d.querySelector('#vcol');if(!w)return;
   if(!VARS.length||!PAL.length)await loadSkus();await loadEnPedido();
   const id=(d.querySelector('[name="id"]')||{}).value||p.id;
-  const V=varsDe(id);
+  const V=varsDe(id).filter(v=>!solo||v.sku===solo);
   if(!V.length){w.innerHTML=`<div class="card pad" style="margin:6px 0">Este producto todavía no tiene colores FORMA. Se crean en el Maestro, con su código de color y sus cajas.<div style="margin-top:8px"><button type="button" class="btn" data-vc0>Crear colores</button></div></div>`;
     w.querySelector('[data-vc0]').onclick=()=>{if(!byCod(id))return toast('Primero tiene que estar en el Maestro');abrirVariantes(id)};return}
   w.innerHTML=`<p class="hint" style="margin:4px 0 8px">Las fotos de cada color: la primera es la principal (la de la grilla) y la segunda aparece al pasar el mouse. Si un color no tiene fotos, se usan las de abajo. Para sumar o cambiar colores: <button type="button" class="lnk" data-vce>Colores y cajas</button>.</p>
@@ -196,7 +205,7 @@ async function pintarVCol(d,p){
   w.querySelector('[data-vce]').onclick=()=>abrirVariantes(id);
   w.querySelectorAll('[data-vfa]').forEach(inp=>inp.onchange=async()=>{const v=VARS.find(x=>x.sku===inp.dataset.vfa);const fs=[...inp.files];if(!fs.length)return;toast('Subiendo '+fs.length+' foto'+(fs.length>1?'s':'')+'…');
     const F=[...(Array.isArray(v.fotos)?v.fotos:[])];for(const f of fs){try{const z=await achicar(f);const path=`${id}/${v.sku}-${Date.now()}-${Math.random().toString(36).slice(2,6)}.jpg`;const {error}=await sb.storage.from('fotos').upload(path,z,{upsert:true,contentType:'image/jpeg'});if(error)throw error;F.push(sb.storage.from('fotos').getPublicUrl(path).data.publicUrl)}catch(e){toast('No se pudo subir una foto')}}
-    if(await guardar(v,F))toast('Fotos de '+colNom(v.color)+' guardadas');pintarVCol(d,p)});
-  w.querySelectorAll('[data-vfx]').forEach(b=>b.onclick=async()=>{const [s,i]=b.dataset.vfx.split('|');const v=VARS.find(x=>x.sku===s);const F=[...v.fotos];F.splice(+i,1);if(await guardar(v,F))pintarVCol(d,p)});
-  w.querySelectorAll('[data-vfm]').forEach(b=>b.onclick=async()=>{const [s,i]=b.dataset.vfm.split('|');const v=VARS.find(x=>x.sku===s);const F=[...v.fotos];const k=+i;[F[k-1],F[k]]=[F[k],F[k-1]];if(await guardar(v,F))pintarVCol(d,p)});
+    if(await guardar(v,F))toast('Fotos de '+colNom(v.color)+' guardadas');pintarVCol(d,p,solo)});
+  w.querySelectorAll('[data-vfx]').forEach(b=>b.onclick=async()=>{const [s,i]=b.dataset.vfx.split('|');const v=VARS.find(x=>x.sku===s);const F=[...v.fotos];F.splice(+i,1);if(await guardar(v,F))pintarVCol(d,p,solo)});
+  w.querySelectorAll('[data-vfm]').forEach(b=>b.onclick=async()=>{const [s,i]=b.dataset.vfm.split('|');const v=VARS.find(x=>x.sku===s);const F=[...v.fotos];const k=+i;[F[k-1],F[k]]=[F[k],F[k-1]];if(await guardar(v,F))pintarVCol(d,p,solo)});
 }

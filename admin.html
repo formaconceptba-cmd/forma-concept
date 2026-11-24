@@ -204,7 +204,7 @@ function drawProds(){
    <td><select data-f="disponibilidad" style="width:auto">${[["","—"],["stock","En stock"],["pedido","A pedido"],["sin_stock","Sin stock"]].map(([v,t])=>`<option value="${v}" ${(p.disponibilidad||"")===v?"selected":""}>${t}</option>`).join("")}</select></td>
    <td><input type="checkbox" data-f="activo" ${p.activo?'checked':''} style="width:auto"></td>
    <td style="white-space:nowrap"><button class="lnk" data-ed>Editar</button> · <button class="lnk" data-del style="color:var(--bad)">Eliminar</button></td></tr>`).join('')}</tbody></table></div>
-  <p class="hint">Cambiá todo lo que quieras y tocá <b>Guardar cambios</b> abajo. La preventa se calcula sola (−45% sobre lista); si escribís un precio, ese manda. Los colores se manejan en la pestaña Colores.</p>`;
+  <p class="hint">Cambiá todo lo que quieras y tocá <b>Guardar cambios</b> abajo. La preventa se calcula sola (−45% sobre lista); si escribís un precio, ese manda. Debajo de cada producto están sus colores: ahí subís las fotos de cada uno y elegís cuáles se ven en la tienda.</p>`;
   $('#q').oninput=e=>{q=e.target.value;const pos=e.target.selectionStart;drawProds();const i=$('#q');i.focus();i.setSelectionRange(pos,pos)};
   $('#nw').onclick=()=>editProd(null);bindSort(drawProds);bindColp();
   $('#m').querySelectorAll('tr[data-id]').forEach(tr=>{
@@ -879,6 +879,6 @@ function drawOrders(){
 }
 start();
 </script>
-<script src="eco-calc.js?v=5"></script><script src="eco-ui.js?v=10"></script><script src="inicio.js?v=6"></script><script src="marketing.js?v=1"></script><script src="maestro.js?v=7"></script><script src="skus.js?v=4"></script><script src="packing.js?v=2"></script><script src="tanda3.js?v=2"></script>
+<script src="eco-calc.js?v=5"></script><script src="eco-ui.js?v=10"></script><script src="inicio.js?v=6"></script><script src="marketing.js?v=1"></script><script src="maestro.js?v=7"></script><script src="skus.js?v=5"></script><script src="packing.js?v=2"></script><script src="tanda3.js?v=3"></script>
 </body>
 </html>

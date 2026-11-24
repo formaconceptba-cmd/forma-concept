@@ -21,3 +21,11 @@ do $x$ declare d text; begin
     insert into settings(key, value) values ('packs_pro_revert', 1);
   end if;
 end $x$;
+
+-- Publicar / sacar de la tienda cada color por separado
+alter table public.variantes add column if not exists publicado boolean not null default true;
+create or replace function public.variantes_publicas() returns table(sku text, producto text, color text, nombre text, hex text, disponible int, con_datos boolean, orden int, fotos jsonb)
+language sql stable security definer set search_path = public as $f$
+  select v.sku, v.codigo_master, v.color, c.nombre, c.hex, greatest(0, s.disponible), coalesce(s.con_datos, false), v.orden, v.fotos
+  from variantes v join colores c on c.codigo = v.color left join stock_variantes() s on s.sku = v.sku
+  where v.estado <> 'discontinuado' and v.publicado and c.activo and public.variante_en_pedido(v.sku) order by v.codigo_master, v.orden, v.sku $f$;
