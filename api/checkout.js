@@ -100,7 +100,7 @@ export default async function handler(req, res) {
     const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, ...(prof ? { email: buyer.email || prof.email, nombre: buyer.nombre || (prof.nombre + (prof.estudio ? ' (' + prof.estudio + ')' : '')), telefono: buyer.telefono || prof.telefono || '' } : {}), canal: prof ? 'profesional' : 'publico', tracking, ...(transf ? { medio_pago: 'transferencia', cuotas: 1, comision_real: 0 } : {}), envio: ENVIOS[envio], costo_envio: costoEnvio, total, bultos, visitante: clean(body.visitante, 64) || null }) });
     if (!or.ok) throw new Error('orders ' + (await or.text()));
     const [order] = await or.json();
-    const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio, precio_lista_momento: i.lista, regla: i.regla, sku: i.sku })) });
+    const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio, precio_lista_momento: i.lista, regla: i.regla, sku: i.sku }))) });
     if (!ir.ok) throw new Error('items ' + (await ir.text()));
     // La reserva arranca acá (pedido pendiente). Si otro cliente reservó lo mismo en el mismo instante, el stock queda negativo: el último se cae.
     const STK2 = Object.fromEntries((await (await sb('rpc/stock_calc', { method: 'POST', body: '{}' })).json()).map(x => [x.id, x]));
