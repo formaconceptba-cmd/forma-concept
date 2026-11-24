@@ -203,13 +203,19 @@ function drawProds(){
    <td class="n"><input class="num n" style="width:70px" data-f="vendidas" value="${p.vendidas??0}" inputmode="numeric"></td>
    <td><select data-f="disponibilidad" style="width:auto">${[["","—"],["stock","En stock"],["pedido","A pedido"],["sin_stock","Sin stock"]].map(([v,t])=>`<option value="${v}" ${(p.disponibilidad||"")===v?"selected":""}>${t}</option>`).join("")}</select></td>
    <td><input type="checkbox" data-f="activo" ${p.activo?'checked':''} style="width:auto"></td>
-   <td><button class="lnk" data-ed>Editar</button></td></tr>`).join('')}</tbody></table></div>
+   <td style="white-space:nowrap"><button class="lnk" data-ed>Editar</button> · <button class="lnk" data-del style="color:var(--bad)">Eliminar</button></td></tr>`).join('')}</tbody></table></div>
   <p class="hint">Cambiá todo lo que quieras y tocá <b>Guardar cambios</b> abajo. La preventa se calcula sola (−45% sobre lista); si escribís un precio, ese manda. Los colores se manejan en la pestaña Colores.</p>`;
   $('#q').oninput=e=>{q=e.target.value;const pos=e.target.selectionStart;drawProds();const i=$('#q');i.focus();i.setSelectionRange(pos,pos)};
   $('#nw').onclick=()=>editProd(null);bindSort(drawProds);bindColp();
   $('#m').querySelectorAll('tr[data-id]').forEach(tr=>{
     const id=tr.dataset.id;
     tr.querySelector('[data-ed]').onclick=()=>editProd(prods.find(p=>p.id===id));
+    /* eliminar de la tienda en forma definitiva (el producto sigue en el Maestro) */
+    tr.querySelector('[data-del]').onclick=async()=>{const p=prods.find(p=>p.id===id);
+      if(!confirm(`¿Eliminar ${p.tipo} ${p.nombre} (${p.id}) de la tienda?\n\nSe borra de la página en forma definitiva. Sigue estando en el Maestro, así que lo podés volver a agregar desde ahí.`))return;
+      const {error}=await sb.from('products').delete().eq('id',id);
+      if(error){toast(error.code==='23503'?'Tiene ventas registradas: no se puede borrar sin perder ese historial. Despublicalo (destildá "Publicado").':'No se pudo eliminar');return}
+      prods=prods.filter(x=>x.id!==id);toast('Eliminado de la tienda');drawProds()};
     tr.querySelectorAll('[data-f]').forEach(inp=>inp.onchange=()=>{
       const f=inp.dataset.f; let v=inp.type==='checkbox'?inp.checked:f==='disponibilidad'?(inp.value||null):inp.value.replace(/\D/g,'');
       if(f!=='activo'&&f!=='disponibilidad')v=v===''?((f==='precio_lista'||f==='precio_preventa')?null:0):+v;
@@ -225,11 +231,22 @@ const preP=p=>p.precio_preventa||(p.precio_lista?Math.ceil(p.precio_lista*(1-(p.
 const pctP=p=>p.precio_lista&&preP(p)?Math.round((1-preP(p)/p.precio_lista)*100):Math.round((p.pct_preventa??PRE)*100);
 const money=v=>v==null||v===''||isNaN(+v)?'':'$'+(+v).toLocaleString('es-AR');
 function colorRow(c=['','#cccccc']){return `<div class="cl"><input placeholder="Nombre del color" value="${esc(c[0])}"><input type="color" value="${esc(c[1])}"><button type="button" class="lnk" data-rm>Quitar</button></div>`}
-function editProd(p){
-  const isNew=!p; p=p||{id:'',img:'',img2:'',tipo:'',nombre:'',linea:PRODF==='nacional'?'Nacional':'Acero',categoria:'Sillas',bajada:'',material:'',terminacion:'',ancho:'',prof:'',alto:'',redonda:false,precio_lista:'',unidades:10,vendidas:0,armado:false,colores:[],destacado:false,activo:false,orden:(prods.at(-1)?.orden||0)+1};
+/* producto de la tienda armado con los datos del Maestro (falta ponerle el nombre comercial antes de darlo de alta) */
+function maestroAProducto(m){
+  const pri=(m.descripcion||'').split(' ')[0]||'',tipo=pri?pri[0].toUpperCase()+pri.slice(1).toLowerCase():'';
+  const sub=m.subcategoria||'',cat=/^Sillas/.test(sub)?(/butaca/i.test(m.descripcion)?'Butacas':/banqueta|banco/i.test(m.descripcion)?'Bancos':'Sillas'):/^Mesas/.test(sub)?(/ratona|auxiliar|baja/i.test(m.descripcion)?'Mesas bajas':'Mesas'):/sof|sill/i.test(sub)?'Sillones':/Cama/.test(sub)?'Camas':'Muebles';
+  const mat=(m.material||'').toLowerCase(),linea=/acero|alumin|metal/.test(mat)?'Acero':/fresno/.test(mat)?'Fresno':/mdf|laca/.test(mat)?'Laca':(m.material||'');
+  const md=String(m.medidas||'').split(/[*x×]/).map(x=>parseFloat(String(x).replace(',','.'))).filter(x=>isFinite(x));
+  const it=(typeof ECO!=='undefined'&&ECO.it||[]).find(i=>i.codigo===m.codigo);
+  return {id:m.codigo,img:m.foto_url||'',img2:'',tipo,nombre:'',linea,categoria:cat,bajada:'',material:m.material||'',terminacion:m.terminacion||'',ancho:md[0]?md[0]/10:'',prof:md[1]?md[1]/10:'',alto:md[2]?md[2]/10:'',redonda:/redond|Ø/i.test(m.descripcion||''),
+    precio_lista:it&&it.precio_ars?Math.round(it.precio_ars):'',unidades:it?it.cant:0,vendidas:0,armado:m.armado==='KD',colores:[],destacado:false,activo:false,orden:(prods.at(-1)?.orden||0)+1};
+}
+function editProd(p,nuevo){
+  const isNew=!p||!!nuevo; p=p||{id:'',img:'',img2:'',tipo:'',nombre:'',linea:PRODF==='nacional'?'Nacional':'Acero',categoria:'Sillas',bajada:'',material:'',terminacion:'',ancho:'',prof:'',alto:'',redonda:false,precio_lista:'',unidades:10,vendidas:0,armado:false,colores:[],destacado:false,activo:false,orden:(prods.at(-1)?.orden||0)+1};
   const lineas=[...new Set(['Acero','Fresno','Laca','Nacional',...prods.map(x=>x.linea)])], cats=[...new Set(['Sillas','Butacas','Mesas','Mesas bajas','Bancos',...prods.map(x=>x.categoria)])];
   const d=document.createElement('dialog');
   d.innerHTML=`<form method="dialog" id="pf"><div class="dh"><h2>${isNew?'Nuevo producto':esc(p.tipo+' '+p.nombre)}</h2><button type="button" class="btn" data-x>Cerrar</button></div><div class="db">
+  ${isNew?`<div style="background:var(--box);padding:10px 12px;margin-bottom:12px"><label style="margin-top:0">Traer del Maestro</label><input id="fm" list="dlm" placeholder="Buscá por código o nombre (ej. SIL-MET-009)" autocomplete="off"><datalist id="dlm"></datalist><div class="hint">Completa código, material, medidas, foto, precio y cupo del contenedor. Después ponele el nombre y revisá antes de guardar.</div></div>`:''}
   <div class="g2"><div><label>Tipo (Silla, Mesa…)</label><input name="tipo" value="${esc(p.tipo)}" required></div><div><label>Nombre</label><input name="nombre" value="${esc(p.nombre)}" required></div></div>
   <div class="g3"><div><label>Código</label><input name="id" value="${esc(p.id)}" ${isNew?'required':'readonly'} placeholder="SIL-MET-000-RUD"></div>
    <div><label>Línea</label><input name="linea" list="dl1" value="${esc(p.linea)}" required></div><div><label>Categoría</label><input name="categoria" list="dl2" value="${esc(p.categoria)}" required></div></div>
@@ -246,6 +263,9 @@ function editProd(p){
   </div><div class="df"><button type="button" class="btn" data-x>Cancelar</button><button class="btn dk" id="sv">Guardar</button></div></form>`;
   document.body.appendChild(d); d.showModal();
   const f=d.querySelector('#pf'); const ph={img:p.img,img2:p.img2};
+  const fm=d.querySelector('#fm');if(fm){(async()=>{if(!master.length||master[0].descripcion===undefined)await loadMaster();try{if(typeof ECO!=='undefined'&&!ECO.it.length)await ecoLoad()}catch(e){}const ya=new Set(prods.map(x=>x.id));
+    d.querySelector('#dlm').innerHTML=master.filter(m=>!m.archivado&&!ya.has(m.codigo)).map(m=>`<option value="${esc(m.codigo)}">${esc(m.descripcion||'')} · ${esc(m.cod_proveedor||'')}</option>`).join('')})();
+    fm.onchange=()=>{const q=fm.value.trim().toUpperCase(),m=master.find(x=>x.codigo===q)||master.find(x=>(x.codigo+' '+(x.descripcion||'')+' '+(x.cod_proveedor||'')).toUpperCase().includes(q));if(!m)return toast('No está en el Maestro');if(prods.some(x=>x.id===m.codigo))return toast('Ese producto ya está en la tienda');d.close();d.remove();editProd(maestroAProducto(m),true)}}
   const upv=()=>{const l=+f.precio_lista.value.replace(/\D/g,'');d.querySelector('#pv').textContent=l?`Preventa ${ars(pre(l))} · 1 pago ${ars(l*(1-OFF_1P))}`:''};upv();f.precio_lista.oninput=upv;
   d.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{d.close();d.remove()});
   const bindRm=()=>d.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>b.parentElement.remove());bindRm();
@@ -425,10 +445,10 @@ async function drawProfPrecios(){
 /* ---------- menú del panel por secciones ---------- */
 const GRUPOS=[['inicio','Inicio',[['inicio','Resumen'],['campanias','Anuncios por campaña'],['clientes','Clientes']]],
  ['b2c','Tienda',[['productos','Productos'],['nacionales','Productos nacionales'],['pedidos','Pedidos y arrepentimientos']]],
+ ['gest','Administración',[['maestro','Maestro de productos'],['rent','Precios y reglas'],['eco','Contenedores'],['ecopar','Parámetros de importación'],['compras','Órdenes a proveedores']]],
  ['prof','Profesionales',[['pprecios','Precios y mínimos'],['pcuentas','Cuentas'],['ppedidos','Pedidos']]],
  ['may','Mayoristas',[['pro','Cuentas, contenedor y catálogo']]],
- ['cont','Contenido',[['frm','FRM Studio'],['fotos','Fotos de la página']]],
- ['gest','Gestión',[['maestro','Maestro de productos'],['rent','Precios y reglas'],['eco','Contenedores'],['ecopar','Parámetros de importación'],['compras','Órdenes a proveedores']]]];
+ ['cont','Contenido',[['frm','FRM Studio'],['fotos','Fotos de la página']]]];
 const grupoDe=t=>(GRUPOS.find(g=>g[2].some(s=>s[0]===t))||GRUPOS[0]);
 function drawNav(){const g=grupoDe(tab);const n=document.getElementById('gnav'),s=document.getElementById('snav');if(!n)return;
   n.innerHTML=GRUPOS.map(x=>`<button data-g="${x[0]}" class="${x[0]===g[0]?'on':''}">${x[1]}</button>`).join('');
