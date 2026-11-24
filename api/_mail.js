@@ -24,3 +24,31 @@ export async function sendMail({ to, subject, html, replyTo, attachments }) {
     return { ok: r.ok };
   } catch (e) { console.error('resend', e); return { ok: false }; }
 }
+
+// Plantillas editables desde el panel (tabla mail_plantillas). Texto plano con {variables}; párrafos separados por línea en blanco.
+// {detalle}, {datos_transferencia} y {seguimiento} son HTML armado por el sistema. Si la plantilla no existe se usa el texto de respaldo.
+const SBU = 'https://znzbwtewxpcpqtmjbmdw.supabase.co';
+const HTMLV = ['detalle', 'datos_transferencia', 'seguimiento'];
+export async function plantilla(clave, vars = {}) {
+  const KEY = process.env.SUPABASE_SECRET_KEY;
+  let p = null;
+  try { const r = await fetch(`${SBU}/rest/v1/mail_plantillas?select=asunto,cuerpo,activo&clave=eq.${clave}`, { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } }); [p] = await r.json(); } catch (e) { console.error('plantilla', e); }
+  if (!p) return null;
+  if (!p.activo) return { skip: true };
+  const txt = s => String(s).replace(/\{(\w+)\}/g, (m, k) => vars[k] != null && !HTMLV.includes(k) ? String(vars[k]) : '');
+  const pars = String(p.cuerpo).split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+  const html = pars.slice(1).map(par => {
+    const solo = par.match(/^\{(\w+)\}$/);
+    if (solo && HTMLV.includes(solo[1])) return vars[solo[1]] || '';
+    return `<p style="font-size:14px;line-height:1.6">${esc(par).replace(/\{(\w+)\}/g, (m, k) => HTMLV.includes(k) ? (vars[k] || '') : esc(vars[k] ?? '')).replace(/\n/g, '<br>')}</p>`;
+  }).join('');
+  return { subject: txt(p.asunto), html: layout(esc(txt(pars[0] || '')), html) };
+}
+// Manda con plantilla; si no hay plantilla, con el respaldo { subject, html }.
+export async function sendPlantilla(clave, to, vars, respaldo) {
+  if (!to) return { ok: false };
+  const t = await plantilla(clave, vars);
+  if (t && t.skip) return { ok: false, skipped: true };
+  const m = t || respaldo; if (!m) return { ok: false };
+  return sendMail({ to, subject: m.subject, html: m.html });
+}

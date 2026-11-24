@@ -1,5 +1,5 @@
 // Un admin cambia el estado de un pedido. Si pasa a "en camino" o "entregado", se avisa al cliente por mail.
-import { sendMail, layout, esc } from './_mail.js';
+import { sendMail, sendPlantilla, layout, esc } from './_mail.js';
 import { marcarPagado } from './_pagado.js';
 const SB = 'https://znzbwtewxpcpqtmjbmdw.supabase.co';
 const PUB = 'sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
@@ -18,12 +18,12 @@ export default async function handler(req, res) {
     const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', Prefer: 'return=representation' };
     // Llegó una transferencia (o un pago que no avisó Mercado Pago): se marca pagado con todo lo que eso implica.
     if (estado === 'pagado') { const [prev] = await (await fetch(`${SB}/rest/v1/orders?select=estado&id=eq.${id}`, { headers: H })).json(); if (prev && prev.estado === 'pendiente') { await marcarPagado(id); return res.status(200).json({ ok: true, mail: true }); } }
-    const [o] = await (await fetch(`${SB}/rest/v1/orders?id=eq.${id}`, { method: 'PATCH', headers: H, body: JSON.stringify({ estado }) })).json();
+    const [o] = await (await fetch(`${SB}/rest/v1/orders?id=eq.${id}`, { method: 'PATCH', headers: H, body: JSON.stringify({ estado, ...(body.tracking_envio ? { tracking_envio: String(body.tracking_envio).slice(0, 300) } : {}) }) })).json();
     if (!o) return res.status(404).json({ error: 'Pedido no encontrado' });
     let mail = false;
     const nombre = esc((o.nombre || '').split(' ')[0]);
-    if (estado === 'en_camino' && o.email) mail = (await sendMail({ to: o.email, subject: `Tu pedido #${o.id} está en camino`, html: layout(`${nombre ? nombre + ', t' : 'T'}u pedido está en camino`, `<p style="font-size:14px;line-height:1.6">Tu pedido <b>#${o.id}</b> salió para tu casa. Te escribimos por WhatsApp con la franja horaria de entrega.</p><p style="font-size:14px;line-height:1.6">Al recibirlo, revisá el embalaje. Si ves algún daño, sacale fotos y escribinos dentro de las 48 h.</p>`) })).ok;
-    if (estado === 'entregado' && o.email) mail = (await sendMail({ to: o.email, subject: `¡Que lo disfrutes! · Pedido #${o.id}`, html: layout(`¡Que lo disfrutes${nombre ? ', ' + nombre : ''}!`, `<p style="font-size:14px;line-height:1.6">Tu pedido <b>#${o.id}</b> figura como entregado. Gracias por elegir FORMA Concept.</p><p style="font-size:14px;line-height:1.6">Si nos mandás una foto de cómo quedó en tu casa, nos encanta verla. Podés etiquetarnos en Instagram <b>@forma.concept</b>.</p>`) })).ok;
+    if (estado === 'en_camino' && o.email) mail = (await sendPlantilla('en_camino', o.email, { nombre: (o.nombre || '').split(' ')[0], pedido: o.id, seguimiento: o.tracking_envio ? `<p style="font-size:14px">Seguimiento del envío: <b>${esc(o.tracking_envio)}</b></p>` : '' }, { subject: `Tu pedido #${o.id} está en camino`, html: layout(`${nombre ? nombre + ', t' : 'T'}u pedido está en camino`, `<p style="font-size:14px;line-height:1.6">Tu pedido <b>#${o.id}</b> salió para tu casa. Te escribimos por WhatsApp con la franja horaria de entrega.</p><p style="font-size:14px;line-height:1.6">Al recibirlo, revisá el embalaje. Si ves algún daño, sacale fotos y escribinos dentro de las 48 h.</p>`) })).ok;
+    if (estado === 'entregado' && o.email) mail = (await sendPlantilla('entregado', o.email, { nombre: (o.nombre || '').split(' ')[0], pedido: o.id }, { subject: `¡Que lo disfrutes! · Pedido #${o.id}`, html: layout(`¡Que lo disfrutes${nombre ? ', ' + nombre : ''}!`, `<p style="font-size:14px;line-height:1.6">Tu pedido <b>#${o.id}</b> figura como entregado. Gracias por elegir FORMA Concept.</p><p style="font-size:14px;line-height:1.6">Si nos mandás una foto de cómo quedó en tu casa, nos encanta verla. Podés etiquetarnos en Instagram <b>@forma.concept</b>.</p>`) })).ok;
     return res.status(200).json({ ok: true, mail });
   } catch (e) { console.error(e); return res.status(500).json({ error: 'Error inesperado' }); }
 }

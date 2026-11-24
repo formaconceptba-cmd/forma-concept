@@ -580,7 +580,10 @@ async function loadDB(){
     const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,disp:x.disponibilidad||'',cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,pp:x.pct_preventa,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores&&x.colores.length?x.colores:[['Único','#D8D2C8']],noColor:!(x.colores&&x.colores.length),feat:x.destacado?1:0}));
     try{const q=await fetch(SB_URL+'/rest/v1/rpc/precios_publicos',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const m=Object.fromEntries((await q.json()).map(x=>[x.id,x]));list.forEach(p=>{const x=m[p.id];if(x){p.list=x.lista;p.price=x.publico;p.transf=x.transf}})}}catch(e){}
     /* colores = variantes (SKU de venta) con el nombre de la paleta FORMA */
-    try{const q=await fetch(SB_URL+'/rest/v1/rpc/variantes_publicas',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const V=await q.json();list.forEach(p=>{const vs=V.filter(v=>v.producto===p.id);if(vs.length){p.colors=vs.map(v=>[v.nombre,v.hex||'#cfc8bd']);p.skus=vs.map(v=>v.sku);p.vdisp=vs.map(v=>v.con_datos?v.disponible:null);p.noColor=false}})}}catch(e){}
+    try{const q=await fetch(SB_URL+'/rest/v1/rpc/variantes_publicas',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const V=await q.json();list.forEach(p=>{const vs=V.filter(v=>v.producto===p.id);if(vs.length){p.colors=vs.map(v=>[v.nombre,v.hex||'#cfc8bd']);p.skus=vs.map(v=>v.sku);p.vdisp=vs.map(v=>v.con_datos?v.disponible:null);p.noColor=false}else{p.colors=[['','#cfc8bd']];p.skus=null;p.noColor=true}})}}catch(e){}
+    /* ficha: peso, armado, bultos y pack (sale del Maestro) */
+    try{const q=await fetch(SB_URL+'/rest/v1/rpc/ficha_publica',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const F=Object.fromEntries((await q.json()).map(x=>[x.id,x]));list.forEach(p=>{const f=F[p.id];if(f){p.peso=f.peso_kg;p.arm=f.armado;p.pz=f.piezas_por_caja||1;p.bul=f.cajas_por_unidad||1}})}}catch(e){}
+    try{const q=await fetch(SB_URL+'/rest/v1/config_tienda?select=key,value',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});if(q.ok)(await q.json()).forEach(x=>CFGT[x.key]=x.value)}catch(e){}
     try{const q=await fetch(SB_URL+'/rest/v1/rpc/stock_publico',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const m=Object.fromEntries((await q.json()).map(x=>[x.id,x.disponible]));list.forEach(p=>{if(m[p.id]!=null){p.units=m[p.id];if(p.units<=0&&p.fam!=='Nacional'&&p.price)p.disp='sin_stock'}})}}catch(e){}
     P.splice(0,P.length,...list);
     if(!animating)render();
@@ -670,7 +673,7 @@ function viewLegal(k){
    <h3>Gran Buenos Aires</h3><p>Envío gratis los jueves y sábados, con el mismo sistema.</p>
    <h3>Envío express</h3><p>Si lo necesitás antes, despachamos tu pedido dentro de las 24 h hábiles desde que el producto está disponible, el día que elijas. Tiene costo y lo ves antes de pagar.</p>
    <h3>Interior del país</h3><p>Lo enviamos por transporte a tu localidad. Te pasamos el costo antes de despachar y lo abonás al recibir.</p>
-   <h3>Retiro</h3><p>También podés retirarlo en Buenos Aires, coordinando día y horario.</p>
+   <h3>Retiro</h3><p>También podés retirarlo sin costo en nuestro depósito de Lanús, coordinando antes el día y horario.</p>
    <h3>Cómo te llega</h3><p>Cada pieza viaja en caja de cartón reforzado, con esquineros y protección en cada cara. Si necesita armado, incluye herrajes e instrucciones; en CABA y GBA te lo podemos dejar armado.</p>`],
   'ayuda-pagos':['Medios de pago',`<p>Podés pagar con <b>Mercado Pago</b> (tarjeta de crédito, débito, dinero en cuenta o efectivo) o con <b>transferencia bancaria</b>. Tus datos de tarjeta nunca pasan por nuestra página.</p>
    <h3>Transferencia: 15% de descuento</h3><p>Si pagás con transferencia tenés <b>15% de descuento</b>. Al finalizar la compra te damos los datos de la cuenta; cuando vemos la plata acreditada te confirmamos el pedido.</p>
@@ -940,7 +943,7 @@ function viewProduct(p){
     <a class="back" href="#tienda" data-back>← Atrás</a>
     <h1>${esc(title(p))}</h1>
     ${p.price?`${p.list>p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>`:""}
-     <div class="price">${ars(p.price)} <span class="tag">${p.fam==='Nacional'?(DISP[p.disp]||'Fabricación nacional'):isProf()?'Precio profesional −'+off(p)+'%':'Preventa −'+off(p)+'%'}</span></div>
+     ${p.pz>1?`<div class="cuo">${p.pz===2?'Se vende por par':'Set de '+p.pz}: el precio es por ${p.pz===2?'las dos':'las '+p.pz+' unidades'}.</div>`:''}<div class="price">${ars(p.price)} <span class="tag">${p.fam==='Nacional'?(DISP[p.disp]||'Fabricación nacional'):isProf()?'Precio profesional −'+off(p)+'%':'Preventa −'+off(p)+'%'}</span></div>
      <ul class="pay"><li><b>${p.fam==='Nacional'?'Precio':isProf()?'Precio profesional':'Precio de preventa'} · Mercado Pago</b><span>${ars(p.price)}</span></li>
       ${p.transf?`<li><b>Con transferencia · 15% off</b><span>${ars(p.transf)}</span></li>`:''}<li><b>Hasta 3 cuotas sin interés</b><span>3 × ${ars(Math.ceil(p.price/3))}</span></li>
       <li><b>Entrega</b><span>${p.fam==='Nacional'?({stock:'Inmediata',pedido:'A pedido, a coordinar',sin_stock:'Sin stock por ahora'}[p.disp]||'A coordinar'):'Estimada '+ENTREGA}</span></li>
@@ -950,12 +953,14 @@ function viewProduct(p){
     <div class="sw">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i?'':'on'}" style="background:${c[1]}" aria-label="${esc(c[0])}"></button>`).join('')}</div>
     <div class="swn" id="swn">${esc(p.colors[0][0])}</div>`}
     <form class="cpf" id="cpForm"><span class="lb">Calculá tu envío</span><div><input id="cp" inputmode="numeric" maxlength="4" placeholder="Tu código postal" aria-label="Código postal"><button type="submit">Calcular</button></div><div class="cpr" id="cpRes"></div></form>
-    ${p.price?`<div class="qty"><span>Cantidad</span><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">${isProf()?(p.min||1):1}</b><button data-qd="1" aria-label="Uno más">+</button></div>`:''}
+    ${p.price?`<div class="qty"><span>Cantidad${p.pz>1?(p.pz===2?' de pares':' de sets'):''}</span><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">${isProf()?(p.min||1):1}</b><button data-qd="1" aria-label="Uno más">+</button></div>`:''}
     <button class="buy" data-add="${p.id}" ${p.disp==='sin_stock'?'disabled':''}>${p.disp==='sin_stock'?'Sin stock':p.price?'Agregar al carrito':'Consultanos'}</button>
     ${p.lead?`<div class="tb"><span>Descripción</span><span>${esc(p.lead)}</span></div>`:""}
     ${p.d.every(x=>x>0)?`<div class="tb"><span>Medidas</span><span>${dims(p)}</span></div>`:''}
     ${p.mat?`<div class="tb"><span>Material</span><span>${esc(p.mat)}</span></div>`:''}
     ${p.fin?`<div class="tb"><span>Terminación</span><span>${esc(p.fin)}</span></div>`:''}
+    ${p.peso?`<div class="tb"><span>Peso</span><span>${String(p.peso).replace('.',',')} kg${p.pz>1?' cada una':''}</span></div>`:''}
+    ${p.arm||p.bul>1||p.pz>1?`<div class="tb"><span>Cómo viene</span><span>${[p.arm==='KD'?'Desarmado, con herrajes e instrucciones':p.arm==='ARMADO'?'Armado':'',p.bul>1?'en '+p.bul+' cajas: te llegan '+p.bul+' bultos por unidad':p.pz>1?p.pz+' unidades en una misma caja':''].filter(Boolean).join(', ')}.</span></div>`:''}
     <div class="tb"><span>Colección</span><span>${p.fam}</span></div>
     <div class="tb"><span>Tiempo de entrega</span><span>${p.fam==='Nacional'?({stock:'En stock: entrega inmediata.',pedido:'Se fabrica a pedido. Te confirmamos el plazo al comprar.',sin_stock:'Sin stock por ahora. Escribinos y te avisamos cuando haya.'}[p.disp]||'A coordinar.'):'Preventa: llega en '+ENTREGA.toLowerCase()+'.'}${p.armado?' Viene para armar, con manual.':''}</span></div>
    </div>
@@ -985,7 +990,11 @@ const openCart=()=>{drawCart();$('#dr').classList.add('on');$('#dr').setAttribut
 const closeCart=()=>{$('#dr').classList.remove('on');$('#dr').setAttribute('aria-hidden','true')};
 document.querySelector('#dr .sh')?.addEventListener('click',closeCart);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#dr').classList.contains('on'))closeCart()});
 /* Paso previo al pago: envío y resumen. El costo real lo vuelve a calcular el servidor. */
-let ENV='gratis', ENV_EXP=35000, PAYM='mp', BUY={n:'',e:'',t:''}, TRF=null;
+let ENV='gratis', ENV_EXP=35000, PAYM='mp', BUY={n:'',e:'',t:'',d:'',a:''}, TRF=null, CFGT={};
+const retiroOp=()=>['retiro','Retiro en depósito (Lanús)',[CFGT.retiro_dir,CFGT.retiro_horario].filter(Boolean).join(' · ')+(CFGT.retiro_dir||CFGT.retiro_horario?'. ':'')+(CFGT.retiro_nota||'Coordiná el día y horario por WhatsApp antes de ir.'),'Gratis'];
+const buyOk=()=>BUY.n.trim()&&/^\d{7,8}$/.test(BUY.d.replace(/\D/g,''))&&/\S+@\S+\.\S+/.test(BUY.e)&&BUY.t.replace(/\D/g,'').length>=8&&(ENV==='retiro'||BUY.a.trim().length>=5);
+const bultos=()=>cart.reduce((a,l)=>a+l.q*((byId(l.id)||{}).bul||1),0);
+const uTxt=(p,q)=>p&&p.pz>1?(p.pz===2?(q===1?'par':'pares'):(q===1?'set de '+p.pz:'sets de '+p.pz)):'u.';
 fetch(SB_URL+'/rest/v1/rpc/envio_precios',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).then(d=>{if(d&&d[0]&&d[0].express!=null)ENV_EXP=+d[0].express}).catch(()=>{});
 /* ---------- página de pago: envío según código postal + resumen + cómo te llega ---------- */
 const ZONAS={caba:{n:'Ciudad de Buenos Aires',dias:'martes, jueves y sábados'},gba:{n:'Gran Buenos Aires',dias:'jueves y sábados'},int:{n:'Interior del país',dias:''}};
@@ -993,17 +1002,17 @@ const zonaCP=cp=>{const n=parseInt(cp,10);if(!(n>=1000&&n<=9999))return null;ret
 let CPV='';try{CPV=localStorage.getItem('fc_cp')||''}catch(e){}
 function envOps(z){
   if(!z)return [];
-  if(z==='int')return [['interior','Envío al interior','Lo despachamos por transporte a tu localidad. Te pasamos el costo por WhatsApp antes de despachar y lo abonás al recibir.','A cotizar'],['retiro','Retiro en Buenos Aires','Coordinamos día y horario para que lo retires.','Gratis']];
+  if(z==='int')return [['interior','Envío al interior','Lo despachamos por transporte a tu localidad. Te pasamos el costo por WhatsApp antes de despachar y lo abonás al recibir.','A cotizar'],retiroOp()];
   return [['gratis','Envío gratis',`En ${ZONAS[z].n} entregamos los ${ZONAS[z].dias}. Te escribimos por WhatsApp para elegir el día.`,'Gratis'],
     ['express','Envío express 24 h','Despacho prioritario: te lo llevamos dentro de las 24 h hábiles desde que el producto está disponible, el día que elijas.',ars(ENV_EXP)],
-    ['retiro','Retiro en Buenos Aires','Coordinamos día y horario para que lo retires.','Gratis']];
+    retiroOp()];
 }
 function viewCheckout(){
   if(!cart.length)return `<section class="ck2"><h1>Tu carrito está vacío</h1><p class="mut">Agregá productos para seguir con la compra.</p><a class="buy" href="#tienda" style="display:inline-flex;align-items:center;justify-content:center;padding:0 32px;width:auto">Ver productos</a></section>`;
   const z=zonaCP(CPV),ops=envOps(z);if(!ops.some(o=>o[0]===ENV))ENV=ops[0]?ops[0][0]:'gratis';
   const TR=PAYM==='transferencia',pu=p=>(TR&&p.transf?p.transf:p.price)||0;
   const sub=cart.reduce((a,l)=>a+pu(byId(l.id))*l.q,0),subMP=cart.reduce((a,l)=>a+(byId(l.id).price||0)*l.q,0),env=ENV==='express'&&z&&z!=='int'?ENV_EXP:0,tot=sub+env;
-  const nPay=z?3:2,okBuy=!TR||(BUY.n&&/\S+@\S+\.\S+/.test(BUY.e)&&BUY.t.replace(/\D/g,'').length>=8);
+  const nPay=z?3:2,okBuy=buyOk();
   return `<section class="ck2"><a class="back" href="#tienda">← Seguir comprando</a><h1>Finalizar compra</h1>
   <div class="ck2-g"><div class="ck2-l">
    <div class="ck2-b"><span class="ck2-n">1</span><div><b>¿Dónde lo recibís?</b>
@@ -1013,13 +1022,13 @@ function viewCheckout(){
    <div class="ck2-b"><span class="ck2-n">${nPay}</span><div><b>¿Cómo pagás?</b><div class="env">
     <button class="env-o ${TR?'':'on'}" data-paym="mp"><i></i><span><b>Mercado Pago</b><small>Tarjeta de crédito hasta 3 cuotas sin interés (6 y 12 con interés), débito, dinero en cuenta o efectivo. Tus datos los cargás ahí.</small></span><em>${ars(subMP)}</em></button>
     <button class="env-o ${TR?'on':''}" data-paym="transferencia"><i></i><span><b>Transferencia bancaria · 15% off</b><small>Te damos los datos de la cuenta y confirmamos tu pedido cuando se acredita.</small></span><em>${ars(cart.reduce((a,l)=>a+((byId(l.id).transf||byId(l.id).price)||0)*l.q,0))}</em></button></div>
-    ${TR?`<div class="ck2-dt"><input id="bu_n" placeholder="Nombre y apellido" value="${esc(BUY.n)}" autocomplete="name"><input id="bu_e" type="email" placeholder="Mail" value="${esc(BUY.e)}" autocomplete="email"><input id="bu_t" inputmode="tel" placeholder="Teléfono / WhatsApp" value="${esc(BUY.t)}" autocomplete="tel"></div><p class="mut">Te mandamos los datos para transferir a ese mail.</p>`:''}</div></div>
+    <div class="ck2-dt"><input id="bu_n" placeholder="Nombre y apellido" value="${esc(BUY.n)}" autocomplete="name"><input id="bu_d" inputmode="numeric" placeholder="DNI" value="${esc(BUY.d)}"><input id="bu_e" type="email" placeholder="Mail" value="${esc(BUY.e)}" autocomplete="email"><input id="bu_t" inputmode="tel" placeholder="Teléfono / WhatsApp" value="${esc(BUY.t)}" autocomplete="tel">${ENV==='retiro'?'':`<input id="bu_a" placeholder="Dirección de entrega (calle, número, piso, localidad)" value="${esc(BUY.a)}" autocomplete="street-address">`}</div><p class="mut">Los necesitamos para la factura y la entrega.${TR?' Te mandamos los datos para transferir a ese mail.':''}</p></div></div>
   </div>
   <aside class="ck2-r"><b class="ck2-h">Tu pedido</b>
-   ${cart.map(l=>{const p=byId(l.id);return `<div class="ck2-i"><img src="${src(p.img)}" alt=""><div><b>${esc(title(p))}</b><small>${esc(p.colors[l.c]?p.colors[l.c][0]:'')} · ${l.q} u.</small></div><span>${ars(pu(p)*l.q)}</span></div>`}).join('')}
+   ${cart.map(l=>{const p=byId(l.id);return `<div class="ck2-i"><img src="${src(p.img)}" alt=""><div><b>${esc(title(p))}</b><small>${esc(p.colors[l.c]?p.colors[l.c][0]:'')} · ${l.q} ${uTxt(p,l.q)}</small></div><span>${ars(pu(p)*l.q)}</span></div>`}).join('')}
    <button class="lnk" data-opencart>Editar carrito</button>
-   <div class="env-r"><div><span>Productos</span><span>${ars(sub)}</span></div><div><span>Envío</span><span>${!z?'Calculalo con tu CP':ENV==='interior'?'A cotizar':env?ars(env):'Gratis'}</span></div><div class="env-t"><span>Total</span><span>${ars(tot)}</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(tot-tot/1.21))}</span></div></div>
-   <button class="buy" id="payMP" ${z&&okBuy?'':'disabled'}>${!z?'Calculá tu envío para seguir':TR?(okBuy?'Confirmar pedido con transferencia':'Completá tus datos para seguir'):'Pagar con Mercado Pago'}</button><small class="safe">${TR?'Reservamos tu pedido y te mandamos los datos de la cuenta':'🔒 Pago seguro con Mercado Pago'}</small></aside></div>
+   <div class="env-r"><div><span>Productos</span><span>${ars(sub)}</span></div><div><span>Bultos</span><span>${bultos()}</span></div><div><span>Envío</span><span>${!z?'Calculalo con tu CP':ENV==='interior'?'A cotizar':env?ars(env):'Gratis'}</span></div><div class="env-t"><span>Total</span><span>${ars(tot)}</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(tot-tot/1.21))}</span></div></div>
+   <button class="buy" id="payMP" ${z&&okBuy?'':'disabled'}>${!z?'Calculá tu envío para seguir':!okBuy?'Completá tus datos para seguir':TR?'Confirmar pedido con transferencia':'Pagar con Mercado Pago'}</button><small class="safe">${TR?'Reservamos tu pedido y te mandamos los datos de la cuenta':'🔒 Pago seguro con Mercado Pago'}</small></aside></div>
   <section class="ck2-pk"><img src="${src(FX('embalaje','pack'))}" alt="Embalaje de un producto FORMA Concept" loading="lazy"><div><span class="k">Cómo te llega</span><h2>Embalado para que llegue perfecto</h2>
    <ul><li>Caja de cartón reforzado con esquineros y protección en cada cara.</li><li>Cada pieza viaja envuelta por separado, con su etiqueta y código.</li><li>Si necesita armado, incluye herrajes e instrucciones. En CABA y GBA te lo podemos dejar armado.</li><li>Te avisamos por WhatsApp el día de entrega y la franja horaria.</li></ul></div></section></section>`;
 }
@@ -1035,7 +1044,7 @@ function drawEnvio(){
   const sub=cart.reduce((a,l)=>a+(byId(l.id).price||0)*l.q,0),env=ENV==='express'?ENV_EXP:0,tot=sub+env;
   const O=[['gratis','Envío gratis · CABA y GBA','Entregamos martes, jueves y sábados. Te escribimos por WhatsApp para coordinar el día.','Gratis'],
     ['express','Envío express','Despacho prioritario: te lo llevamos dentro de las 24 h hábiles desde que el producto está disponible.',ars(ENV_EXP)],
-    ['retiro','Retiro en Buenos Aires','Coordinamos día y horario para que lo retires.','Gratis']];
+    retiroOp()];
   $('#cartFt').innerHTML=`<div class="env"><b class="env-h">Envío</b>${O.map(([k,t,s,p])=>`<button class="env-o ${ENV===k?'on':''}" data-env="${k}"><i></i><span><b>${t}</b><small>${s}</small></span><em>${p}</em></button>`).join('')}
    <div class="env-r"><div><span>Productos</span><span>${ars(sub)}</span></div><div><span>Envío</span><span>${env?ars(env):'Gratis'}</span></div><div class="env-t"><span>Total</span><span>${ars(tot)}</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(tot-tot/1.21))}</span></div></div>
    <p class="env-p">En Mercado Pago elegís cómo pagar: un solo pago con tarjeta de crédito, débito, dinero en cuenta o efectivo. Tus datos de contacto los cargás ahí.</p>
@@ -1166,7 +1175,7 @@ document.addEventListener('click',e=>{
   if(a.dataset.env){ENV=a.dataset.env;drawEnvio();return}
   if(a.dataset.paym){PAYM=a.dataset.paym;render();return}
   if(a.id==='payMP'){const TR=PAYM==='transferencia',lbl=TR?'Confirmar pedido con transferencia':'Pagar con Mercado Pago';a.disabled=true;a.textContent=TR?'Reservando tu pedido…':'Abriendo Mercado Pago…';const tot=cart.reduce((s,l)=>s+((TR&&byId(l.id).transf)||byId(l.id).price||0)*l.q,0);track('inicio_checkout',{valor:tot});
-    (async()=>{const ss=sbInit()?(await sbInit().auth.getSession()).data.session:null;return fetch('/api/checkout',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},ss?{Authorization:'Bearer '+ss.access_token}:{}),body:JSON.stringify({tracking:trackingData(),medio:TR?'transferencia':'mp',buyer:TR?{cp:CPV,nombre:BUY.n,email:BUY.e,telefono:BUY.t}:{cp:CPV},envio:ENV,cp:CPV,visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0],sku:(byId(l.id).skus||[])[l.c]||l.sku||null}))})})})()
+    (async()=>{const ss=sbInit()?(await sbInit().auth.getSession()).data.session:null;return fetch('/api/checkout',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},ss?{Authorization:'Bearer '+ss.access_token}:{}),body:JSON.stringify({tracking:trackingData(),medio:TR?'transferencia':'mp',buyer:{cp:CPV,nombre:BUY.n,email:BUY.e,telefono:BUY.t,dni:BUY.d,direccion:ENV==='retiro'?'':BUY.a},envio:ENV,cp:CPV,visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0],sku:(byId(l.id).skus||[])[l.c]||l.sku||null}))})})})()
       .then(r=>r.json()).then(d=>{if(d.url){try{localStorage.setItem('fc_last_order',JSON.stringify({order:d.order,total:d.total,ids:cart.map(l=>l.id)}))}catch(e){}location.href=d.url}else if(d.transfer){TRF=d.transfer;track('compra_transferencia',{valor:d.transfer.total});cart=[];save();location.hash='#transferencia'}else{toast(d.error||'No pudimos iniciar el pago.');a.disabled=false;a.textContent=lbl}})
       .catch(()=>{toast('No pudimos iniciar el pago. Probá de nuevo.');a.disabled=false;a.textContent=lbl});return}
   if(a.hasAttribute('data-back')){drawCart();return}
@@ -1257,7 +1266,7 @@ addEventListener('popstate',()=>{if(!animating){render();scrollTo(0,0)}});
   else setTimeout(()=>toast('El pago no se completó. Podés intentar de nuevo.'),600);
   try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}})();
 /* checkout: datos para pagar con transferencia (sin redibujar para no perder el foco) */
-document.addEventListener('input',e=>{const t=e.target;if(!t.id||!t.id.startsWith('bu_'))return;BUY[t.id.slice(3)]=t.value;const b=$('#payMP');if(!b)return;const ok=BUY.n.trim()&&/\S+@\S+\.\S+/.test(BUY.e)&&BUY.t.replace(/\D/g,'').length>=8&&zonaCP(CPV);b.disabled=!ok;b.textContent=ok?'Confirmar pedido con transferencia':'Completá tus datos para seguir'});
+document.addEventListener('input',e=>{const t=e.target;if(!t.id||!t.id.startsWith('bu_'))return;BUY[t.id.slice(3)]=t.value;const b=$('#payMP');if(!b)return;const ok=buyOk()&&zonaCP(CPV);b.disabled=!ok;b.textContent=ok?(PAYM==='transferencia'?'Confirmar pedido con transferencia':'Pagar con Mercado Pago'):'Completá tus datos para seguir'});
 document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('[data-copy]');if(!c)return;try{navigator.clipboard.writeText(c.dataset.copy);toast('Copiado')}catch(x){}});
 /* Aviso de cookies: medición propia y anónima; se puede rechazar. */
 (()=>{let c;try{c=localStorage.getItem('fc_consent')}catch(e){}if(c)return;

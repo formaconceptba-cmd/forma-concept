@@ -3,7 +3,7 @@
 import { sendMail, layout, ADMIN_MAIL } from './_mail.js';
 const SB = 'https://znzbwtewxpcpqtmjbmdw.supabase.co';
 const PUB = 'sb_publishable_DRouvIiAf-Vj354iZnNx5Q_XoOt3akE';
-const TABLAS = ['master_productos', 'master_historial', 'master_listas', 'products', 'catalogo_pro', 'settings', 'eco_param', 'eco_pedidos', 'eco_items', 'eco_recepcion', 'eco_movimientos', 'orders', 'order_items', 'pedidos_pro', 'precio_historial', 'ads_campania'];
+const TABLAS = ['facturas', 'devoluciones', 'mail_plantillas', 'colores_alias', 'config_tienda', 'envio_tarifas', 'master_productos', 'master_historial', 'master_listas', 'products', 'catalogo_pro', 'settings', 'eco_param', 'eco_pedidos', 'eco_items', 'eco_recepcion', 'eco_movimientos', 'orders', 'order_items', 'pedidos_pro', 'precio_historial', 'ads_campania'];
 
 const csvCelda = v => { if (v == null) return ''; const s = typeof v === 'object' ? JSON.stringify(v) : String(v); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 function aCSV(rows) {

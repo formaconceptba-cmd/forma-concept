@@ -1,4 +1,4 @@
 {
   "cleanUrls": true,
-  "crons": [{ "path": "/api/backup", "schedule": "0 12 * * 1" }]
+  "crons": [{ "path": "/api/backup", "schedule": "0 12 * * 1" }, { "path": "/api/vencidos", "schedule": "0 13 * * *" }]
 }
