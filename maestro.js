@@ -18,6 +18,7 @@ async function sumarALista(campo,valor){if(!valor||(ML[campo]||[]).includes(valo
 
 async function drawMaster(){
   if(!Object.keys(ML).length)await loadListas();
+  if(!PAL.length)await loadSkus();
   if(MVIEW==='nuevo')return drawMaestroNuevo();
   if(MVIEW==='importar')return drawImportar();
   let L=master.filter(m=>(MF_ARCH?m.archivado:!m.archivado)&&(!MF.prov||m.proveedor===MF.prov)&&(!MF.cat||m.subcategoria===MF.cat)&&(!MF.mat||m.material===MF.mat)&&(!MF.est||m.estado===MF.est)
@@ -43,7 +44,7 @@ async function drawMaster(){
    <td class="n"><input class="num n" style="width:66px" data-mf2="cbm" data-cod="${esc(m.codigo)}" value="${m.cbm??''}" inputmode="decimal"></td>
    <td class="n" data-mc="${esc(m.codigo)}">${usd(costo(m.fob_usd,m.cbm))}</td>
    <td class="n"><input class="num n" style="width:60px" data-mk="${esc(m.codigo)}" value="${m.markup!=null?Math.round(m.markup*100):''}" placeholder="${Math.round(ST.markup_pro*100)}" title="% sobre costo. Vacío = general"></td>
-   <td class="n">${ars(ppro(m))}</td><td style="white-space:nowrap">${inShop.has(m.codigo)?'':`<button class="lnk" data-tienda="${esc(m.codigo)}">+ Tienda</button> · `}<button class="lnk" data-hi="${esc(m.codigo)}">Historial</button> · <button class="lnk" data-oc="${esc(m.codigo)}">+ OC</button> · <button class="lnk" data-addpro="${esc(m.codigo)}">+ Pro</button> · <button class="lnk" data-arch="${esc(m.codigo)}">${m.archivado?'Restaurar':'Archivar'}</button></td></tr>`).join('')}</tbody></table></div>`}
+   <td class="n">${ars(ppro(m))}</td><td style="white-space:nowrap">${inShop.has(m.codigo)?'':`<button class="lnk" data-tienda="${esc(m.codigo)}">+ Tienda</button> · `}<button class="lnk" data-var="${esc(m.codigo)}">Colores y cajas${(()=>{const n=VARS.filter(v=>v.codigo_master===m.codigo&&v.estado!=='discontinuado').length;return n?' ('+n+')':''})()}</button> · <button class="lnk" data-hi="${esc(m.codigo)}">Historial</button> · <button class="lnk" data-oc="${esc(m.codigo)}">+ OC</button> · <button class="lnk" data-addpro="${esc(m.codigo)}">+ Pro</button> · <button class="lnk" data-arch="${esc(m.codigo)}">${m.archivado?'Restaurar':'Archivar'}</button></td></tr>`).join('')}</tbody></table></div>`}
   <p class="hint">FOB, m³, MOQ y estado se editan en la tabla: tocá "Guardar cambios" abajo. Cada cambio queda en el historial del producto. Nada se borra: se archiva, y se puede restaurar.</p>`;
   $('#mq').oninput=e=>{MF.q=e.target.value;const p=e.target.selectionStart;drawMaster();const i=$('#mq');i.focus();i.setSelectionRange(p,p)};
   $('#m').querySelectorAll('[data-mf]').forEach(s=>s.onchange=()=>{MF[s.dataset.mf]=s.value;drawMaster()});
@@ -56,6 +57,7 @@ async function drawMaster(){
   $('#m').querySelectorAll('[data-oc]').forEach(b=>b.onclick=()=>{const m=byCod(b.dataset.oc);const l=OC.find(x=>x.codigo===m.codigo);if(l)l.q+=(+m.moq||1);else OC.push({codigo:m.codigo,q:+m.moq||1,color:''});saveOC();toast('Agregado a la orden de compra ('+m.codigo+')');drawMaster()});
   $('#m').querySelectorAll('[data-arch]').forEach(b=>b.onclick=async()=>{const m=byCod(b.dataset.arch),v=!m.archivado;const {error}=await sb.from('master_productos').update({archivado:v}).eq('codigo',m.codigo);if(error)return toast('No se pudo');m.archivado=v;toast(v?'Archivado: lo ves tildando "Ver archivados"':'Restaurado');drawMaster()});
   $('#m').querySelectorAll('[data-tienda]').forEach(b=>b.onclick=()=>editProd(maestroAProducto(byCod(b.dataset.tienda)),true));
+  $('#m').querySelectorAll('[data-var]').forEach(b=>b.onclick=()=>abrirVariantes(b.dataset.var));
   $('#march').onchange=e=>{MF_ARCH=e.target.checked;drawMaster()};
   $('#mnew').onclick=()=>{MVIEW='nuevo';drawMaster()};$('#mimp').onclick=()=>{MVIEW='importar';IMP=null;drawMaster()};$('#mexp').onclick=exportarMaestro;
   $('#mbak').onclick=async e=>{const b=e.target;b.disabled=true;b.textContent='Mandando…';const {data:{session}}=await sb.auth.getSession();const r=await fetch('/api/backup',{headers:{Authorization:'Bearer '+session.access_token}});const d=await r.json().catch(()=>({}));b.disabled=false;b.textContent='Mandar respaldo ahora';toast(r.ok?'Respaldo enviado a tu mail':(d.error||'No se pudo mandar'))};

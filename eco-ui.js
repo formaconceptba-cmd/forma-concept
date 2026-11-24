@@ -26,7 +26,7 @@ async function ecoLoad(){
   const [{data:pr},{data:pe},{data:it}]=await Promise.all([sb.from('eco_param').select('*').eq('id',1).maybeSingle(),sb.from('eco_pedidos').select('*').order('created_at'),sb.from('eco_items').select('*').order('orden')]);
   if(!master.length||master[0].moq===undefined)await loadMaster();
   ECO.par=Object.assign({},PAR_DEF,{tc:ST.tc||PAR_DEF.tc},(pr&&pr.par)||{});ECO.par.tc=ST.tc||ECO.par.tc;ECO.ar=(pr&&pr.aranceles)||{};ECO.ped=pe||[];ECO.it=it||[];
-  const [{data:rc},{data:mv}]=await Promise.all([sb.from('eco_recepcion').select('*'),sb.from('eco_movimientos').select('*').order('fecha')]);ECO.rec=rc||[];ECO.mov=mv||[];
+  const [{data:rc},{data:mv},{data:ig}]=await Promise.all([sb.from('eco_recepcion').select('*'),sb.from('eco_movimientos').select('*').order('fecha'),sb.from('eco_ingreso').select('*')]);ECO.rec=rc||[];ECO.mov=mv||[];ECO.ing=ig||[];
 }
 const ecoCat=()=>master.map(x=>({codigo:x.codigo,desc:x.descripcion,subcat:x.subcategoria,prov:x.proveedor,fob:x.fob_usd,cbm:x.cbm,moq:x.moq,foto:x.foto_url,medidas:x.medidas,material:x.material}));
 const ecoPedido=pe=>({par:pe.par||{},items:ECO.it.filter(i=>i.pedido_id===pe.id).map(i=>({codigo:i.codigo,cant:i.cant,precioARS:i.precio_ars,markupManual:i.markup_manual}))});
@@ -41,7 +41,7 @@ function ecoCostos(){const out={};const ord=[...ECO.ped].sort((a,b)=>(a.estado==
 async function drawEco(){
   $('#m').innerHTML='<p class="hint">Cargando…</p>';
   await ecoLoad();if(!prods.length)await loadProds();
-  if(ECO.sel){try{ECO.V=await ventasRent()}catch(e){ECO.V=null}}
+  if(ECO.sel){try{ECO.V=await ventasRent()}catch(e){ECO.V=null}try{await loadSkus()}catch(e){}}
   if(ECO.sel&&!ECO.ped.find(p=>p.id===ECO.sel))ECO.sel=null;
   if(ECO.sel)return drawEcoPedido();
   if(ECO.vista==='comparar')return drawEcoComparar();
@@ -60,20 +60,20 @@ async function drawEco(){
 
 function drawEcoPedido(){
   const pe=ECO.ped.find(p=>p.id===ECO.sel),r=ecoCalc(pe),V=ECO.vista;
-  const T=[['tablero','Tablero'],['real','Real'],['productos','Productos'],['precios','Precios'],['costos','Costos'],['caja','Caja']];
-  const body={real:ecoRealV,tablero:ecoTablero,productos:ecoProductos,precios:ecoPrecios,costos:ecoCostosV,caja:ecoCaja}[V]||ecoTablero;
+  const T=[['tablero','Tablero'],['real','Real'],['productos','Productos'],['precios','Precios'],['costos','Costos'],['caja','Caja'],['ingreso','Ingreso y packing list']];
+  const body={ingreso:ecoIngresoV,real:ecoRealV,tablero:ecoTablero,productos:ecoProductos,precios:ecoPrecios,costos:ecoCostosV,caja:ecoCaja}[V]||ecoTablero;
   $('#m').innerHTML=`<div class="bar"><button class="btn" id="eback">← Contenedores</button><input id="enom" value="${esc(pe.nombre)}" style="font:500 20px Outfit,sans-serif;border:0;background:none;width:200px"><input id="eprov" value="${esc(pe.proveedor||'')}" placeholder="proveedor" style="width:150px">
    <select id="eest">${Object.entries(ESTP).map(([k,l])=>`<option value="${k}" ${pe.estado===k?'selected':''}>${l}</option>`).join('')}</select><span class="sp"></span><button class="btn" id="edup">Duplicar</button><button class="btn" id="edel">Borrar</button></div>
   <div class="bar" style="gap:6px">${T.map(([k,l])=>`<button class="btn ${V===k?'dk':''}" data-ev="${k}">${l}</button>`).join('')}</div>
   <div id="ebody">${body(pe,r)}</div>`;
   const upd=async(f,v)=>{pe[f]=v;const {error}=await sb.from('eco_pedidos').update({[f]:v}).eq('id',pe.id);toast(error?'No se pudo guardar':'Guardado')};
   $('#eback').onclick=()=>{ECO.sel=null;drawEco()};
-  $('#enom').onchange=e=>upd('nombre',e.target.value.trim()||pe.nombre);$('#eprov').onchange=e=>upd('proveedor',e.target.value.trim());$('#eest').onchange=async e=>{const v=e.target.value;if(['recibido','cerrado'].includes(v)&&!pe.proyeccion){if(!confirm('Al pasar a Recibido se congela la proyección: los supuestos de este pedido quedan fijos para comparar contra lo real. No se puede deshacer. ¿Seguimos?')){e.target.value=pe.estado;return}const s=ecoSnapshot(pe);const {error}=await sb.from('eco_pedidos').update({estado:v,proyeccion:s}).eq('id',pe.id);if(error)return toast('No se pudo guardar');pe.estado=v;pe.proyeccion=s;toast('Proyección congelada');drawEcoPedido();return}upd('estado',v)};
+  $('#enom').onchange=e=>upd('nombre',e.target.value.trim()||pe.nombre);$('#eprov').onchange=e=>upd('proveedor',e.target.value.trim());$('#eest').onchange=async e=>{const v=e.target.value;if(['recibido','cerrado'].includes(v)&&!pe.proyeccion){if(!confirm('Al pasar a Recibido se congela la proyección: los supuestos de este pedido quedan fijos para comparar contra lo real. No se puede deshacer. ¿Seguimos?')){e.target.value=pe.estado;return}const s=ecoSnapshot(pe);const {error}=await sb.from('eco_pedidos').update({estado:v,proyeccion:s}).eq('id',pe.id);if(error)return toast('No se pudo guardar');pe.estado=v;pe.proyeccion=s;const ni=await ingresarAlStock(pe);toast(ni?'Proyección congelada y '+ni+' tipos de caja entraron al stock':'Proyección congelada');drawEcoPedido();return}upd('estado',v)};
   $('#m').querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>{ECO.vista=b.dataset.ev;drawEcoPedido()});
   $('#edel').onclick=async()=>{if(!confirm(`¿Borrar ${pe.nombre} y todos sus productos? No se puede deshacer.`))return;const {error}=await sb.from('eco_pedidos').delete().eq('id',pe.id);if(error)return toast('No se pudo borrar');ECO.sel=null;drawEco()};
   $('#edup').onclick=async()=>{const {data,error}=await sb.from('eco_pedidos').insert({nombre:pe.nombre+' (copia)',proveedor:pe.proveedor,notas:pe.notas,par:pe.par}).select().single();if(error)return toast('No se pudo duplicar');
     const its=ECO.it.filter(i=>i.pedido_id===pe.id).map(i=>({pedido_id:data.id,codigo:i.codigo,cant:i.cant,precio_ars:i.precio_ars,markup_manual:i.markup_manual,orden:i.orden}));if(its.length)await sb.from('eco_items').insert(its);ECO.sel=data.id;toast('Duplicado');drawEco()};
-  ({productos:bindProductos,precios:bindPrecios,tablero:bindTablero,caja:bindCaja})[V]?.(pe,r);
+  ({productos:bindProductos,precios:bindPrecios,tablero:bindTablero,caja:bindCaja,ingreso:bindIngreso})[V]?.(pe,r);
 }
 
 /* ---- Tablero: 8 bloques ---- */

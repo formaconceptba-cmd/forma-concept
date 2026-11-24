@@ -70,6 +70,7 @@ body.menu-on header{background:var(--bg)!important;color:var(--ink)!important;bo
 body.menu-on .msh{opacity:1;visibility:visible}
 /* filtro de colecciones (se pueden elegir varias) */
 .flt .lb2{color:var(--soft)}
+.flt .fcol{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin-top:8px}.flt .fcol button::before{display:none}.flt .fcol button i{width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.18);display:inline-block}.flt .fcol button.on{color:var(--ink,#141414);text-decoration:underline}
 .flt button{color:var(--soft);display:inline-flex;align-items:center;gap:7px}
 .flt button::before{content:"";width:9px;height:9px;border:1px solid currentColor;border-radius:50%;transition:background .2s}
 .flt button.on{color:var(--ink)}
@@ -578,6 +579,8 @@ async function loadDB(){
     if(!r.ok)return; const rows=await r.json(); if(!rows.length)return;
     const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,disp:x.disponibilidad||'',cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,pp:x.pct_preventa,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores&&x.colores.length?x.colores:[['Único','#D8D2C8']],noColor:!(x.colores&&x.colores.length),feat:x.destacado?1:0}));
     try{const q=await fetch(SB_URL+'/rest/v1/rpc/precios_publicos',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const m=Object.fromEntries((await q.json()).map(x=>[x.id,x]));list.forEach(p=>{const x=m[p.id];if(x){p.list=x.lista;p.price=x.publico;p.transf=x.transf}})}}catch(e){}
+    /* colores = variantes (SKU de venta) con el nombre de la paleta FORMA */
+    try{const q=await fetch(SB_URL+'/rest/v1/rpc/variantes_publicas',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const V=await q.json();list.forEach(p=>{const vs=V.filter(v=>v.producto===p.id);if(vs.length){p.colors=vs.map(v=>[v.nombre,v.hex||'#cfc8bd']);p.skus=vs.map(v=>v.sku);p.vdisp=vs.map(v=>v.con_datos?v.disponible:null);p.noColor=false}})}}catch(e){}
     try{const q=await fetch(SB_URL+'/rest/v1/rpc/stock_publico',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const m=Object.fromEntries((await q.json()).map(x=>[x.id,x.disponible]));list.forEach(p=>{if(m[p.id]!=null){p.units=m[p.id];if(p.units<=0&&p.fam!=='Nacional'&&p.price)p.disp='sin_stock'}})}}catch(e){}
     P.splice(0,P.length,...list);
     if(!animating)render();
@@ -911,12 +914,12 @@ function fsScroll(){if(innerWidth<=720)return;document.querySelectorAll('.fs-p')
 /* ---------- tienda ---------- */
 let view='grid';
 const FAMS=['Fresno','Acero','Laca','Nacional'];
-let selF=new Set();
+let selF=new Set(),selC=new Set();
 function viewShop(f){
-  const items=P.filter(p=>(f==='Todos'||p.cat===f)&&(!selF.size||selF.has(p.fam))).sort((a,b)=>(!a.price)-(!b.price));
+  const items=P.filter(p=>(f==='Todos'||p.cat===f)&&(!selF.size||selF.has(p.fam))&&(!selC.size||(p.skus&&p.colors.some(c=>selC.has(c[0]))))).sort((a,b)=>(!a.price)-(!b.price));
   const body=view==='grid'?`<div class="grid">${items.map(card).join('')}</div>`
    :`<div class="list">${items.map(p=>`<a class="row c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph"><img src="${src(p.img)}" alt="" loading="lazy"></div><span>${esc(title(p))}</span><span>Colección ${p.fam}</span><span>${dims(p)}</span><span class="pz">${p.price?`${p.list>p.price?`<s>${ars(p.list)}</s>`:""}<b>${ars(p.price)}</b>`:"Consultar"}</span></a>`).join('')}</div>`;
-  return `<div class="flt"><div><span class="lb2">Colección</span>${FAMS.map(x=>`<button data-fam="${x}" class="${selF.has(x)?'on':''}" aria-pressed="${selF.has(x)}">${x}</button>`).join('')}${selF.size?'<button data-fam="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>
+  return `<div class="flt"><div><span class="lb2">Colección</span>${FAMS.map(x=>`<button data-fam="${x}" class="${selF.has(x)?'on':''}" aria-pressed="${selF.has(x)}">${x}</button>`).join('')}${selF.size?'<button data-fam="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>${(()=>{const m=new Map();P.filter(p=>p.skus).forEach(p=>p.colors.forEach(c=>{if(!m.has(c[0]))m.set(c[0],c[1])}));return m.size?`<div class="fcol"><span class="lb2">Color</span>${[...m].map(([n,h])=>`<button data-colf="${esc(n)}" class="${selC.has(n)?'on':''}" aria-pressed="${selC.has(n)}" title="${esc(n)}"><i style="background:${h}"></i>${esc(n)}</button>`).join('')}${selC.size?'<button data-colf="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>`:''})()}
    <div class="vw"><a href="#" data-view="grid" class="${view==='grid'?'on':''}">Grilla</a><a href="#" data-view="list" class="${view==='list'?'on':''}">Lista</a></div></div>${selF.has('Nacional')?'<p class="nac">Colección Nacional: próximamente. Piezas únicas, hechas en Argentina.</p>':''}${items.length||selF.has('Nacional')?body:'<p class="nac">No hay piezas con esa combinación.</p>'}`;
 }
 
@@ -1111,10 +1114,11 @@ document.addEventListener('click',e=>{
   if(a.dataset.col){col=+a.dataset.col;document.querySelectorAll('.sw button').forEach((b,i)=>b.classList.toggle('on',i===col));const p=P.find(x=>slug(x.id)===location.hash.slice(1));$('#swn').textContent=p.colors[col][0];return}
   if(a.dataset.add){const p=byId(a.dataset.add);
     if(!p.price){window.open('https://wa.me/541139443055?text='+encodeURIComponent('Hola, quiero consultar por '+title(p)),'_blank','noopener');return}
-    track('agregar_carrito',{producto:p.id,valor:p.price});const n=+($('#qn')?.textContent)||1;const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q+=n:cart.push({id:p.id,c:col,q:n}); save(); openCart(); return}
+    track('agregar_carrito',{producto:p.id,valor:p.price});const n=+($('#qn')?.textContent)||1;if(p.vdisp&&p.vdisp[col]!=null&&p.vdisp[col]<n){toast(p.vdisp[col]>0?`Quedan ${p.vdisp[col]} en ${p.colors[col][0]}`:`${p.colors[col][0]}: sin stock por ahora`);return}const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q+=n:cart.push({id:p.id,c:col,q:n,sku:p.skus?p.skus[col]:null}); save(); openCart(); return}
   if(a.dataset.qd){const e=$('#qn'),pq=P.find(x=>slug(x.id)===location.hash.slice(1));e.textContent=Math.max(isProf()&&pq?(pq.min||1):1,Math.min(20,(+e.textContent||1)+(+a.dataset.qd)));return}
   if(a.id==='menuBtn'){document.body.classList.contains('menu-on')?closeMenu():openMenu();return}
   if(a.closest('#mn'))closeMenu();
+  if(a.dataset.colf!==undefined&&a.closest('.flt')){const x=a.dataset.colf;if(!x)selC.clear();else selC.has(x)?selC.delete(x):selC.add(x);render();return}
   if(a.dataset.fam!==undefined&&a.closest('.flt')){const x=a.dataset.fam;if(!x)selF.clear();else selF.has(x)?selF.delete(x):selF.add(x);render();return}
   if(a.id==='cartBtn'){closeMenu();openCart();return}
   if(a.id==='adminBtn'){fadeTo('#pro');return}
@@ -1162,7 +1166,7 @@ document.addEventListener('click',e=>{
   if(a.dataset.env){ENV=a.dataset.env;drawEnvio();return}
   if(a.dataset.paym){PAYM=a.dataset.paym;render();return}
   if(a.id==='payMP'){const TR=PAYM==='transferencia',lbl=TR?'Confirmar pedido con transferencia':'Pagar con Mercado Pago';a.disabled=true;a.textContent=TR?'Reservando tu pedido…':'Abriendo Mercado Pago…';const tot=cart.reduce((s,l)=>s+((TR&&byId(l.id).transf)||byId(l.id).price||0)*l.q,0);track('inicio_checkout',{valor:tot});
-    (async()=>{const ss=sbInit()?(await sbInit().auth.getSession()).data.session:null;return fetch('/api/checkout',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},ss?{Authorization:'Bearer '+ss.access_token}:{}),body:JSON.stringify({tracking:trackingData(),medio:TR?'transferencia':'mp',buyer:TR?{cp:CPV,nombre:BUY.n,email:BUY.e,telefono:BUY.t}:{cp:CPV},envio:ENV,cp:CPV,visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0]}))})})})()
+    (async()=>{const ss=sbInit()?(await sbInit().auth.getSession()).data.session:null;return fetch('/api/checkout',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},ss?{Authorization:'Bearer '+ss.access_token}:{}),body:JSON.stringify({tracking:trackingData(),medio:TR?'transferencia':'mp',buyer:TR?{cp:CPV,nombre:BUY.n,email:BUY.e,telefono:BUY.t}:{cp:CPV},envio:ENV,cp:CPV,visitante:VID,items:cart.map(l=>({id:l.id,q:l.q,color:(byId(l.id).colors[l.c]||[''])[0],sku:(byId(l.id).skus||[])[l.c]||l.sku||null}))})})})()
       .then(r=>r.json()).then(d=>{if(d.url){try{localStorage.setItem('fc_last_order',JSON.stringify({order:d.order,total:d.total,ids:cart.map(l=>l.id)}))}catch(e){}location.href=d.url}else if(d.transfer){TRF=d.transfer;track('compra_transferencia',{valor:d.transfer.total});cart=[];save();location.hash='#transferencia'}else{toast(d.error||'No pudimos iniciar el pago.');a.disabled=false;a.textContent=lbl}})
       .catch(()=>{toast('No pudimos iniciar el pago. Probá de nuevo.');a.disabled=false;a.textContent=lbl});return}
   if(a.hasAttribute('data-back')){drawCart();return}

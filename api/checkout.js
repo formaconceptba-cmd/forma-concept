@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       direccion: clean(b.direccion, 240), cp: clean(b.cp || body.cp, 12)
     };
 
-    const lines = (body.items || []).slice(0, 30).map(l => ({ id: clean(l.id, 40), color: clean(l.color, 60), q: Math.max(1, Math.min(20, parseInt(l.q) || 1)) }));
+    const lines = (body.items || []).slice(0, 30).map(l => ({ id: clean(l.id, 40), color: clean(l.color, 60), sku: clean(l.sku, 30).toUpperCase() || null, q: Math.max(1, Math.min(20, parseInt(l.q) || 1)) }));
     if (!lines.length) return res.status(400).json({ error: 'El carrito está vacío.' });
 
     // Precios y stock salen de la base, nunca del navegador.
@@ -46,6 +46,10 @@ export default async function handler(req, res) {
     const transf = body.medio === 'transferencia';
     // Stock: sale de los contenedores (y descuenta lo reservado por pedidos sin pagar y reservas mayoristas).
     const STK = Object.fromEntries((await (await sb('rpc/stock_calc', { method: 'POST', body: '{}' })).json()).map(x => [x.id, x]));
+    // SKU de venta (producto + color): tiene que ser de ese producto y no estar discontinuado; si ya hay stock por caja, se controla por color.
+    const skus = [...new Set(lines.map(l => l.sku).filter(Boolean))];
+    const VAR = skus.length ? Object.fromEntries((await (await sb(`variantes?select=sku,codigo_master,estado&sku=in.(${skus.map(encodeURIComponent).join(',')})`)).json()).map(v => [v.sku, v])) : {};
+    const SV = skus.length ? Object.fromEntries((await (await sb('rpc/stock_variantes', { method: 'POST', body: '{}' })).json()).map(x => [x.sku, x])) : {};
     const items = [];
     for (const l of lines) {
       const p = prods[l.id];
@@ -54,8 +58,11 @@ export default async function handler(req, res) {
       if (l.q > libre) return res.status(409).json({ error: `No queda stock suficiente de ${p.tipo} ${p.nombre}.` });
       if (prof) { const mn = p.min_profesional || minProf || 1; const tot = lines.filter(x => x.id === l.id).reduce((s, x) => s + x.q, 0); if (tot < mn) return res.status(400).json({ error: `La compra mínima profesional de ${p.tipo} ${p.nombre} es de ${mn} unidades.` }); }
       const c = PC[l.id]; if (!c) return res.status(400).json({ error: 'Un producto ya no está disponible.' });
+      const v = l.sku ? VAR[l.sku] : null;
+      if (l.sku && (!v || v.codigo_master !== l.id || v.estado === 'discontinuado')) return res.status(400).json({ error: `El color elegido de ${p.tipo} ${p.nombre} ya no está disponible.` });
+      if (v && SV[l.sku] && SV[l.sku].con_datos && l.q > SV[l.sku].disponible - lines.filter(x => x.sku === l.sku && x !== l).reduce((a, x) => a + x.q, 0)) return res.status(409).json({ error: `No queda stock de ${p.tipo} ${p.nombre} en ${l.color || 'ese color'}.` });
       const precio = prof ? (transf ? c.prof_transf : c.prof) : (transf ? c.transf : c.publico);
-      items.push({ p, q: l.q, color: l.color, precio, lista: c.lista, regla: [prof ? 'profesional' : c.regla, transf ? 'transferencia' : ''].filter(Boolean).join(' + ') });
+      items.push({ p, q: l.q, color: l.color, sku: v ? l.sku : null, precio, lista: c.lista, regla: [prof ? 'profesional' : c.regla, transf ? 'transferencia' : ''].filter(Boolean).join(' + ') });
     }
     const ENVIOS = { gratis: 'Envío gratis (día a coordinar)', express: 'Envío express 24 h', retiro: 'Retiro en Buenos Aires', interior: 'Envío al interior (a cotizar)' };
     const cpN = parseInt(body.cp, 10), zona = cpN >= 1000 && cpN <= 9999 ? (cpN < 1500 ? 'caba' : cpN < 1900 ? 'gba' : 'int') : null;
@@ -75,7 +82,7 @@ export default async function handler(req, res) {
     const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, ...(prof ? { email: buyer.email || prof.email, nombre: buyer.nombre || (prof.nombre + (prof.estudio ? ' (' + prof.estudio + ')' : '')), telefono: buyer.telefono || prof.telefono || '' } : {}), canal: prof ? 'profesional' : 'publico', tracking, ...(transf ? { medio_pago: 'transferencia', cuotas: 1, comision_real: 0 } : {}), envio: ENVIOS[envio], costo_envio: costoEnvio, total, visitante: clean(body.visitante, 64) || null }) });
     if (!or.ok) throw new Error('orders ' + (await or.text()));
     const [order] = await or.json();
-    const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio, precio_lista_momento: i.lista, regla: i.regla }))) });
+    const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio, precio_lista_momento: i.lista, regla: i.regla, sku: i.sku })) });
     if (!ir.ok) throw new Error('items ' + (await ir.text()));
 
     // Transferencia: no pasa por Mercado Pago. Le damos los datos y lo confirmás en el panel cuando llega la plata.

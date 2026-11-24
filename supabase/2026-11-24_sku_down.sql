@@ -1,0 +1,25 @@
+-- Deshace 2026-11-24_sku.sql: borra sólo lo que esa migración agregó. Lo que existía antes queda igual.
+drop function if exists public.generar_despacho_admin(bigint);
+drop function if exists public.generar_despacho(bigint);
+drop function if exists public.despacho_lineas(text, int);
+drop function if exists public.variantes_publicas();
+drop function if exists public.stock_variantes_admin();
+drop function if exists public.stock_cajas_admin();
+drop function if exists public.stock_variantes();
+drop function if exists public.stock_cajas();
+drop table if exists public.despacho_items;
+drop table if exists public.despachos;
+drop table if exists public.eco_ingreso;
+drop table if exists public.stock_mov;
+drop table if exists public.cajas;
+drop table if exists public.variantes;
+drop table if exists public.colores_proveedor;
+drop table if exists public.colores;
+drop table if exists public.empresa_datos;
+drop function if exists public.cajas_nombre();
+drop function if exists public.sku_caja_de(text, text);
+drop function if exists public.variantes_guardia();
+drop function if exists public.sku_de(text, text);
+drop function if exists public.colores_guardia();
+alter table public.order_items drop column if exists sku;
+alter table public.eco_pedidos drop column if exists packing;

@@ -17,6 +17,8 @@ export async function marcarPagado(orderId, extra = {}) {
     const [p] = await (await sb(`products?select=vendidas&id=eq.${encodeURIComponent(it.product_id)}`)).json();
     if (p) await sb(`products?id=eq.${encodeURIComponent(it.product_id)}`, { method: 'PATCH', body: JSON.stringify({ vendidas: (p.vendidas || 0) + it.cantidad }) });
   }
+  // Orden de despacho para Pailos: el SKU de venta se traduce a sus cajas y se descuenta del stock por caja.
+  try { await sb('rpc/generar_despacho', { method: 'POST', body: JSON.stringify({ p_order: orderId }) }); } catch (e) { console.error('despacho', e); }
   try {
     const [o] = await (await sb(`orders?select=*,order_items(cantidad,precio,color,products(tipo,nombre))&id=eq.${orderId}`)).json();
     const its = (o.order_items || []).map(i => ({ q: i.cantidad, precio: i.precio, color: i.color, nombre: i.products ? i.products.tipo + ' ' + i.products.nombre : '' }));

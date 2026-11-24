@@ -161,7 +161,7 @@ function shell(){
 }
 async function draw(){
   drawNav();PRODF=tab==='nacionales'?'nacional':'';if(tab==='nacionales'){await loadProds();drawProds();return}PEDF=tab==='ppedidos'?'profesional':'publico';if(tab==='ppedidos'){await loadOrders();drawOrders();return}if(tab==='pprecios'){await drawProfPrecios();return}if(tab==='pcuentas'){CUENTAS='profesional';await drawPro();return}if(tab==='pro')CUENTAS='mayorista';
-  if(tab==='inicio'){await drawInicio();await drawSubs()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);try{await ecoLoad()}catch(e){}drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='ecopar'){await loadMaster();await drawEcoPar()}else if(tab==='rent'){await loadMaster();await drawRent()}else if(tab==='campanias'){await drawCampanias()}else if(tab==='clientes'){await drawClientes()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
+  if(tab==='inicio'){await drawInicio();await drawSubs()}else if(tab==='productos'){await loadProds();drawProds()}else if(tab==='arr'){await drawArr()}else if(tab==='pro'){await drawPro();await loadMaster();await drawCatPro()}else if(tab==='colores'){await drawColores()}else if(tab==='frm'){await drawFrm()}else if(tab==='fotos'){await drawFotos()}else if(tab==='maestro'){await Promise.all([loadMaster(),prods.length?0:loadProds()]);try{await ecoLoad()}catch(e){}drawMaster()}else if(tab==='eco'){await loadMaster();await drawEco()}else if(tab==='ecopar'){await loadMaster();await drawEcoPar()}else if(tab==='rent'){await loadMaster();await drawRent()}else if(tab==='paleta'){await loadMaster();await drawPaleta()}else if(tab==='stock'){await drawStock()}else if(tab==='campanias'){await drawCampanias()}else if(tab==='clientes'){await drawClientes()}else if(tab==='compras'){await loadMaster();await drawCompras()}else{await loadOrders();drawOrders();$('#m').insertAdjacentHTML('afterbegin','<div class="bar"><span class="sp"></span><a class="btn" href="#arrh">Ver arrepentimientos ↓</a></div>');$('#m').insertAdjacentHTML('beforeend','<h3 id="arrh" style="margin:36px 0 10px">Arrepentimientos</h3><div id="arrw"></div>');await drawArr()}
 }
 
 /* ---------- productos ---------- */
@@ -445,7 +445,7 @@ async function drawProfPrecios(){
 /* ---------- menú del panel por secciones ---------- */
 const GRUPOS=[['inicio','Inicio',[['inicio','Resumen'],['campanias','Anuncios por campaña'],['clientes','Clientes']]],
  ['b2c','Tienda',[['productos','Productos'],['nacionales','Productos nacionales'],['pedidos','Pedidos y arrepentimientos']]],
- ['gest','Administración',[['maestro','Maestro de productos'],['rent','Precios y reglas'],['eco','Contenedores'],['ecopar','Parámetros de importación'],['compras','Órdenes a proveedores']]],
+ ['gest','Administración',[['maestro','Maestro de productos'],['paleta','Colores FORMA'],['stock','Stock Pailos'],['rent','Precios y reglas'],['eco','Contenedores'],['ecopar','Parámetros de importación'],['compras','Órdenes a proveedores']]],
  ['prof','Profesionales',[['pprecios','Precios y mínimos'],['pcuentas','Cuentas'],['ppedidos','Pedidos']]],
  ['may','Mayoristas',[['pro','Cuentas, contenedor y catálogo']]],
  ['cont','Contenido',[['frm','FRM Studio'],['fotos','Fotos de la página']]]];
@@ -879,6 +879,6 @@ function drawOrders(){
 }
 start();
 </script>
-<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=6"></script><script src="inicio.js?v=6"></script><script src="marketing.js?v=1"></script><script src="maestro.js?v=2"></script>
+<script src="eco-calc.js?v=4"></script><script src="eco-ui.js?v=7"></script><script src="inicio.js?v=6"></script><script src="marketing.js?v=1"></script><script src="maestro.js?v=4"></script><script src="skus.js?v=1"></script>
 </body>
 </html>
