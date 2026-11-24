@@ -154,7 +154,7 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .flt div{display:flex;gap:26px;flex-wrap:wrap}
 .flt a{color:var(--soft)}
 .flt a.on{color:var(--ink)}
-.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px 10px;padding:6px var(--g) 80px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:44px 28px;padding:6px var(--g) 80px}
 .sec .grid{padding:0 0 40px;grid-template-columns:repeat(4,minmax(0,1fr))}
 .c{display:block;transition:opacity .35s,filter .35s}
 .ph{background:var(--box);aspect-ratio:4/5;position:relative;overflow:hidden}
@@ -162,7 +162,7 @@ html.cur a,html.cur button,html.cur label,html.cur select,html.cur summary,html.
 .ph .alt{position:absolute;inset:0;object-fit:cover;padding:0;opacity:0;mix-blend-mode:normal}
 .c:hover .ph .alt{opacity:1}
 .c:hover .ph img:first-child{transform:scale(1.03)}
-.c .n{display:flex;justify-content:space-between;gap:8px;padding:8px 0 0;font-size:12px}
+.c .n{display:flex;flex-direction:column;gap:5px;padding:14px 0 0;font-size:12px;line-height:1.35}
 .c .n span:last-child{color:var(--soft)}
 .leaving .c:not(.picked){opacity:0;filter:blur(4px)}
 .leaving .flt,.leaving .sec h3{opacity:.0;transition:opacity .3s}
@@ -958,7 +958,7 @@ function viewShop(f){
   const tarjetas=expand?items.flatMap(p=>p.skus&&p.colors.length>1?p.colors.map((c,i)=>[p,i]).filter(([,i])=>!selC.size||selC.has(p.colors[i][0])):[[p,null]]):items.map(p=>[p,null]);
   const body=view==='grid'?`<div class="grid">${tarjetas.map(([p,i])=>card(p,i)).join('')}</div>`
    :`<div class="list">${items.map(p=>`<a class="row c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph"><img src="${src(p.img)}" alt="" loading="lazy"></div><span>${esc(title(p))}</span><span>Colección ${p.fam}</span><span>${dims(p)}</span><span class="pz">${p.price?`${p.list>p.price?`<s>${ars(p.list)}</s>`:""}<b>${ars(p.price)}</b>`:"Consultar"}</span></a>`).join('')}</div>`;
-  return `<div class="flt"><div><span class="lb2">Colección</span>${FAMS.map(x=>`<button data-fam="${x}" class="${selF.has(x)?'on':''}" aria-pressed="${selF.has(x)}">${x}</button>`).join('')}${selF.size?'<button data-fam="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>${(()=>{const m=new Map();P.filter(p=>p.skus).forEach(p=>p.colors.forEach(c=>{if(!m.has(c[0]))m.set(c[0],c[1])}));return m.size?`<div class="fcol"><span class="lb2">Color</span>${[...m].map(([n,h])=>`<button data-colf="${esc(n)}" class="${selC.has(n)?'on':''}" aria-pressed="${selC.has(n)}" title="${esc(n)}"><i style="background:${h}"></i>${esc(n)}</button>`).join('')}${selC.size?'<button data-colf="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>`:''})()}
+  return `<div class="flt"><div><span class="lb2">Colección</span>${FAMS.map(x=>`<button data-fam="${x}" class="${selF.has(x)?'on':''}" aria-pressed="${selF.has(x)}">${x}</button>`).join('')}${selF.size?'<button data-fam="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>
    <div class="vw"><a href="#" data-view="grid" class="${view==='grid'?'on':''}">Grilla</a><a href="#" data-view="list" class="${view==='list'?'on':''}">Lista</a></div></div>${selF.has('Nacional')?'<p class="nac">Colección Nacional: próximamente. Piezas únicas, hechas en Argentina.</p>':''}${items.length||selF.has('Nacional')?body:'<p class="nac">No hay piezas con esa combinación.</p>'}`;
 }
 
