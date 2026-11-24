@@ -178,3 +178,25 @@ async function drawEnvios(){
   $('#m').querySelectorAll('[data-td]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Borrar la zona '+b.dataset.td+'?'))return;await sb.from('envio_tarifas').delete().eq('zona',b.dataset.td);drawEnvios()});
   $('#tzadd').onclick=async()=>{const z=$('#tzn').value.trim().toUpperCase();if(!z)return;const {error}=await sb.from('envio_tarifas').insert({zona:z,nombre:z,desde_cp:1000,hasta_cp:1499,orden:T.length+1});if(error)return toast('No se pudo (¿ya existe?)');drawEnvios()};
 }
+
+/* ---- Tienda → Editar producto: colores FORMA (de Colores y cajas) con su galería de fotos.
+   Los colores no se escriben a mano: salen de las variantes del Maestro. La tienda muestra las fotos del color elegido. ---- */
+async function pintarVCol(d,p){
+  const w=d.querySelector('#vcol');if(!w)return;
+  if(!VARS.length||!PAL.length)await loadSkus();await loadEnPedido();
+  const id=(d.querySelector('[name="id"]')||{}).value||p.id;
+  const V=varsDe(id);
+  if(!V.length){w.innerHTML=`<div class="card pad" style="margin:6px 0">Este producto todavía no tiene colores FORMA. Se crean en el Maestro, con su código de color y sus cajas.<div style="margin-top:8px"><button type="button" class="btn" data-vc0>Crear colores</button></div></div>`;
+    w.querySelector('[data-vc0]').onclick=()=>{if(!byCod(id))return toast('Primero tiene que estar en el Maestro');abrirVariantes(id)};return}
+  w.innerHTML=`<p class="hint" style="margin:4px 0 8px">Las fotos de cada color: la primera es la principal (la de la grilla) y la segunda aparece al pasar el mouse. Si un color no tiene fotos, se usan las de abajo. Para sumar o cambiar colores: <button type="button" class="lnk" data-vce>Colores y cajas</button>.</p>
+   ${V.map(v=>{const F=Array.isArray(v.fotos)?v.fotos:[];return `<div class="card pad" style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><i style="width:18px;height:18px;border-radius:50%;background:${esc(colHex(v.color))};border:1px solid rgba(0,0,0,.15);display:inline-block"></i><b>${esc(colNom(v.color))}</b><span class="hint">${esc(v.sku)}</span>${ENPED.has(v.sku)?'':'<span class="hint neg">· no está en ningún pedido: no se muestra</span>'}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">${F.map((u,i)=>`<div style="position:relative;width:86px"><img src="${esc(u)}" alt="" style="width:86px;height:86px;object-fit:cover;background:#eee;display:block"><div style="display:flex;justify-content:space-between;font-size:12px">${i?`<button type="button" class="lnk" data-vfm="${v.sku}|${i}" title="Mover a la izquierda">←</button>`:'<span class="hint">principal</span>'}<button type="button" class="lnk" data-vfx="${v.sku}|${i}" title="Sacar" style="color:var(--bad)">×</button></div></div>`).join('')}
+     <label class="btn" style="width:86px;height:86px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;margin:0">+ Fotos<input type="file" accept="image/*" multiple data-vfa="${v.sku}" style="display:none"></label></div></div>`}).join('')}`;
+  const guardar=async(v,F)=>{const {error}=await sb.from('variantes').update({fotos:F}).eq('sku',v.sku);if(error){toast('No se pudo guardar');return false}v.fotos=F;return true};
+  w.querySelector('[data-vce]').onclick=()=>abrirVariantes(id);
+  w.querySelectorAll('[data-vfa]').forEach(inp=>inp.onchange=async()=>{const v=VARS.find(x=>x.sku===inp.dataset.vfa);const fs=[...inp.files];if(!fs.length)return;toast('Subiendo '+fs.length+' foto'+(fs.length>1?'s':'')+'…');
+    const F=[...(Array.isArray(v.fotos)?v.fotos:[])];for(const f of fs){try{const z=await achicar(f);const path=`${id}/${v.sku}-${Date.now()}-${Math.random().toString(36).slice(2,6)}.jpg`;const {error}=await sb.storage.from('fotos').upload(path,z,{upsert:true,contentType:'image/jpeg'});if(error)throw error;F.push(sb.storage.from('fotos').getPublicUrl(path).data.publicUrl)}catch(e){toast('No se pudo subir una foto')}}
+    if(await guardar(v,F))toast('Fotos de '+colNom(v.color)+' guardadas');pintarVCol(d,p)});
+  w.querySelectorAll('[data-vfx]').forEach(b=>b.onclick=async()=>{const [s,i]=b.dataset.vfx.split('|');const v=VARS.find(x=>x.sku===s);const F=[...v.fotos];F.splice(+i,1);if(await guardar(v,F))pintarVCol(d,p)});
+  w.querySelectorAll('[data-vfm]').forEach(b=>b.onclick=async()=>{const [s,i]=b.dataset.vfm.split('|');const v=VARS.find(x=>x.sku===s);const F=[...v.fotos];const k=+i;[F[k-1],F[k]]=[F[k],F[k-1]];if(await guardar(v,F))pintarVCol(d,p)});
+}

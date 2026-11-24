@@ -256,7 +256,7 @@ function editProd(p,nuevo){
   <div class="g3"><div><label>Ancho / Ø (cm)</label><input name="ancho" value="${p.ancho??''}" inputmode="decimal"></div><div><label>Profundidad (cm)</label><input name="prof" value="${p.prof??''}" inputmode="decimal"></div><div><label>Alto (cm)</label><input name="alto" value="${p.alto??''}" inputmode="decimal"></div></div>
   <div class="g3"><div><label>Precio de lista (con IVA)</label><input name="precio_lista" value="${p.precio_lista??''}" inputmode="numeric"><div class="hint" id="pv"></div></div><div><label>Cupo de preventa</label><input name="unidades" value="${p.unidades??0}" inputmode="numeric"></div><div><label>Orden en la tienda</label><input name="orden" value="${p.orden??0}" inputmode="numeric"></div></div>
   <div class="chk"><label><input type="checkbox" name="redonda" ${p.redonda?'checked':''}> Es redonda</label><label><input type="checkbox" name="armado" ${p.armado?'checked':''}> Requiere armado</label><label><input type="checkbox" name="destacado" ${p.destacado?'checked':''}> Destacado</label><label><input type="checkbox" name="activo" ${p.activo?'checked':''}> Publicado</label></div>
-  <label>Colores</label><div id="cls">${(p.colores||[]).map(colorRow).join('')}</div><button type="button" class="lnk" id="addc" style="margin-top:8px">+ Agregar color</button>
+  ${(p.linea||'')==='Nacional'?`<label>Colores</label><div id="cls">${(p.colores||[]).map(colorRow).join('')}</div><button type="button" class="lnk" id="addc" style="margin-top:8px">+ Agregar color</button>`:`<label>Colores y fotos por color</label><div id="vcol" class="hint">Cargando…</div>`}
   <label>Fotos</label><div class="ph">
    <div><img id="i1" src="${esc(src(p.img))}" alt=""><input type="file" accept="image/*" data-ph="img"><div class="hint">Principal, fondo claro</div></div>
    <div><img id="i2" src="${esc(src(p.img2))}" alt=""><input type="file" accept="image/*" data-ph="img2"><div class="hint">Ambientada (al pasar el mouse)</div></div></div>
@@ -269,7 +269,7 @@ function editProd(p,nuevo){
   const upv=()=>{const l=+f.precio_lista.value.replace(/\D/g,'');d.querySelector('#pv').textContent=l?`Preventa ${ars(pre(l))} · 1 pago ${ars(l*(1-OFF_1P))}`:''};upv();f.precio_lista.oninput=upv;
   d.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{d.close();d.remove()});
   const bindRm=()=>d.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>b.parentElement.remove());bindRm();
-  d.querySelector('#addc').onclick=()=>{d.querySelector('#cls').insertAdjacentHTML('beforeend',colorRow());bindRm()};
+  const adc=d.querySelector('#addc');if(adc)adc.onclick=()=>{d.querySelector('#cls').insertAdjacentHTML('beforeend',colorRow());bindRm()};if(d.querySelector('#vcol')&&typeof pintarVCol==='function')pintarVCol(d,p);
   d.querySelectorAll('[data-ph]').forEach(inp=>inp.onchange=async()=>{
     const file=inp.files[0]; if(!file)return; const code=(f.id.value||'nuevo').trim();
     const path=`${code}/${inp.dataset.ph}-${Date.now()}.${(file.name.split('.').pop()||'jpg').toLowerCase()}`;
@@ -285,7 +285,7 @@ function editProd(p,nuevo){
     const row={id:f.id.value.trim(),tipo:f.tipo.value.trim(),nombre:f.nombre.value.trim().toUpperCase(),linea:f.linea.value.trim(),categoria:f.categoria.value.trim(),bajada:f.bajada.value.trim(),material:f.material.value.trim(),terminacion:f.terminacion.value.trim(),
       ancho:num(f.ancho.value),prof:num(f.prof.value),alto:num(f.alto.value),precio_lista:f.precio_lista.value?+f.precio_lista.value.replace(/\D/g,''):null,unidades:+f.unidades.value||0,orden:+f.orden.value||0,
       redonda:f.redonda.checked,armado:f.armado.checked,destacado:f.destacado.checked,activo:f.activo.checked,img:ph.img,img2:ph.img2||null,
-      colores:[...d.querySelectorAll('#cls .cl')].map(r=>[r.children[0].value.trim(),r.children[1].value.toUpperCase()]).filter(c=>c[0]),updated_at:new Date().toISOString()};
+      colores:d.querySelector('#cls')?[...d.querySelectorAll('#cls .cl')].map(r=>[r.children[0].value.trim(),r.children[1].value.toUpperCase()]).filter(c=>c[0]):(p.colores||[]),updated_at:new Date().toISOString()};
     const {error}=isNew?await sb.from('products').insert(row):await sb.from('products').update(row).eq('id',p.id);
     if(error){toast(error.code==='23505'?'Ya existe un producto con ese código':'No se pudo guardar');return}
     d.close();d.remove();toast('Producto guardado');draw();
@@ -879,6 +879,6 @@ function drawOrders(){
 }
 start();
 </script>
-<script src="eco-calc.js?v=5"></script><script src="eco-ui.js?v=10"></script><script src="inicio.js?v=6"></script><script src="marketing.js?v=1"></script><script src="maestro.js?v=7"></script><script src="skus.js?v=4"></script><script src="packing.js?v=2"></script><script src="tanda3.js?v=1"></script>
+<script src="eco-calc.js?v=5"></script><script src="eco-ui.js?v=10"></script><script src="inicio.js?v=6"></script><script src="marketing.js?v=1"></script><script src="maestro.js?v=7"></script><script src="skus.js?v=4"></script><script src="packing.js?v=2"></script><script src="tanda3.js?v=2"></script>
 </body>
 </html>

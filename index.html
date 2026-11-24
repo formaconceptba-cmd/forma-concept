@@ -460,7 +460,36 @@ body.home #app>.full:first-child{border-bottom:12px solid var(--bg)}
 .rv .pvs{position:absolute;top:0;left:0;right:0;z-index:2;background:rgba(20,20,20,.8);color:#fff;padding:24px 0 0;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}.rv .pvs-t{color:#fff}.rv .pvs-t b{color:#D07A89}.rv .pvs-b{background:rgba(255,255,255,.14)}.rv .pvs-b i{background:#B5495B}
 .rv+.sec{position:relative;background:var(--bg)}
 @media (max-width:720px){.rv-t{bottom:20px;padding:14px 16px 16px}.rv-t h2{font-size:40px!important}}
-</style>
+/* ficha de producto: miniaturas · foto · datos (estilo ESE) */
+.pdp{grid-template-columns:minmax(0,1fr) minmax(320px,31%)!important;gap:32px!important}
+.pdp .pics{grid-column:1;grid-row:1;display:grid!important;grid-template-columns:88px minmax(0,1fr);gap:14px;align-items:start}
+.pdp .info{grid-column:2;grid-row:1;max-width:none!important;top:76px}
+.pmw{grid-column:2;grid-row:1}.pmw .ph{height:calc(100svh - 110px)!important;min-height:460px;background:var(--box)}
+.pmw .ph img{width:100%;height:100%;object-fit:contain}.pdr{display:flex;align-items:center;justify-content:center;height:100%}.pdr svg{width:70%}
+.pth{grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:10px;max-height:calc(100svh - 110px);overflow:auto;scrollbar-width:none}.pth::-webkit-scrollbar{display:none}
+.pth button{width:88px;aspect-ratio:3/4;flex:0 0 auto;background:var(--box);border:1px solid transparent;padding:0;cursor:pointer}.pth button.on{border-color:var(--ink)}.pth img{width:100%;height:100%;object-fit:cover}.pth .dr svg{width:100%;height:100%;padding:6px}
+.pdp.pre .pics>.pmw{visibility:hidden}
+.bc{font-size:11px;color:#8a877f;margin-bottom:10px}.bc a{color:inherit;text-decoration:none}.bc span{color:var(--ink)}
+.pdp h1{font:400 22px/1.25 var(--f)!important;letter-spacing:0!important;margin-bottom:16px!important}
+.pr1{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}.pp{font-size:16px}.pp s{color:#8a877f;font-size:12px;margin-right:8px}.pc{font-size:11px;color:#55534d}
+.psi{font-size:11px;color:#8a877f;margin:6px 0 8px}
+.ptr{border-left:3px solid var(--ink);padding:2px 0 2px 10px;font-size:12px;color:#55534d}.ptr b{font-size:18px;color:var(--ink);font-weight:600;margin-right:4px}
+.ptag{font-size:11px;color:#55534d;margin-top:10px}
+.psep{border:0;border-top:1px solid var(--line);margin:20px 0}
+.pcl{display:flex;gap:10px;align-items:baseline;margin-bottom:8px}.pcl .lb{font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin:0}.pcl .swn{margin:0;font-size:11px;color:#8a877f}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.chips button{border:1px solid var(--line);background:transparent;padding:6px 10px;font:inherit;font-size:10px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}.chips button.on{border-color:var(--ink);background:#e9e8e4}
+.pbuy{display:flex;gap:10px;align-items:stretch;margin-bottom:20px}.pbuy .qty{margin:0}.pbuy .buy{flex:1;margin:0;letter-spacing:.14em;text-transform:uppercase;font-size:11px}
+.acc{border-top:1px solid var(--line)}.acc+.acc{border-top:0}.acc{border-bottom:1px solid var(--line)}
+.acc summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:13px 0;font-size:10px;letter-spacing:.1em;text-transform:uppercase}.acc summary::-webkit-details-marker{display:none}
+.acc summary:after{content:'';margin-left:auto;width:7px;height:7px;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(45deg) translateY(-3px);transition:transform .2s}.acc[open] summary:after{transform:rotate(-135deg)}
+.acc>div{padding:0 0 14px;font-size:12px;line-height:1.6}.acc>div p{margin:0 0 4px}.acc .cpf{margin:0 0 10px}
+.pdesc{margin-top:20px;font-size:12px;line-height:1.75}.pdesc p{margin:0}.pdesc b{font-weight:600}
+@media (max-width:900px){
+ .pdp{grid-template-columns:1fr!important}.pdp .info{grid-column:1;grid-row:2;position:static}
+ .pdp .pics{grid-column:1;grid-row:1;display:block!important;overflow:visible!important;margin-inline:0!important;padding-inline:0!important}
+ .pmw .ph{height:auto!important;aspect-ratio:4/5;min-height:0}
+ .pth{flex-direction:row;max-height:none;overflow-x:auto;margin-top:8px}.pth button{width:64px}
+}</style>
 
 <header>
   <nav><button class="mbtn" id="menuBtn" aria-expanded="false" aria-controls="mn"><i></i>Menú</button><a class="hide-m" href="#tienda/Sillas" data-r="Sillas">Sillas</a><a class="hide-m" href="#tienda/Butacas" data-r="Butacas">Sillones</a><a class="hide-m" href="#tienda/Mesas" data-r="Mesas">Mesas</a><a class="hide-m" href="#tienda/Mesas bajas" data-r="Mesas bajas">Mesas bajas</a><a class="hide-m" href="#tienda/Bancos" data-r="Bancos">Bancos</a><a class="hide-m" href="#tienda" data-r="tienda">Ver todo</a><a class="hide-m" href="#nacional" data-r="nacional">Nacional</a></nav>
@@ -580,7 +609,7 @@ async function loadDB(){
     const list=rows.map(x=>norm({id:x.id,img:x.img,img2:x.img2||undefined,t:x.tipo,n:x.nombre,fam:x.linea,disp:x.disponibilidad||'',cat:x.categoria,lead:x.bajada,mat:x.material,fin:x.terminacion,d:[+x.ancho,+x.prof,+x.alto],round:x.redonda?1:0,price:x.precio_lista,pre:x.precio_preventa||0,pp:x.pct_preventa,units:Math.max(0,x.unidades-x.vendidas),armado:x.armado,colors:x.colores&&x.colores.length?x.colores:[['Único','#D8D2C8']],noColor:!(x.colores&&x.colores.length),feat:x.destacado?1:0}));
     try{const q=await fetch(SB_URL+'/rest/v1/rpc/precios_publicos',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const m=Object.fromEntries((await q.json()).map(x=>[x.id,x]));list.forEach(p=>{const x=m[p.id];if(x){p.list=x.lista;p.price=x.publico;p.transf=x.transf}})}}catch(e){}
     /* colores = variantes (SKU de venta) con el nombre de la paleta FORMA */
-    try{const q=await fetch(SB_URL+'/rest/v1/rpc/variantes_publicas',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const V=await q.json();list.forEach(p=>{const vs=V.filter(v=>v.producto===p.id);if(vs.length){p.colors=vs.map(v=>[v.nombre,v.hex||'#cfc8bd']);p.skus=vs.map(v=>v.sku);p.vdisp=vs.map(v=>v.con_datos?v.disponible:null);p.noColor=false}else{p.colors=[['','#cfc8bd']];p.skus=null;p.noColor=true}})}}catch(e){}
+    try{const q=await fetch(SB_URL+'/rest/v1/rpc/variantes_publicas',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const V=await q.json();list.forEach(p=>{const vs=V.filter(v=>v.producto===p.id);if(vs.length){p.colors=vs.map(v=>[v.nombre,v.hex||'#cfc8bd']);p.skus=vs.map(v=>v.sku);p.vdisp=vs.map(v=>v.con_datos?v.disponible:null);p.vfotos=vs.map(v=>Array.isArray(v.fotos)?v.fotos:[]);p.noColor=false}else{p.colors=[['','#cfc8bd']];p.skus=null;p.noColor=true}})}}catch(e){}
     /* ficha: peso, armado, bultos y pack (sale del Maestro) */
     try{const q=await fetch(SB_URL+'/rest/v1/rpc/ficha_publica',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const F=Object.fromEntries((await q.json()).map(x=>[x.id,x]));list.forEach(p=>{const f=F[p.id];if(f){p.peso=f.peso_kg;p.arm=f.armado;p.pz=f.piezas_por_caja||1;p.bul=f.cajas_por_unidad||1}})}}catch(e){}
     try{const q=await fetch(SB_URL+'/rest/v1/config_tienda?select=key,value',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});if(q.ok)(await q.json()).forEach(x=>CFGT[x.key]=x.value)}catch(e){}
@@ -594,7 +623,7 @@ const src=n=>/^https?:/.test(n)?n:"img/"+n+".jpg";
 const ars=n=>'$'+Math.round(n).toLocaleString('es-AR');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cap=s=>s.charAt(0)+s.slice(1).toLowerCase();
-const title=p=>`${p.t} ${cap(p.n)}`;
+const title=p=>`${p.t} ${cap(p.n)}${p.pz>1?' x'+p.pz+' unidades':''}`;
 const slug=id=>'p-'+id.toLowerCase();
 const byId=id=>P.find(p=>p.id===id);
 const dims=p=>p.round?`Ø ${p.d[0]} × ${p.d[2]} cm`:`${p.d[0]} × ${p.d[1]} × ${p.d[2]} cm`;
@@ -607,9 +636,10 @@ cart=cart.filter(l=>byId(l.id));
 const save=()=>{try{localStorage.setItem('fc_cart_c',JSON.stringify(cart))}catch(e){}$('#cartN').textContent=cart.reduce((a,l)=>a+l.q,0)};
 
 /* ---------- piezas ---------- */
-function card(p){
-  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph">${p.fam==="Nacional"&&p.disp?`<span class="disp d-${p.disp}">${DISP[p.disp]||""}</span>`:p.price&&off(p)>0?`<span class="circ">−${off(p)}%</span>`:""}<img src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">${p.img2?`<img class="alt" src="${src(p.img2)}" alt="" loading="lazy">`:''}</div>
-  <div class="n"><span>${esc(title(p))}</span><span class="pz">${p.price?`${p.list>p.price?`<s>${ars(p.list)}</s>`:""}<b>${ars(p.price)}</b>`:"Consultar"}</span></div></a>`;
+function card(p,ci){
+  const v=ci!=null&&p.colors&&p.colors[ci],G=v?galeria(p,ci):[p.img,p.img2],nm=v?`${title(p)} | ${p.colors[ci][0]}`:title(p);
+  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"${v?` data-ci="${ci}"`:''}><div class="ph">${p.fam==="Nacional"&&p.disp?`<span class="disp d-${p.disp}">${DISP[p.disp]||""}</span>`:p.price&&off(p)>0?`<span class="circ">−${off(p)}%</span>`:""}<img src="${src(G[0])}" alt="${esc(nm)}" loading="lazy">${G[1]?`<img class="alt" src="${src(G[1])}" alt="" loading="lazy">`:''}</div>
+  <div class="n"><span>${esc(nm)}</span><span class="pz">${p.price?`${p.list>p.price?`<s>${ars(p.list)}</s>`:""}<b>${ars(p.price)}</b>`:"Consultar"}</span></div></a>`;
 }
 /* toda la foto es un link, no solo el botón */
 function proTile(){const S=P.filter(p=>p.cat==='Butacas'&&p.img);const L=S.length?S:P.filter(p=>p.img).slice(0,4);
@@ -637,10 +667,10 @@ function viewHome(){
   <section class="rv rv1"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt=""></div><div class="rv-t rv-ar"><span>Próximamente</span><h2>Probalo<br>en tu casa</h2><p>Vas a poder ver los muebles en tu espacio con la cámara del celular.</p></div></section>
   ${cats()}
   <section class="sil on" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
-  <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(card).join('')}</div></section>
+  <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(x=>card(x)).join('')}</div></section>
   <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${proTile()}</div>
   <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
-  ${(()=>{const N=P.filter(p=>p.fam==='Nacional'&&p.img);return N.length?`<section class="sec ctr"><h3><span>Productos nacionales</span><a href="#nacional">Ver todos</a></h3><div class="grid">${N.slice(0,8).map(card).join('')}</div></section>`:''})()}
+  ${(()=>{const N=P.filter(p=>p.fam==='Nacional'&&p.img);return N.length?`<section class="sec ctr"><h3><span>Productos nacionales</span><a href="#nacional">Ver todos</a></h3><div class="grid">${N.slice(0,8).map(x=>card(x)).join('')}</div></section>`:''})()}
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
    <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="${src(FX('estudio_'+(i+1),s[0]))}" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
 }
@@ -778,7 +808,7 @@ function viewProCat(){
   const cats=[...new Set(PROCAT.map(p=>p.categoria))],L=PROCAT.filter(p=>!PCATF||p.categoria===PCATF);
   return `<section class="pcat"><div class="pcat-h"><div><span class="k">FORMA PRO · Catálogo</span><h1>${esc(PCATF||'Todos los productos')}</h1>${proNav('cat')}</div>${contBar(cbm)}</div>
   <div class="pchips"><a href="#pro-catalogo" class="${PCATF?'':'on'}">Todos</a>${cats.map(c=>`<a href="#tienda/${encodeURIComponent(c)}" class="${PCATF===c?'on':''}">${esc(c)}</a>`).join('')}</div>
-  <div class="pcat-g"><div class="pcgrid">${L.map(card).join('')||'<p class="mut">No hay productos en esta categoría.</p>'}</div>
+  <div class="pcat-g"><div class="pcgrid">${L.map(x=>card(x)).join('')||'<p class="mut">No hay productos en esta categoría.</p>'}</div>
   <aside class="pcat-o"><h3>Pedido en armado</h3>${order}</aside></div></section>`;
 }
 const RUBROS=['Arquitectura','Interiorismo','Desarrollo inmobiliario','Hotelería / gastronomía','Oficinas / corporativo','Otro'];
@@ -890,7 +920,7 @@ function viewNacional(){
   <section class="nac-h"><div class="nac-im">${['nac_1','nac_2','nac_3'].map((n,i)=>`<img src="${src(FX('nacional_'+(i+1),n))}" alt="" loading="lazy">`).join('')}</div>
    <div class="nac-t"><span class="k">Hecho en Argentina</span><h1>Productos nacionales</h1><p>Piezas únicas fabricadas en Buenos Aires por talleres con los que trabajamos hace años. Algunas están en stock para entrega inmediata y otras se hacen a pedido, en la medida y terminación que elijas.</p></div></section>
   <section class="sec"><h3><span>${L.length?L.length+' piezas':'Piezas'}</span><a href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por productos nacionales a pedido')}" target="_blank" rel="noopener">Consultar a medida</a></h3>
-   ${L.length?`<div class="grid">${L.map(card).join('')}</div>`
+   ${L.length?`<div class="grid">${L.map(x=>card(x)).join('')}</div>`
    :`<p class="nac-empty">Estamos sumando las primeras piezas. Si buscás algo en particular, <a href="https://wa.me/541139443055" target="_blank" rel="noopener">escribinos</a> y lo hacemos a pedido.</p>`}</section></div>`;
 }
 function viewStudio(){
@@ -920,7 +950,10 @@ const FAMS=['Fresno','Acero','Laca','Nacional'];
 let selF=new Set(),selC=new Set();
 function viewShop(f){
   const items=P.filter(p=>(f==='Todos'||p.cat===f)&&(!selF.size||selF.has(p.fam))&&(!selC.size||(p.skus&&p.colors.some(c=>selC.has(c[0]))))).sort((a,b)=>(!a.price)-(!b.price));
-  const body=view==='grid'?`<div class="grid">${items.map(card).join('')}</div>`
+  /* en una categoría o colección, cada color es una tarjeta (en "Todos", una por producto) */
+  const expand=f!=='Todos'||selF.size>0;
+  const tarjetas=expand?items.flatMap(p=>p.skus&&p.colors.length>1?p.colors.map((c,i)=>[p,i]).filter(([,i])=>!selC.size||selC.has(p.colors[i][0])):[[p,null]]):items.map(p=>[p,null]);
+  const body=view==='grid'?`<div class="grid">${tarjetas.map(([p,i])=>card(p,i)).join('')}</div>`
    :`<div class="list">${items.map(p=>`<a class="row c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph"><img src="${src(p.img)}" alt="" loading="lazy"></div><span>${esc(title(p))}</span><span>Colección ${p.fam}</span><span>${dims(p)}</span><span class="pz">${p.price?`${p.list>p.price?`<s>${ars(p.list)}</s>`:""}<b>${ars(p.price)}</b>`:"Consultar"}</span></a>`).join('')}</div>`;
   return `<div class="flt"><div><span class="lb2">Colección</span>${FAMS.map(x=>`<button data-fam="${x}" class="${selF.has(x)?'on':''}" aria-pressed="${selF.has(x)}">${x}</button>`).join('')}${selF.size?'<button data-fam="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>${(()=>{const m=new Map();P.filter(p=>p.skus).forEach(p=>p.colors.forEach(c=>{if(!m.has(c[0]))m.set(c[0],c[1])}));return m.size?`<div class="fcol"><span class="lb2">Color</span>${[...m].map(([n,h])=>`<button data-colf="${esc(n)}" class="${selC.has(n)?'on':''}" aria-pressed="${selC.has(n)}" title="${esc(n)}"><i style="background:${h}"></i>${esc(n)}</button>`).join('')}${selC.size?'<button data-colf="" class="lb2" style="text-decoration:underline">Limpiar</button>':''}</div>`:''})()}
    <div class="vw"><a href="#" data-view="grid" class="${view==='grid'?'on':''}">Grilla</a><a href="#" data-view="list" class="${view==='list'?'on':''}">Lista</a></div></div>${selF.has('Nacional')?'<p class="nac">Colección Nacional: próximamente. Piezas únicas, hechas en Argentina.</p>':''}${items.length||selF.has('Nacional')?body:'<p class="nac">No hay piezas con esa combinación.</p>'}`;
@@ -934,45 +967,54 @@ function drawing(p){
    <line x1="${x}" y1="${y+h+16}" x2="${x+w}" y2="${y+h+16}" stroke="#9A988F"/><text x="${x+w/2}" y="${y+h+32}" text-anchor="middle">${p.round?'Ø ':''}${p.d[0]} cm</text>
    <line x1="${x+w+16}" y1="${y}" x2="${x+w+16}" y2="${y+h}" stroke="#9A988F"/><text x="${x+w+24}" y="${y+h/2+4}">${p.d[2]} cm</text></svg>`;
 }
-let col=0;
+let col=0,PRESEL=0;
+/* galería del color elegido (fotos por color cargadas en el panel); si no tiene, las fotos del producto */
+const galeria=(p,i)=>{const F=p.vfotos&&p.vfotos[i]&&p.vfotos[i].length?p.vfotos[i]:[p.img,p.img2].filter(Boolean);return F.length?F:[p.img]};
+const IC_CARD='<svg width="15" height="12" viewBox="0 0 15 12" fill="none" stroke="currentColor"><rect x=".5" y=".5" width="14" height="11" rx="1"/><path d="M.5 3.5h14"/></svg>';
+const IC_TRUCK='<svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor"><path d="M.5 1.5h9v7h-9zM9.5 4.5h3l3 3v1h-6z"/><circle cx="3.5" cy="9.5" r="1.5" fill="#F7F7F5"/><circle cx="12" cy="9.5" r="1.5" fill="#F7F7F5"/></svg>';
+function pdpPics(p){const G=galeria(p,col),dr=p.d.every(x=>x>0);
+  return `<div class="pmw"><div class="ph" id="pmain"><img src="${src(G[0])}" alt="${esc(title(p))}"></div></div>
+   <div class="pth">${G.map((u,i)=>`<button data-th="${i}" class="${i?'':'on'}" aria-label="Foto ${i+1}"><img src="${src(u)}" alt="" loading="lazy"></button>`).join('')}${dr?`<button data-th="dr" class="dr" aria-label="Medidas">${drawing(p)}</button>`:''}</div>`}
 function viewProduct(p){
-  col=0;
+  col=Math.min(PRESEL||0,Math.max(0,(p.colors||[]).length-1));PRESEL=0;
   const more=P.filter(x=>x.id!==p.id&&x.price&&(x.fam===p.fam||x.cat===p.cat)).slice(0,4);
+  const ent=p.fam==='Nacional'?({stock:'En stock: entrega inmediata.',pedido:'Se fabrica a pedido. Te confirmamos el plazo al comprar.',sin_stock:'Sin stock por ahora. Escribinos y te avisamos cuando haya.'}[p.disp]||'A coordinar.'):'Preventa: llega en '+ENTREGA.toLowerCase()+'.';
+  const como=[p.arm==='KD'?'Desarmado, con herrajes e instrucciones':p.arm==='ARMADO'?'Armado':'',p.bul>1?'en '+p.bul+' cajas':p.pz>1?p.pz+' unidades en una misma caja':''].filter(Boolean).join(', ');
   return `<div class="pdp pre" id="pdp">
    <div class="info">
-    <a class="back" href="#tienda" data-back>← Atrás</a>
+    <nav class="bc"><a href="#inicio">Inicio</a> . <a href="#tienda" data-back>${esc(p.cat||'Tienda')}</a> . <span>${esc(title(p))}</span></nav>
     <h1>${esc(title(p))}</h1>
-    ${p.price?`${p.list>p.price?`<div class="plist">Precio de lista <s>${ars(p.list)}</s></div>`:""}
-     ${p.pz>1?`<div class="cuo">${p.pz===2?'Se vende por par':'Set de '+p.pz}: el precio es por ${p.pz===2?'las dos':'las '+p.pz+' unidades'}.</div>`:''}<div class="price">${ars(p.price)} <span class="tag">${p.fam==='Nacional'?(DISP[p.disp]||'Fabricación nacional'):isProf()?'Precio profesional −'+off(p)+'%':'Preventa −'+off(p)+'%'}</span></div>
-     <ul class="pay"><li><b>${p.fam==='Nacional'?'Precio':isProf()?'Precio profesional':'Precio de preventa'} · Mercado Pago</b><span>${ars(p.price)}</span></li>
-      ${p.transf?`<li><b>Con transferencia · 15% off</b><span>${ars(p.transf)}</span></li>`:''}<li><b>Hasta 3 cuotas sin interés</b><span>3 × ${ars(Math.ceil(p.price/3))}</span></li>
-      <li><b>Entrega</b><span>${p.fam==='Nacional'?({stock:'Inmediata',pedido:'A pedido, a coordinar',sin_stock:'Sin stock por ahora'}[p.disp]||'A coordinar'):'Estimada '+ENTREGA}</span></li>
-      ${isProf()&&p.min>1?`<li><b>Compra mínima profesional</b><span>${p.min} unidades</span></li>`:""}
-      <li><b>6 y 12 cuotas, débito, dinero en cuenta o efectivo</b><span>Mercado Pago</span></li></ul>`:'<div class="cuo">Precio a confirmar</div>'}
-    ${p.noColor?'':`<div class="lb">Color</div>
-    <div class="sw">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i?'':'on'}" style="background:${c[1]}" aria-label="${esc(c[0])}"></button>`).join('')}</div>
-    <div class="swn" id="swn">${esc(p.colors[0][0])}</div>`}
-    <form class="cpf" id="cpForm"><span class="lb">Calculá tu envío</span><div><input id="cp" inputmode="numeric" maxlength="4" placeholder="Tu código postal" aria-label="Código postal"><button type="submit">Calcular</button></div><div class="cpr" id="cpRes"></div></form>
-    ${p.price?`<div class="qty"><span>Cantidad${p.pz>1?(p.pz===2?' de pares':' de sets'):''}</span><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">${isProf()?(p.min||1):1}</b><button data-qd="1" aria-label="Uno más">+</button></div>`:''}
-    <button class="buy" data-add="${p.id}" ${p.disp==='sin_stock'?'disabled':''}>${p.disp==='sin_stock'?'Sin stock':p.price?'Agregar al carrito':'Consultanos'}</button>
-    ${p.lead?`<div class="tb"><span>Descripción</span><span>${esc(p.lead)}</span></div>`:""}
-    ${p.d.every(x=>x>0)?`<div class="tb"><span>Medidas</span><span>${dims(p)}</span></div>`:''}
-    ${p.mat?`<div class="tb"><span>Material</span><span>${esc(p.mat)}</span></div>`:''}
-    ${p.fin?`<div class="tb"><span>Terminación</span><span>${esc(p.fin)}</span></div>`:''}
-    ${p.peso?`<div class="tb"><span>Peso</span><span>${String(p.peso).replace('.',',')} kg${p.pz>1?' cada una':''}</span></div>`:''}
-    ${p.arm||p.bul>1||p.pz>1?`<div class="tb"><span>Cómo viene</span><span>${[p.arm==='KD'?'Desarmado, con herrajes e instrucciones':p.arm==='ARMADO'?'Armado':'',p.bul>1?'en '+p.bul+' cajas: te llegan '+p.bul+' bultos por unidad':p.pz>1?p.pz+' unidades en una misma caja':''].filter(Boolean).join(', ')}.</span></div>`:''}
-    <div class="tb"><span>Colección</span><span>${p.fam}</span></div>
-    <div class="tb"><span>Tiempo de entrega</span><span>${p.fam==='Nacional'?({stock:'En stock: entrega inmediata.',pedido:'Se fabrica a pedido. Te confirmamos el plazo al comprar.',sin_stock:'Sin stock por ahora. Escribinos y te avisamos cuando haya.'}[p.disp]||'A coordinar.'):'Preventa: llega en '+ENTREGA.toLowerCase()+'.'}${p.armado?' Viene para armar, con manual.':''}</span></div>
+    ${p.price?`<div class="pr1"><span class="pp">${p.list>p.price?`<s>${ars(p.list)}</s>`:''}${ars(p.price)}</span><span class="pc">3 cuotas sin interés de ${ars(p.price/3)}</span></div>
+     <div class="psi">Precio sin impuestos ${ars(p.price/1.21)}</div>
+     ${p.transf?`<div class="ptr"><b>${ars(p.transf)}</b> con Transferencia</div>`:''}
+     ${p.fam!=='Nacional'&&off(p)>0?`<div class="ptag">${isProf()?'Precio profesional':'Precio de preventa'} −${off(p)}%</div>`:''}`:'<div class="psi">Precio a confirmar</div>'}
+    <hr class="psep">
+    ${p.noColor?'':`<div class="pcl"><span class="lb">Color</span><span class="swn" id="swn">${esc(p.colors[col][0])}</span></div>
+    <div class="chips">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i===col?'on':''}">${esc(c[0])}</button>`).join('')}</div>`}
+    ${p.price?`<div class="pbuy"><div class="qty"><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">${isProf()?(p.min||1):1}</b><button data-qd="1" aria-label="Uno más">+</button></div><button class="buy" data-add="${p.id}" ${p.disp==='sin_stock'?'disabled':''}>${p.disp==='sin_stock'?'Sin stock':'Agregar al carrito'}</button></div>`:`<button class="buy" data-add="${p.id}">Consultanos</button>`}
+    ${isProf()&&p.min>1?`<p class="psi">Compra mínima profesional: ${p.min} unidades</p>`:''}
+    <details class="acc"><summary>${IC_CARD}<span>Medios de pago</span></summary><div>
+     ${p.price?`<p>3 cuotas sin interés de <b>${ars(p.price/3)}</b></p>`:''}
+     ${p.transf?`<p>15% de descuento pagando con Transferencia: <b>${ars(p.transf)}</b></p>`:''}
+     <p>También 6 y 12 cuotas, débito, dinero en cuenta o efectivo con Mercado Pago.</p></div></details>
+    <details class="acc"><summary>${IC_TRUCK}<span>Medios de envío</span></summary><div>
+     <form class="cpf" id="cpForm"><div><input id="cp" inputmode="numeric" maxlength="4" placeholder="Tu código postal" aria-label="Código postal"><button type="submit">Calcular</button></div><div class="cpr" id="cpRes"></div></form>
+     <p>Retiro sin costo en nuestro depósito de Lanús, coordinando antes el día y horario.</p></div></details>
+    <div class="pdesc">
+     ${p.lead?`<p>${esc(p.lead)}</p>`:''}
+     ${p.mat?`<p><b>Material</b>: ${esc(p.mat)}.</p>`:''}
+     ${p.fin?`<p><b>Terminación</b>: ${esc(p.fin)}.</p>`:''}
+     ${p.d.every(x=>x>0)?`<p><b>Medidas</b>: ${p.round?`Ø ${p.d[0]} cm / ${p.d[2]} cm alto`:`${p.d[0]} cm largo / ${p.d[1]} cm profundidad / ${p.d[2]} cm alto`}.</p>`:''}
+     ${p.peso?`<p><b>Peso</b>: ${String(p.peso).replace('.',',')} kg${p.pz>1?' cada una':''}.</p>`:''}
+     ${como?`<p><b>Cómo viene</b>: ${como}.</p>`:''}
+     <p><b>Colección</b>: ${esc(p.fam)}.</p>
+     <p><b>Entrega</b>: ${ent}</p>
+    </div>
    </div>
-   <div class="pics">
-    <div class="ph" id="pmain"><img src="${src(p.img)}" alt="${esc(title(p))}"></div>
-    ${p.img2?`<div class="ph"><img class="cov" src="${src(p.img2)}" alt="${esc(title(p))} en un ambiente" loading="lazy"></div>`:''}
-    ${p.d.every(x=>x>0)?`<div class="ph">${drawing(p)}</div>`:''}
-   </div>
+   <div class="pics" id="pgal">${pdpPics(p)}</div>
   </div>
-  ${more.length?`<section class="more"><h3>También te puede gustar</h3><div class="grid">${more.map(card).join('')}</div></section>`:''}`;
+  ${more.length?`<section class="more"><h3>También te puede gustar</h3><div class="grid">${more.map(x=>card(x)).join('')}</div></section>`:''}`;
 }
-
 /* ---------- carrito ---------- */
 function drawCart(){
   const t=cart.reduce((a,l)=>a+(byId(l.id).price||0)*l.q,0);
@@ -994,7 +1036,7 @@ let ENV='gratis', ENV_EXP=35000, PAYM='mp', BUY={n:'',e:'',t:'',d:'',a:''}, TRF=
 const retiroOp=()=>['retiro','Retiro en depósito (Lanús)',[CFGT.retiro_dir,CFGT.retiro_horario].filter(Boolean).join(' · ')+(CFGT.retiro_dir||CFGT.retiro_horario?'. ':'')+(CFGT.retiro_nota||'Coordiná el día y horario por WhatsApp antes de ir.'),'Gratis'];
 const buyOk=()=>BUY.n.trim()&&/^\d{7,8}$/.test(BUY.d.replace(/\D/g,''))&&/\S+@\S+\.\S+/.test(BUY.e)&&BUY.t.replace(/\D/g,'').length>=8&&(ENV==='retiro'||BUY.a.trim().length>=5);
 const bultos=()=>cart.reduce((a,l)=>a+l.q*((byId(l.id)||{}).bul||1),0);
-const uTxt=(p,q)=>p&&p.pz>1?(p.pz===2?(q===1?'par':'pares'):(q===1?'set de '+p.pz:'sets de '+p.pz)):'u.';
+const uTxt=()=>'u.';
 fetch(SB_URL+'/rest/v1/rpc/envio_precios',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'}).then(r=>r.json()).then(d=>{if(d&&d[0]&&d[0].express!=null)ENV_EXP=+d[0].express}).catch(()=>{});
 /* ---------- página de pago: envío según código postal + resumen + cómo te llega ---------- */
 const ZONAS={caba:{n:'Ciudad de Buenos Aires',dias:'martes, jueves y sábados'},gba:{n:'Gran Buenos Aires',dias:'jueves y sábados'},int:{n:'Interior del país',dias:''}};
@@ -1099,7 +1141,7 @@ function fadeTo(hash){
 }
 /* la transición tipo galería: el resto se desvanece y la foto elegida vuela a su lugar en la ficha */
 function openProduct(a){
-  const hash='#'+slug(a.dataset.p);
+  const hash='#'+slug(a.dataset.p);PRESEL=a.dataset.ci!=null?+a.dataset.ci:0;
   if(REDUCED){location.hash=hash;return}
   const box=a.querySelector('.ph'), r=box.getBoundingClientRect();
   a.classList.add('picked'); app.classList.add('leaving');
@@ -1120,7 +1162,8 @@ document.addEventListener('click',e=>{
   if(a.matches('a.c[data-p]')){e.preventDefault();openProduct(a);return}
   if(a.dataset.view){e.preventDefault();view=a.dataset.view;render();return}
   if(a.hasAttribute('data-back')){e.preventDefault();fadeTo('#tienda');return}
-  if(a.dataset.col){col=+a.dataset.col;document.querySelectorAll('.sw button').forEach((b,i)=>b.classList.toggle('on',i===col));const p=P.find(x=>slug(x.id)===location.hash.slice(1));$('#swn').textContent=p.colors[col][0];return}
+  if(a.dataset.col){col=+a.dataset.col;document.querySelectorAll('.chips button').forEach((b,i)=>b.classList.toggle('on',i===col));const p=P.find(x=>slug(x.id)===location.hash.slice(1));$('#swn').textContent=p.colors[col][0];const g=$('#pgal');if(g)g.innerHTML=pdpPics(p);return}
+  if(a.dataset.th!=null){const p=P.find(x=>slug(x.id)===location.hash.slice(1)),m=$('#pmain');if(!p||!m)return;document.querySelectorAll('.pth button').forEach(b=>b.classList.toggle('on',b===a));m.innerHTML=a.dataset.th==='dr'?`<div class="pdr">${drawing(p)}</div>`:`<img src="${src(galeria(p,col)[+a.dataset.th])}" alt="${esc(title(p))}">`;return}
   if(a.dataset.add){const p=byId(a.dataset.add);
     if(!p.price){window.open('https://wa.me/541139443055?text='+encodeURIComponent('Hola, quiero consultar por '+title(p)),'_blank','noopener');return}
     track('agregar_carrito',{producto:p.id,valor:p.price});const n=+($('#qn')?.textContent)||1;if(p.vdisp&&p.vdisp[col]!=null&&p.vdisp[col]<n){toast(p.vdisp[col]>0?`Quedan ${p.vdisp[col]} en ${p.colors[col][0]}`:`${p.colors[col][0]}: sin stock por ahora`);return}const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q+=n:cart.push({id:p.id,c:col,q:n,sku:p.skus?p.skus[col]:null}); save(); openCart(); return}
