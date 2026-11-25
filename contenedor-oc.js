@@ -35,10 +35,14 @@ function ocLeer(A,pe){
   let hr=0,best=-1;A.slice(0,25).forEach((r,i)=>{const s=r.filter(c=>String(c).trim()).length+3*r.filter(c=>IMPC.some(([, ,syn])=>syn.some(w=>String(c).toLowerCase().includes(w)))).length;if(s>best){best=s;hr=i}});
   const cols=(A[hr]||[]).map((c,i)=>({i,t:String(c).trim()}));const map={},usada=i=>Object.values(map).includes(i);
   IMPC.forEach(([k,,syn])=>{for(const w of syn){const c=cols.find(c=>c.t&&!usada(c.i)&&c.t.toLowerCase().includes(w));if(c){map[k]=c.i;break}}});
-  const filas=[];
+  const filas=[];let fin=false;
   A.slice(hr+1).forEach((r,ix)=>{const g=k=>map[k]!=null?r[map[k]]:'',tx=k=>String(g(k)??'').trim();
     const f={fila:hr+2+ix,cod:tx('cod_proveedor'),desc:tx('descripcion'),fob:pnum(g('fob_usd')),cbm:pnum(g('cbm')),cbmCaja:pnum(g('cbm_caja')),cbmT:pnum(g('cbm_total')),cant:pnum(g('cantidad')),pz:pnum(g('piezas_por_caja')),up:tx('unidad_precio'),k1:parseCaja(tx('caja1_med')),celdas:r.map(c=>String(c||'').trim().toUpperCase())};
     /* fila de continuación (2ª caja de la misma pieza): suma m³ a la anterior */
+    if(fin)return;
+    /* fila de totales (sin código ni precio pero con cantidad): ahí termina la lista */
+    if(!f.cod&&!f.desc&&f.fob==null&&f.cant!=null&&filas.length){fin=true;return}
+    if(f.fob==null&&f.cant==null&&!f.k1&&f.cbm==null)return;
     if(!f.cod&&!f.desc&&f.fob==null){const p=filas[filas.length-1];if(p){if(f.cbm!=null)p.cbm=(p.cbm||0)+f.cbm;if(f.cbmT!=null)p.cbmT=(p.cbmT||0)+f.cbmT;if(f.cbmCaja!=null)p.cbmCaja=(p.cbmCaja||0)+f.cbmCaja;if(f.k1)p.k2=f.k1}return}
     if(!f.cod&&!f.desc)return;if(/^(total|subtotal|sum)/i.test(f.desc||f.cod))return;filas.push(f)});
   const enPed=new Set(ECO.it.filter(i=>i.pedido_id===pe.id).map(i=>i.codigo)),prov=(pe.proveedor||'').toUpperCase();
@@ -52,7 +56,9 @@ function ocLeer(A,pe){
     let m=f.cod&&master.find(x=>U(x.cod_proveedor)===U(f.cod)&&(!prov||!x.proveedor||U(x.proveedor)===prov))
       ||f.cod&&master.find(x=>U(x.cod_proveedor)===U(f.cod))
       ||master.find(x=>f.celdas.includes(U(x.codigo)))
-      ||f.desc&&master.find(x=>U(x.descripcion)===U(f.desc));
+      ||f.desc&&master.find(x=>U(x.descripcion)===U(f.desc))
+      /* mismo código con otra letra adelante (C537 / X537): sólo si hay uno solo */
+      ||(()=>{const n=String(f.cod||'').replace(/^[A-Z]+/i,'');if(n.length<3)return null;const c=master.filter(x=>String(x.cod_proveedor||'').replace(/^[A-Z]+/i,'').toUpperCase()===n.toUpperCase());return c.length===1?c[0]:null})();
     return {fila:f.fila,cod:f.cod,desc:f.desc,cant:f.cant!=null?Math.round(f.cant):null,fob,cbm,codigo:m?m.codigo:'',enPed:m?enPed.has(m.codigo):false,ok:!!m}});
   return {lin,map:Object.fromEntries(Object.entries(map).map(([k,i])=>[k,(cols.find(c=>c.i===i)||{}).t]))};
 }
