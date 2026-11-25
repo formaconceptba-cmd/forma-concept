@@ -539,7 +539,7 @@ body.home #app>.full:first-child{border-bottom:12px solid var(--bg)}
 .hpromo p{margin:0;font-size:12px!important;line-height:1.35!important;letter-spacing:.06em!important}
 @media (max-width:720px){.hpromo{top:84px;left:var(--g);gap:12px}}
 /* video vertical: en la compu se ve a su tamaño, centrado y nítido */
-@media (min-width:721px){.full.vid{background:#1d1b19}.full.vid video{object-fit:contain!important}.solo-m{display:none!important}}
+@media (min-width:721px){.solo-m{display:none!important}}
 @media (max-width:720px){.solo-d{display:none!important}}
 .two.solo-d .full{height:80svh}
 /* video de la colección Fresno */
@@ -786,7 +786,7 @@ document.addEventListener('submit',e=>{if(e.target.id==='ckForm'){e.preventDefau
 function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
   const PS=(()=>{const S=P.filter(p=>p.cat==='Butacas'&&p.img);return S.length?S:P.filter(p=>p.img).slice(0,4)})();
-  return `${full(FX('inicio_portada','ctx_pause'),'','Diseño en madera, acero y laca.','Ver toda la colección','#tienda','portada').replace('loading="lazy"','loading="eager" fetchpriority="high"').replace('<div class="t">','<div class="hpromo" id="hpromo"><p>3 cuotas<br>sin interés</p><p>15% off<br>en transferencia</p></div><div class="t">')}
+  return `${full(FX('inicio_portada','ctx_pause'),'','Diseño en madera, acero y laca.','Ver toda la colección','#tienda','portada').replace('loading="lazy"','loading="eager" fetchpriority="high"')}
   ${cats()}
   <section class="sil on" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
   <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(x=>card(x)).join('')}</div></section>
