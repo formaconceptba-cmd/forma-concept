@@ -31,18 +31,23 @@ const todas=new Set([...MENU,PIE].flatMap(g=>g[2].map(s=>s[0])));
 const extra=GRUPOS.flatMap(g=>g[2]).filter(s=>!todas.has(s[0]));
 if(extra.length)MENU.push(['otros','Otros',extra]);
 GRUPOS.length=0;GRUPOS.push(...MENU,PIE);
-let abiertos=new Set();
+/* grupos desplegados: quedan como los dejaste (también al recargar). El de la pantalla actual arranca abierto salvo que lo cierres. */
+const NAVK='fc_nav_v2';let NAV={a:[],c:[]};try{NAV=Object.assign(NAV,JSON.parse(localStorage.getItem(NAVK)||'{}'))}catch(e){}
+let abiertos=new Set(NAV.a),cerrados=new Set(NAV.c);
+const navSave=()=>{try{localStorage.setItem(NAVK,JSON.stringify({a:[...abiertos],c:[...cerrados]}))}catch(e){}};
+const estaAbierto=g=>abiertos.has(g[0])||(g[2].some(s=>s[0]===tab)&&!cerrados.has(g[0]));
 
 const ico=k=>`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${IC[k]||IC.inicio}</svg>`;
-const item=g=>{const act=g[2].some(s=>s[0]===tab),uno=g[2].length===1,ab=act||abiertos.has(g[0]);
+const item=g=>{const act=g[2].some(s=>s[0]===tab),uno=g[2].length===1,ab=estaAbierto(g);
   return `<div class="tn-g${act?' act':''}"><button class="tn-i${act&&uno?' on':''}" data-gk="${g[0]}">${ico(g[0])}<span>${g[1]}</span>${uno?'':`<i class="tn-ch${ab?' up':''}"></i>`}</button>
    ${uno||!ab?'':`<div class="tn-sub">${g[2].map(s=>`<button class="${s[0]===tab?'on':''}" data-t="${s[0]}">${s[1]}</button>`).join('')}</div>`}</div>`};
 window.drawNav=function(){const n=document.getElementById('gnav'),f=document.getElementById('gfoot');if(!n)return;
   n.innerHTML=MENU.map(item).join('');f.innerHTML=item(PIE);
   const lab=[...MENU,PIE].flatMap(g=>g[2]).find(s=>s[0]===tab);const t=document.getElementById('tnt');if(t)t.textContent=lab?lab[1]:'';document.title=(lab?lab[1]+' · ':'')+'FORMA Admin';
   document.querySelectorAll('.tn-side [data-gk]').forEach(b=>b.onclick=()=>{const g=GRUPOS.find(x=>x[0]===b.dataset.gk);if(g[2].length===1){tab=g[2][0][0];cerrarMenu();draw();return}
-    if(g[2].some(s=>s[0]===tab)||abiertos.has(g[0])){abiertos.delete(g[0]);if(!g[2].some(s=>s[0]===tab)){drawNav();return}}
-    abiertos.add(g[0]);if(!g[2].some(s=>s[0]===tab)){tab=g[2][0][0];cerrarMenu();draw()}else drawNav()});
+    /* la flechita sólo abre o cierra: no cambia de pantalla */
+    if(estaAbierto(g)){abiertos.delete(g[0]);cerrados.add(g[0])}else{abiertos.add(g[0]);cerrados.delete(g[0])}
+    navSave();drawNav()});
   document.querySelectorAll('.tn-side [data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;cerrarMenu();draw()})};
 const cerrarMenu=()=>document.body.classList.remove('tn-open');
 const _shell=window.shell;

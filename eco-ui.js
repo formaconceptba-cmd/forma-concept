@@ -30,9 +30,11 @@ async function ecoLoad(){
 }
 const ecoCat=()=>master.map(x=>({codigo:x.codigo,desc:x.descripcion,subcat:x.subcategoria,prov:x.proveedor,fob:x.fob_usd,cbm:x.cbm,moq:x.moq,foto:x.foto_url,medidas:x.medidas,material:x.material}));
 const ecoPedido=pe=>({par:pe.par||{},items:ECO.it.filter(i=>i.pedido_id===pe.id).map(i=>({codigo:i.codigo,cant:i.cant,precioARS:i.precio_ars,markupManual:i.markup_manual}))});
+/* lo que trae la orden de compra manda: FOB y m³ por pieza propios de este contenedor (el Maestro no se toca) */
+const ecoCatPe=pe=>{const O={};ECO.it.forEach(i=>{if(i.pedido_id===pe.id)O[i.codigo]=i});return ecoCat().map(c=>{const o=O[c.codigo];return o&&(o.fob_oc!=null||o.cbm_oc!=null)?{...c,fob:o.fob_oc??c.fob,cbm:o.cbm_oc??c.cbm,fobM:c.fob,cbmM:c.cbm,oc:1}:c})};
 /* si el pedido ya pasó a Recibido, se calcula SIEMPRE con la proyección congelada (datos, parámetros y aranceles de ese día) */
-const ecoCalc=(pe,extra)=>{const S=pe.proyeccion;if(S&&S.input)return calcular({items:S.input.items,par:Object.assign({},S.input.par||{},extra||{})},S.cat,S.par,S.ar);return calcular(Object.assign(ecoPedido(pe),extra?{par:Object.assign({},pe.par||{},extra)}:{}),ecoCat(),ECO.par,ECO.ar)};
-function ecoSnapshot(pe){const inp=ecoPedido(pe),cods=new Set(inp.items.map(i=>i.codigo)),cat=ecoCat().filter(c=>cods.has(c.codigo)),r=calcular(inp,cat,ECO.par,ECO.ar);
+const ecoCalc=(pe,extra)=>{const S=pe.proyeccion;if(S&&S.input)return calcular({items:S.input.items,par:Object.assign({},S.input.par||{},extra||{})},S.cat,S.par,S.ar);return calcular(Object.assign(ecoPedido(pe),extra?{par:Object.assign({},pe.par||{},extra)}:{}),ecoCatPe(pe),ECO.par,ECO.ar)};
+function ecoSnapshot(pe){const inp=ecoPedido(pe),cods=new Set(inp.items.map(i=>i.codigo)),cat=ecoCatPe(pe).filter(c=>cods.has(c.codigo)),r=calcular(inp,cat,ECO.par,ECO.ar);
   return {fecha:new Date().toISOString(),input:inp,cat,par:{...ECO.par},ar:{...ECO.ar},resultado:{pico:r.pico,teQueda:r.resultado,retorno:r.retorno,rindePorAno:r.anualizado,ciclo:r.ciclo+r.diasAcred,ventaNeta:r.venta,costoFinal:r.costoFinal,costoCobro:r.venta*r.cc.total,unidades:r.unidades},porProducto:r.items.map(i=>({sku:i.codigo,unidades:i.cant,precioUsd:i.precioUsd,margenU:i.margenU,netoU:i.netoU,retorno:i.retorno}))}}
 /* costo puesto en el galpón por unidad (USD), del pedido más reciente que trae ese producto: lo usa Rentabilidad */
 function ecoCostos(){const out={};const ord=[...ECO.ped].sort((a,b)=>(a.estado==='borrador')-(b.estado==='borrador')||b.created_at.localeCompare(a.created_at));
@@ -60,11 +62,12 @@ async function drawEco(){
 
 function drawEcoPedido(){
   const pe=ECO.ped.find(p=>p.id===ECO.sel),r=ecoCalc(pe),V=ECO.vista;
-  const T=[['tablero','Tablero'],['real','Real'],['productos','Productos'],['precios','Precios'],['costos','Costos'],['caja','Caja'],['ingreso','Ingreso y packing list']];
-  const body={ingreso:ecoIngresoV,real:ecoRealV,tablero:ecoTablero,productos:ecoProductos,precios:ecoPrecios,costos:ecoCostosV,caja:ecoCaja}[V]||ecoTablero;
+  const T=[['tablero','Tablero'],['oc','Orden de compra y proformas'],['productos','Productos'],['precios','Precios'],['costos','Costos'],['caja','Caja'],['ingreso','Ingreso y packing list'],['real','Real']];
+  const body={ingreso:ecoIngresoV,real:ecoRealV,tablero:ecoTablero,productos:ecoProductos,precios:ecoPrecios,costos:ecoCostosV,caja:ecoCaja,oc:ecoOC}[V]||ecoTablero;
   $('#m').innerHTML=`<div class="bar"><button class="btn" id="eback">← Contenedores</button><input id="enom" value="${esc(pe.nombre)}" style="font:500 20px Outfit,sans-serif;border:0;background:none;width:200px"><input id="eprov" value="${esc(pe.proveedor||'')}" placeholder="proveedor" style="width:150px">
    <select id="eest">${Object.entries(ESTP).map(([k,l])=>`<option value="${k}" ${pe.estado===k?'selected':''}>${l}</option>`).join('')}</select><span class="sp"></span><button class="btn" id="edup">Duplicar</button><button class="btn" id="edel">Borrar</button></div>
   <div class="bar" style="gap:6px">${T.map(([k,l])=>`<button class="btn ${V===k?'dk':''}" data-ev="${k}">${l}</button>`).join('')}</div>
+  <div class="card pad eco-que"><b>${(T.find(t=>t[0]===(body===ecoTablero?'tablero':V))||T[0])[1]}:</b> ${ECO_QUE[body===ecoTablero?'tablero':V]||''}</div>
   <div id="ebody">${body(pe,r)}</div>`;
   const upd=async(f,v)=>{pe[f]=v;const {error}=await sb.from('eco_pedidos').update({[f]:v}).eq('id',pe.id);toast(error?'No se pudo guardar':'Guardado')};
   $('#eback').onclick=()=>{ECO.sel=null;drawEco()};
@@ -73,7 +76,7 @@ function drawEcoPedido(){
   $('#edel').onclick=async()=>{if(!confirm(`¿Borrar ${pe.nombre} y todos sus productos? No se puede deshacer.`))return;const {error}=await sb.from('eco_pedidos').delete().eq('id',pe.id);if(error)return toast('No se pudo borrar');ECO.sel=null;drawEco()};
   $('#edup').onclick=async()=>{const {data,error}=await sb.from('eco_pedidos').insert({nombre:pe.nombre+' (copia)',proveedor:pe.proveedor,notas:pe.notas,par:pe.par}).select().single();if(error)return toast('No se pudo duplicar');
     const its=ECO.it.filter(i=>i.pedido_id===pe.id).map(i=>({pedido_id:data.id,codigo:i.codigo,cant:i.cant,precio_ars:i.precio_ars,markup_manual:i.markup_manual,orden:i.orden}));if(its.length)await sb.from('eco_items').insert(its);ECO.sel=data.id;toast('Duplicado');drawEco()};
-  ({productos:bindProductos,precios:bindPrecios,tablero:bindTablero,caja:bindCaja,ingreso:bindIngreso})[V]?.(pe,r);
+  ({productos:bindProductos,precios:bindPrecios,tablero:bindTablero,caja:bindCaja,ingreso:bindIngreso,oc:bindOC})[V]?.(pe,r);
 }
 
 /* ---- Tablero: 8 bloques ---- */
@@ -109,15 +112,17 @@ function bindTablero(){}
 
 /* ---- Productos ---- */
 function ecoProductos(pe,r){
-  const cat=ecoCat();const REC=['recibido','cerrado'].includes(pe.estado);
+  const cat=ecoCat(),it0=c=>ECO.it.find(x=>x.pedido_id===pe.id&&x.codigo===c);const REC=['recibido','cerrado'].includes(pe.estado);
   const rk=i=>i.margenT>0?i.cbmT/i.margenT:1e9+i.cbmT;const L=ECO.ordP==='m3mg'?[...r.items].sort((a,b)=>rk(b)-rk(a)):r.items;let ac=0;L.forEach(i=>{ac+=i.cbmT;i._acu=ac});const pp=pe.par||{};
   return `<div class="card pad" style="margin-bottom:12px"><div class="bar" style="margin:0;gap:14px;flex-wrap:wrap"><label style="margin:0">Contenedores 40HQ contratados <input class="num" id="pchq" style="width:50px" value="${pp.contHQ??''}" placeholder="auto" inputmode="numeric"></label><label style="margin:0">Costos en origen US$ <input class="num" id="porg" style="width:80px" value="${pp.origenUSD??''}" placeholder="0" inputmode="decimal"></label><span class="hint" style="flex:1;min-width:220px">Contratados: fija la capacidad (${eN(r.p.cbmHQ,0)} m³ por 40HQ) y avisa si sobra. Vacío = el sistema elige los contenedores. Costos en origen: transporte entre fábricas, consolidación, etc. Se suman al flete y se reparten por m³.</span></div>${r.sobra>0?`<p class="neg" style="margin:8px 0 0"><b>No entra: sobran ${eN(r.sobra)} m³.</b> Ordená por rendimiento y sacá desde arriba hasta que el acumulado quede abajo de ${eN(r.capacidad,0)}.</p>`:''}</div>
   <div class="bar"><button class="btn ${ECO.ordP!=='m3mg'?'dk':''}" data-op="pedido">Orden del pedido</button><button class="btn ${ECO.ordP==='m3mg'?'dk':''}" data-op="m3mg">Lo que menos rinde por m³ primero</button></div>
   <div class="bar"><input id="eadd" list="ecatl" placeholder="Buscar en el catálogo por código o nombre y Enter para sumar…" style="flex:1;min-width:240px"><datalist id="ecatl">${cat.filter(c=>!(byCod(c.codigo)||{}).archivado).map(c=>`<option value="${esc(c.codigo)}">${esc(c.desc||'')} · ${esc(c.subcat||'')}</option>`).join('')}</datalist></div>
   <div class="card wrap"><table class="big"><thead><tr><th></th><th>Producto</th><th class="n">Cant.</th><th class="n">MOQ</th>${REC?'<th class="n">Recibidas</th><th class="n">Rotas</th>':''}<th class="n">m³ u.</th><th class="n">m³ total</th><th class="n">% cont.</th><th class="n">m³ acumulado</th><th class="n" title="Cuántos m³ ocupa por cada US$ 1.000 de margen. Más alto = rinde menos por metro: es lo primero que conviene sacar">m³ por US$ 1.000 de margen</th><th class="n">FOB u.</th><th class="n">FOB total</th><th class="n">Costo u.</th><th class="n">Costo total</th><th></th></tr></thead><tbody>
   ${L.map(i=>`<tr><td>${i.foto?`<img src="${esc(src(i.foto))}" alt="">`:''}</td><td><b>${esc(i.codigo)}</b><div class="hint">${esc(i.desc)}${i.subcat?' · '+esc(i.subcat):''}</div></td>
-   <td class="n"><input class="num" style="width:64px" data-cant="${esc(i.codigo)}" value="${i.cant}" inputmode="numeric"></td><td class="n ${i.bajoMoq?'neg':''}">${i.moq||'—'}</td>${REC?(()=>{const x=ECO.rec.find(z=>z.pedido_id===pe.id&&z.codigo===i.codigo)||{};return `<td class="n"><input class="num" style="width:56px" data-rcv="${esc(i.codigo)}" value="${x.recibidas??''}" placeholder="${i.cant}" inputmode="numeric"></td><td class="n"><input class="num" style="width:48px" data-rot="${esc(i.codigo)}" value="${x.rotas??''}" placeholder="0" inputmode="numeric"></td>`})():''}<td class="n">${eN(i.cbmU,3)}</td><td class="n">${eN(i.cbmT)}</td><td class="n">${eP(r.capacidad?i.cbmT/r.capacidad:null)}</td><td class="n ${r.capacidad&&i._acu>r.capacidad?'neg':''}">${eN(i._acu)}</td><td class="n">${i.margenT>0?eN(i.cbmT/i.margenT*1000,2):'<span class="neg">sin margen</span>'}</td>
-   <td class="n">${eN(i.fobU)}</td><td class="n">${eU(i.fobT)}</td><td class="n">${eN(i.costoU)}</td><td class="n">${eU(i.costoT)}</td><td><button class="btn" data-del="${esc(i.codigo)}" title="Sacar del pedido">×</button></td></tr>`).join('')}</tbody></table></div>
+   <td class="n"><input class="num" style="width:64px" data-cant="${esc(i.codigo)}" value="${i.cant}" inputmode="numeric"></td><td class="n ${i.bajoMoq?'neg':''}">${i.moq||'—'}</td>${REC?(()=>{const x=ECO.rec.find(z=>z.pedido_id===pe.id&&z.codigo===i.codigo)||{};return `<td class="n"><input class="num" style="width:56px" data-rcv="${esc(i.codigo)}" value="${x.recibidas??''}" placeholder="${i.cant}" inputmode="numeric"></td><td class="n"><input class="num" style="width:48px" data-rot="${esc(i.codigo)}" value="${x.rotas??''}" placeholder="0" inputmode="numeric"></td>`})():''}<td class="n">${(()=>{const o=it0(i.codigo),m=byCod(i.codigo)||{};return REC?eN(i.cbmU,3):`<input class="num n${o&&o.cbm_oc!=null?' ocv':''}" style="width:68px" data-ocbm="${esc(i.codigo)}" value="${o&&o.cbm_oc!=null?o.cbm_oc:''}" placeholder="${m.cbm??''}" inputmode="decimal" title="m³ por pieza. Vacío = el del Maestro (${m.cbm??'—'})">`})()}</td>
+<td class="n">${eN(i.cbmT)}</td><td class="n">${eP(r.capacidad?i.cbmT/r.capacidad:null)}</td><td class="n ${r.capacidad&&i._acu>r.capacidad?'neg':''}">${eN(i._acu)}</td><td class="n">${i.margenT>0?eN(i.cbmT/i.margenT*1000,2):'<span class="neg">sin margen</span>'}</td>
+   <td class="n">${(()=>{const o=it0(i.codigo),m=byCod(i.codigo)||{};return REC?eN(i.fobU):`<input class="num n${o&&o.fob_oc!=null?' ocv':''}" style="width:68px" data-ofob="${esc(i.codigo)}" value="${o&&o.fob_oc!=null?o.fob_oc:''}" placeholder="${m.fob_usd??''}" inputmode="decimal" title="FOB US$ por pieza. Vacío = el del Maestro (${m.fob_usd??'—'})">`})()}</td><td class="n">${eU(i.fobT)}</td>
+<td class="n">${eN(i.costoU)}</td><td class="n">${eU(i.costoT)}</td><td><button class="btn" data-del="${esc(i.codigo)}" title="Sacar del pedido">×</button></td></tr>`).join('')}</tbody></table></div>
   <div class="kps" style="margin-top:12px">${[['m³ cargados',eN(r.cbm)],['Capacidad contratada',eN(r.capacidad,0)+' m³'],['Ocupación',eP(r.ocupacion)],['Flete',eU(r.flete)],['Flete por m³',eU(r.cbm?r.flete/r.cbm:null)],['Unidades',r.unidades]].map(([t,v])=>`<div class="card kp"><span>${t}</span><b>${v}</b></div>`).join('')}</div>`;
 }
 function bindProductos(pe){
@@ -129,6 +134,10 @@ function bindProductos(pe){
   $('#m').querySelectorAll('[data-rot]').forEach(x=>x.onchange=()=>rcv(x.dataset.rot,'rotas',Math.max(0,Math.round(eNum(x.value)||0))));
   const it=c=>ECO.it.find(i=>i.pedido_id===pe.id&&i.codigo===c);
   $('#m').querySelectorAll('[data-cant]').forEach(x=>x.onchange=async()=>{const i=it(x.dataset.cant),v=Math.max(0,Math.round(eNum(x.value)||0));i.cant=v;const {error}=await sb.from('eco_items').update({cant:v}).eq('id',i.id);if(error)toast('No se pudo guardar');drawEcoPedido()});
+  /* FOB y m³ propios del contenedor (vacío = vuelve al Maestro) */
+  const ocSet=async(c,f,raw)=>{const i=it(c),v=eNum(raw);const val=v!=null&&v>0?v:null;i[f]=val;const {error}=await sb.from('eco_items').update({[f]:val}).eq('id',i.id);toast(error?'No se pudo guardar: '+error.message:val==null?'Vuelve al valor del Maestro':'Guardado para este contenedor');drawEcoPedido()};
+  $('#m').querySelectorAll('[data-ocbm]').forEach(x=>x.onchange=()=>ocSet(x.dataset.ocbm,'cbm_oc',x.value));
+  $('#m').querySelectorAll('[data-ofob]').forEach(x=>x.onchange=()=>ocSet(x.dataset.ofob,'fob_oc',x.value));
   $('#m').querySelectorAll('[data-del]').forEach(x=>x.onclick=async()=>{const i=it(x.dataset.del);const {error}=await sb.from('eco_items').delete().eq('id',i.id);if(error)return toast('No se pudo sacar');ECO.it=ECO.it.filter(z=>z!==i);drawEcoPedido()});
   const a=$('#eadd');if(!ECO.it.some(i=>i.pedido_id===pe.id))a.focus();a.onkeydown=async e=>{if(e.key!=='Enter')return;const q=a.value.trim().toUpperCase();const m=master.find(x=>x.codigo===q)||master.find(x=>(x.codigo+' '+(x.descripcion||'')).toUpperCase().includes(q));if(!m)return toast('No está en el catálogo');if(it(m.codigo))return toast('Ya está en el pedido');
     const {data,error}=await sb.from('eco_items').insert({pedido_id:pe.id,codigo:m.codigo,cant:m.moq||1,orden:ECO.it.filter(i=>i.pedido_id===pe.id).length+1}).select().single();if(error)return toast('No se pudo sumar');ECO.it.push(data);toast('Sumado: '+m.codigo);drawEcoPedido()};
@@ -237,7 +246,7 @@ function ecoReal(pe){
   const over={};if(okRot)over.meses=C.meses.real;if(okMix){over.mixTransf=C.mixTransf.real;over.mixUnPago=C.mixUnPago.real;over.unidPorVenta=C.unidPorVenta.real}if(recib)over.merma=C.merma.real;
   const S=pe.proyeccion,inp=S&&S.input?S.input:ecoPedido(pe);
   const items=inp.items.map(it=>{const s=SKU[it.codigo];return s&&s.u>=MIN.skuU?{...it,precioARS:s.m/s.u}:it});
-  const r1=calcular({items,par:Object.assign({},inp.par||{},over)},S?S.cat:ecoCat(),S?S.par:ECO.par,S?S.ar:ECO.ar);
+  const r1=calcular({items,par:Object.assign({},inp.par||{},over)},S?S.cat:ecoCatPe(pe),S?S.par:ECO.par,S?S.ar:ECO.ar);
   return {r0,r1,C,L,PED,u,nP,dias,fRec,recib,rotas,total,SKU,cobr,neta,tc};
 }
 function ecoAlertasReales(pe){
