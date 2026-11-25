@@ -542,6 +542,15 @@ body.home #app>.full:first-child{border-bottom:12px solid var(--bg)}
 @media (min-width:721px){.solo-m{display:none!important}}
 @media (max-width:720px){.solo-d{display:none!important}}
 .two.solo-d .full{height:80svh}
+/* destacados: páginas de 4 que se pasan con el dedo, puntitos grises abajo */
+.fpg-t{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}.fpg-t::-webkit-scrollbar{display:none}
+.fpg-p{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always}
+.sec .fpg .grid{padding:0 0 8px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.fpg-d{display:flex;justify-content:center;gap:10px;padding:18px 0 30px}
+.fpg-d button{width:8px;height:8px;border-radius:50%;background:#d3d1cb;border:0;padding:0;cursor:pointer;transition:background .25s}.fpg-d button.on{background:#6b6964}
+@media (max-width:720px){.sec .fpg .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* categorías en el celular: más altas, como ESE, y se asoma la que sigue */
+@media (max-width:720px){.cs{padding:10px 0}.cs .tr{gap:10px;padding:0 8px;scroll-padding:0 8px}.cs a{flex-basis:84%!important;aspect-ratio:9/10!important}.cs a.w img{padding:4% 0 14%;transform:scale(.92)}.cs b{font-size:24px!important}.cs a.w b{padding-bottom:22px;font-size:16px!important}.cs .ar{display:none}}
 /* video de la colección Fresno */
 .full.vid video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#2b2926}
 /* banner de profesionales, ahora al final */
@@ -788,12 +797,12 @@ function quote(cp){const z=zonaCP(cp);if(!z)return null;return envOps(z).map(([k
 document.addEventListener('submit',e=>{if(e.target.id==='ckForm'){e.preventDefault();const v=$('#ckCp').value.trim();if(!zonaCP(v)){toast('Escribí un código postal de 4 números');return}CPV=v;try{localStorage.setItem('fc_cp',v)}catch(_){}render();return}if(e.target.id!=='cpForm')return;e.preventDefault();const o=quote($('#cp').value);
   $('#cpRes').innerHTML=o?o.map(x=>`<div class="o"><span>${x.t}<small>${x.s}</small></span><span>${x.txt}</span></div>`).join(''):'<div class="nt">Escribí un código postal de 4 números.</div>'});
 function viewHome(){
-  const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
+  const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,12);
   const PS=(()=>{const S=P.filter(p=>p.cat==='Butacas'&&p.img);return S.length?S:P.filter(p=>p.img).slice(0,4)})();
   return `${full(FX('inicio_portada','ctx_pause'),'','Diseño en madera, acero y laca.','Ver toda la colección','#tienda','portada').replace('loading="lazy"','loading="eager" fetchpriority="high"')}
   ${cats()}
   <section class="sil on" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
-  <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(x=>card(x)).join('')}</div></section>
+  <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3>${(()=>{const pg=[];for(let i=0;i<feat.length;i+=4)pg.push(feat.slice(i,i+4));return `<div class="fpg"><div class="fpg-t" data-pg>${pg.map(c=>`<div class="fpg-p"><div class="grid">${c.map(x=>card(x)).join('')}</div></div>`).join('')}</div>${pg.length>1?`<div class="fpg-d">${pg.map((c,i)=>`<button data-fpg="${i}" class="${i?'':'on'}" aria-label="Ver destacados ${i+1}"></button>`).join('')}</div>`:''}</div>`})()}</section>
   <a class="full vid" href="#tienda/Fresno"><video data-src="img/teaser-ambientes.mp4" muted loop playsinline preload="none" aria-label="Ambientes con muebles FORMA"></video><div class="t"><h2>Colección Fresno</h2><div><span class="ob">Ver Fresno</span></div></div></a>
   ${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero','acero solo-m')}
   <div class="two solo-d">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${full(FX('inicio_fresno','fresno-comedor'),'Colección Fresno','','Ver Fresno','#tienda/Fresno')}</div>
@@ -1121,6 +1130,9 @@ function pdpPics(p){const G=galeria(p,col),dr=p.d.every(x=>x>0);
    <div class="psw"><div class="psw-t" id="pswt">${G.map((u,i)=>`<div class="psw-s"><img src="${src(u)}" alt="${i?'':esc(title(p))}" ${i?'loading="lazy"':''} draggable="false"></div>`).join('')}${dr?`<div class="psw-s pdr">${drawing(p)}</div>`:''}</div>
    ${G.length+(dr?1:0)>1?`<div class="psw-d">${[...G,...(dr?[0]:[])].map((u,i)=>`<button data-psw="${i}" class="${i?'':'on'}" aria-label="Foto ${i+1}"></button>`).join('')}</div>`:''}</div>`}
 /* galería del celular: se pasa con el dedo y los puntitos marcan la foto */
+/* destacados de a 4: los puntitos siguen a la página que se ve */
+document.addEventListener('scroll',e=>{const t=e.target;if(!t.matches||!t.matches('[data-pg]'))return;const i=Math.round(t.scrollLeft/t.clientWidth);t.parentElement.querySelectorAll('[data-fpg]').forEach((b,j)=>b.classList.toggle('on',j===i))},true);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-fpg]');if(!b)return;const t=b.closest('.fpg').querySelector('[data-pg]');t.scrollTo({left:t.clientWidth*+b.dataset.fpg,behavior:'smooth'})});
 document.addEventListener('scroll',e=>{const t=e.target;if(!t.id||t.id!=='pswt')return;const i=Math.round(t.scrollLeft/t.clientWidth);t.parentElement.querySelectorAll('[data-psw]').forEach((b,j)=>b.classList.toggle('on',j===i))},true);
 document.addEventListener('click',e=>{const b=e.target.closest('[data-psw]');if(!b)return;const t=$('#pswt');t.scrollTo({left:t.clientWidth*+b.dataset.psw,behavior:'smooth'})});
 function viewProduct(p){
