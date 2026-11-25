@@ -1,9 +1,4 @@
 {
   "cleanUrls": true,
-  "crons": [{ "path": "/api/backup", "schedule": "0 12 * * 1" }, { "path": "/api/vencidos", "schedule": "0 13 * * *" }],
-  "headers": [
-    { "source": "/", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
-    { "source": "/admin", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
-    { "source": "/(.*)\.(js|html)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
-  ]
+  "crons": [{ "path": "/api/backup", "schedule": "0 12 * * 1" }, { "path": "/api/vencidos", "schedule": "0 13 * * *" }]
 }
