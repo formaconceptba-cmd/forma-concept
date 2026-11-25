@@ -56,6 +56,8 @@ function ocLeer(A,pe){
     let m=f.cod&&master.find(x=>U(x.cod_proveedor)===U(f.cod)&&(!prov||!x.proveedor||U(x.proveedor)===prov))
       ||f.cod&&master.find(x=>U(x.cod_proveedor)===U(f.cod))
       ||master.find(x=>f.celdas.includes(U(x.codigo)))
+      /* código FORMA abreviado en la proforma (columna "FC Code": MES-249-LAD → MES-MAD-249-BAI) */
+      ||(()=>{for(const c of f.celdas){const k=c.match(/^([A-Z]{3})-(\d{3})\b/);if(!k)continue;const L=master.filter(x=>U(x.codigo).startsWith(k[1]+'-')&&U(x.codigo).includes('-'+k[2]+'-'));if(L.length===1)return L[0]}return null})()
       ||f.desc&&master.find(x=>U(x.descripcion)===U(f.desc))
       /* mismo código con otra letra adelante (C537 / X537): sólo si hay uno solo */
       ||(()=>{const n=String(f.cod||'').replace(/^[A-Z]+/i,'');if(n.length<3)return null;const c=master.filter(x=>String(x.cod_proveedor||'').replace(/^[A-Z]+/i,'').toUpperCase()===n.toUpperCase());return c.length===1?c[0]:null})();
