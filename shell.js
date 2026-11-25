@@ -16,7 +16,7 @@ const IC={
 /* menú: [clave, etiqueta, [[pantalla, etiqueta], ...]] — mismas pantallas de siempre, ordenadas como Tiendanube */
 const MENU=[
  ['inicio','Inicio',[['inicio','Inicio']]],
- ['alertas','Alertas',[['alertas','Alertas']]],
+ ['alertas','Alertas / pendientes',[['alertas','Alertas / pendientes']]],
  ['stats','Estadísticas',[['campanias','Anuncios por campaña']]],
  ['ventas','Ventas',[['pedidos','Lista de ventas'],['facturas','Facturas'],['ppedidos','Ventas a profesionales']]],
  ['prods','Productos',[['productos','Lista de productos'],['nacionales','Productos nacionales'],['stock','Inventario (Pailos)'],['paleta','Colores']]],
@@ -24,7 +24,7 @@ const MENU=[
  ['desc','Descuentos',[['pprecios','Precios profesionales']]],
  ['mkt','Marketing',[['mails','Mails a clientes']]],
  ['online','Tienda online',[['frm','FRM Studio'],['fotos','Fotos de la página']]],
- ['imp','Importación',[['maestro','Maestro de productos'],['eco','Contenedores'],['compras','Órdenes a proveedores'],['ecopar','Parámetros de importación']]]];
+ ['imp','Importación',[['maestro','Maestro de productos'],['maestro|nuevo','Nuevo producto'],['maestro|importar','Importar cotización (RFQ)'],['eco','Contenedores'],['compras','Órdenes a proveedores'],['ecopar','Parámetros de importación']]]];
 const PIE=['config','Configuración',[['rent','Precios y medios de pago'],['envios','Envíos y retiro']]];
 /* cualquier pantalla que exista y no esté en el menú, se suma para no perder nada */
 const todas=new Set([...MENU,PIE].flatMap(g=>g[2].map(s=>s[0])));
@@ -38,26 +38,30 @@ const navSave=()=>{try{localStorage.setItem(NAVK,JSON.stringify({a:[...abiertos]
 const estaAbierto=g=>abiertos.has(g[0])||(g[2].some(s=>s[0]===tab)&&!cerrados.has(g[0]));
 
 const ico=k=>`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${IC[k]||IC.inicio}</svg>`;
+/* sub-pantallas del Maestro (nuevo producto / importar) */
+const mv=()=>typeof MVIEW!=='undefined'?MVIEW:'lista';
+const subOn=k=>k.includes('|')?tab==='maestro'&&mv()===k.split('|')[1]:k===tab&&!(k==='maestro'&&mv()!=='lista');
 const item=g=>{const act=g[2].some(s=>s[0]===tab),uno=g[2].length===1,ab=estaAbierto(g);
   return `<div class="tn-g${act?' act':''}"><button class="tn-i${act&&uno?' on':''}" data-gk="${g[0]}">${ico(g[0])}<span>${g[1]}</span>${uno?'':`<i class="tn-ch${ab?' up':''}"></i>`}</button>
-   ${uno||!ab?'':`<div class="tn-sub">${g[2].map(s=>`<button class="${s[0]===tab?'on':''}" data-t="${s[0]}">${s[1]}</button>`).join('')}</div>`}</div>`};
+   ${uno||!ab?'':`<div class="tn-sub">${g[2].map(s=>`<button class="${subOn(s[0])?'on':''}" data-t="${s[0]}">${s[1]}</button>`).join('')}</div>`}</div>`};
 window.drawNav=function(){const n=document.getElementById('gnav'),f=document.getElementById('gfoot');if(!n)return;
   n.innerHTML=MENU.map(item).join('');f.innerHTML=item(PIE);
   const lab=[...MENU,PIE].flatMap(g=>g[2]).find(s=>s[0]===tab);const t=document.getElementById('tnt');if(t)t.textContent=lab?lab[1]:'';document.title=(lab?lab[1]+' · ':'')+'FORMA Admin';
+  const hp=document.getElementById('tnh');if(hp){const k=tab==='maestro'&&mv()!=='lista'?'maestro|'+mv():tab;hp.innerHTML=(window.AYUDA||{})[k]||''}
   document.querySelectorAll('.tn-side [data-gk]').forEach(b=>b.onclick=()=>{const g=GRUPOS.find(x=>x[0]===b.dataset.gk);if(g[2].length===1){tab=g[2][0][0];cerrarMenu();draw();return}
     /* la flechita sólo abre o cierra: no cambia de pantalla */
     if(estaAbierto(g)){abiertos.delete(g[0]);cerrados.add(g[0])}else{abiertos.add(g[0]);cerrados.delete(g[0])}
     navSave();drawNav()});
-  document.querySelectorAll('.tn-side [data-t]').forEach(b=>b.onclick=()=>{tab=b.dataset.t;cerrarMenu();draw()})};
+  document.querySelectorAll('.tn-side [data-t]').forEach(b=>b.onclick=()=>{const t=b.dataset.t;if(t.includes('|')){tab='maestro';MVIEW=t.split('|')[1];if(MVIEW==='importar')IMP=null}else{tab=t;if(t==='maestro'&&typeof MVIEW!=='undefined')MVIEW='lista'}cerrarMenu();draw()})};
 const cerrarMenu=()=>document.body.classList.remove('tn-open');
 const _shell=window.shell;
 window.shell=function(){
-  app.innerHTML=`<div class="tn"><aside class="tn-side"><div class="tn-logo">forma<small>Admin</small></div><nav id="gnav" class="tn-menu"></nav><div id="gfoot" class="tn-foot"></div></aside>
+  app.innerHTML=`<div class="tn"><aside class="tn-side"><div class="tn-logo">forma<small>Admin</small></div><nav id="gnav" class="tn-menu"></nav><div id="gfoot" class="tn-foot"></div><div class="tn-foot"><button class="tn-i tn-ask" id="tnask"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.6-.8 1.1M12 14.6v.1"/></svg><span>Preguntar</span></button></div></aside>
    <div class="tn-back" id="tnbk"></div>
    <div class="tn-main"><header class="tn-top"><button class="tn-hb" id="tnhb" aria-label="Menú">☰</button><span class="sp"></span><a class="tn-a hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn hide-m" id="chp">Cambiar contraseña</button><button class="btn" id="out">Salir</button></header>
-   <div class="tn-ph"><h1 id="tnt"></h1></div><main id="m"></main></div></div>`;
+   <div class="tn-ph"><h1 id="tnt"></h1><p id="tnh" class="tn-help"></p></div><main id="m"></main></div></div>`;
   document.getElementById('tnhb').onclick=()=>document.body.classList.toggle('tn-open');document.getElementById('tnbk').onclick=cerrarMenu;
-  $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};$('#chp').onclick=()=>viewNewPass();draw()};
+  $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};document.getElementById('tnask').onclick=()=>{cerrarMenu();chatAbrir()};$('#chp').onclick=()=>viewNewPass();draw()};
 /* si el panel ya se dibujó con la estructura vieja, se rearma */
 if(typeof user!=='undefined'&&user&&document.querySelector('header')&&!document.querySelector('.tn')){window.shell()}
 })();

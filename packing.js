@@ -61,17 +61,33 @@ function abrirPacking(cod){
   pintar();d.showModal();
 }
 
-/* ---- plantilla de RFQ para mandar al proveedor (con los productos filtrados, o vacía) ---- */
-const RFQ_COLS=['Item No. (your code)','FC Code','Description','Photo','Size L×W×H (mm)','Material','Finish / Color','MOQ','Incoterm','Price unit (PIECE / CARTON)','Unit price USD','Unit CBM (per piece)','Gross weight per piece (kg)','Pieces per carton','Cartons per complete unit (1 or 2)','Carton 1 size L×W×H (cm)','Carton 1 gross weight (kg)','Carton 2 size L×W×H (cm)','Carton 2 gross weight (kg)','Production lead time (days)','Remarks'];
+/* ---- planilla RFQ (pedido de cotización) para mandar al proveedor: mismo formato que la de Rudi (agosto 2026) ----
+   Una hoja por subcategoría. Arriba: proveedor, contacto, fecha, ID e instrucciones. GRIS = lo completa FORMA,
+   BLANCO = lo completa el proveedor, NARANJA = dato clave que no puede faltar. Al volver, se sube con "Importar cotización". */
+const RFQ_COLS=[['Item No.',7,'f'],['FORMA Code',17,'f'],['Supplier Product Code',18,'w'],['Image',18,'w'],['Size L*W*H mm',18,'f'],['Seat Height mm',11,'w'],['Colors available (Y/N + which)',22,'w'],['Material',20,'o'],['MOQ',8,'w'],['Unit Price USD',12,'w'],['Price per (PIECE / CARTON)',13,'w'],['Incoterm',10,'w'],['CBM per unit',11,'o'],['Units per box',10,'o'],['Boxes per unit (1 or 2)',11,'o'],['Assembled / KD',12,'o'],['Package size cm (box 1)',17,'w'],['Package size cm (box 2)',17,'w'],['Gross weight per unit kg',12,'w'],['Description',30,'w'],['Lead Time days',10,'w'],['Supplier Notes',26,'w']];
+const loadExcelJS=()=>window.ExcelJS?Promise.resolve():new Promise((ok,ko)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';s.onload=ok;s.onerror=()=>ko(new Error('No se pudo cargar el armador de Excel'));document.head.appendChild(s)});
 async function plantillaRFQ(L){
-  try{await loadXLSX()}catch(e){return toast(e.message)}
-  const filas=(L&&L.length?L:[]).map(m=>{const K=Array.isArray(m.cajas_pack)?m.cajas_pack:[],md=k=>volK(k)?`${k.largo_cm}*${k.ancho_cm}*${k.alto_cm}`:'';
-    return [m.cod_proveedor||'',m.codigo,m.descripcion||'',m.foto_url||'',m.medidas||'',m.material||'',m.terminacion||'',m.moq??'',m.incoterm||'FOB',m.unidad_precio==='CAJA'?'CARTON':'PIECE','','','',m.piezas_por_caja??'',m.cajas_por_unidad??'',md(K[0]||{}),(K[0]||{}).peso_bruto_kg??'',md(K[1]||{}),(K[1]||{}).peso_bruto_kg??'',m.lead_dias??'','']});
-  while(filas.length<(L&&L.length?0:30))filas.push(RFQ_COLS.map(()=>''));
-  const A=[['FORMA Concept · Request for Quotation'],['IMPORTANT: Unit price and CBM must be PER PIECE, not per carton. If you quote per carton, write CARTON in "Price unit". If one piece comes in 2 cartons (e.g. top + base), fill Carton 1 and Carton 2. One line per model and color.'],[],RFQ_COLS,...filas];
-  const ws=XLSX.utils.aoa_to_sheet(A);ws['!cols']=RFQ_COLS.map((c,i)=>({wch:[2,10,15,19,20].includes(i)?28:Math.max(12,Math.min(24,c.length))}));ws['!merges']=[{s:{r:1,c:0},e:{r:1,c:12}}];
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'RFQ');XLSX.writeFile(wb,`RFQ FORMA Concept ${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast(L&&L.length?`Plantilla RFQ con ${L.length} productos`:'Plantilla RFQ vacía');
+  try{await loadExcelJS()}catch(e){return toast(e.message)}
+  const prov=(L&&L.length&&L.every(m=>m.proveedor===L[0].proveedor))?L[0].proveedor:'';
+  const hoy=new Date().toISOString().slice(0,10),id=`FORMA-CONCEPT-${(prov.split('-').pop()||'GEN')}-${hoy.slice(0,7)}`;
+  const G={};(L&&L.length?L:[null]).forEach(m=>{const k=m?(m.subcategoria||'Products'):'Products';(G[k]=G[k]||[]).push(m)});
+  const wb=new ExcelJS.Workbook();wb.creator='FORMA Concept';
+  const fill=c=>({type:'pattern',pattern:'solid',fgColor:{argb:c}}),borde={top:{style:'thin',color:{argb:'FFBFBFBF'}},left:{style:'thin',color:{argb:'FFBFBFBF'}},bottom:{style:'thin',color:{argb:'FFBFBFBF'}},right:{style:'thin',color:{argb:'FFBFBFBF'}}};
+  const COL={f:'FFE7E6E6',w:'FFFFFFFF',o:'FFFCE4D6'};
+  Object.entries(G).forEach(([cat,M])=>{
+    const ws=wb.addWorksheet(cat.replace(/[\/*?:[\]]/g,' ').slice(0,31),{views:[{state:'frozen',ySplit:10}]});
+    ws.columns=RFQ_COLS.map(([,w])=>({width:w}));
+    ws.mergeCells('A1:F1');Object.assign(ws.getCell('A1'),{value:'FORMA — REQUEST FOR QUOTATION (RFQ)',font:{bold:true,size:15}});
+    [['Supplier:',prov.split('-').pop()||''],['Contact:',''],['RFQ Date:',hoy],['RFQ ID:',id],['Category:',cat]].forEach(([a,b],i)=>{const r=ws.getRow(2+i);r.getCell(1).value=a;r.getCell(1).font={bold:true};r.getCell(3).value=b});
+    ws.mergeCells('A8:S8');Object.assign(ws.getCell('A8'),{value:'Complete the WHITE cells. FORMA pre-filled code + size where available (GREY). ORANGE = key data, please don\'t skip (Material, CBM per unit, Units per box, Boxes per unit, Assembled/KD). Unit price and CBM must be PER PIECE. If one piece comes in 2 boxes (e.g. top + base), fill box 1 and box 2. One line per model and color. Quote USD, FOB preferred.',alignment:{wrapText:true,vertical:'top'},font:{italic:true,color:{argb:'FF7F4F00'}}});ws.getRow(8).height=42;
+    const h=ws.getRow(10);RFQ_COLS.forEach(([t,,k],i)=>{const c=h.getCell(i+1);c.value=t;c.font={bold:true,color:{argb:'FFFFFFFF'}};c.fill=fill(k==='o'?'FFC65911':'FF262626');c.alignment={wrapText:true,vertical:'middle',horizontal:'center'};c.border=borde});h.height=34;
+    const filas=M[0]?M:Array.from({length:25},()=>null);
+    filas.forEach((m,j)=>{const r=ws.getRow(11+j);const K=m&&Array.isArray(m.cajas_pack)?m.cajas_pack:[],md=k=>k&&+k.largo_cm>0?`${k.largo_cm}*${k.ancho_cm}*${k.alto_cm}`:'';
+      const v=m?[j+1,m.codigo,m.cod_proveedor||'',m.foto_url||'',m.medidas||'','','',m.material||'',m.moq??'','',m.unidad_precio==='CAJA'?'CARTON':'PIECE',m.incoterm||'FOB','',m.piezas_por_caja??'',m.cajas_por_unidad??'',m.armado==='KD'?'KD':m.armado==='ARMADO'?'Assembled':'',md(K[0]),md(K[1]),'',m.descripcion||'',m.lead_dias??'','']:[j+1];
+      RFQ_COLS.forEach(([,,k],i)=>{const c=r.getCell(i+1);if(v[i]!==undefined&&v[i]!=='')c.value=v[i];c.fill=fill(COL[k]);c.border=borde;c.alignment={vertical:'middle',wrapText:true}})});
+  });
+  const buf=await wb.xlsx.writeBuffer(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download=`RFQ FORMA Concept${prov?' '+prov:''} ${hoy}.xlsx`;a.click();
+  toast(L&&L.length?`Planilla RFQ con ${L.length} productos en ${Object.keys(G).length} hoja(s)`:'Planilla RFQ vacía');
 }
 
 /* ---- V3: la orden de compra contra el Maestro (packing y m³) ---- */

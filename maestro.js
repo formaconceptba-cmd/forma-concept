@@ -135,11 +135,11 @@ function drawMaestroNuevo(){
 
 /* ---- importar una cotización: archivo → mapeo de columnas (se guarda por proveedor) → previsualización con errores → alta en lote ---- */
 /* el orden importa: los campos más específicos primero, así "Carton size" no se confunde con "Size" ni "CBM/CTN" con "CBM" */
-const IMPC=[['cod_proveedor','Código del proveedor',['your code','model no','item no','model','modelo','art','ref','item','codigo','código']],['descripcion','Descripción',['description','descrip','product name','name','producto','nombre']],
- ['unidad_precio','Precio cotizado por (pieza / caja)',['price unit','unidad de precio','precio por']],['fob_usd','FOB US$',['unit price','fob','price','precio','usd','valor']],
- ['piezas_por_caja','Piezas por caja',['pieces per carton','pcs/ctn','qty/ctn','pcs per carton','piezas por caja']],['cajas_por_unidad','Cajas por producto completo',['cartons per','packages per','ctns per','cajas por']],
+const IMPC=[['codigo_forma','Código FORMA (si viene, actualiza ese producto)',['forma code','fc code','código forma','codigo forma']],['cod_proveedor','Código del proveedor',['supplier product code','supplier code','your code','model no','item no','model','modelo','art','ref','item','codigo','código']],['descripcion','Descripción',['description','descrip','product name','name','producto','nombre']],
+ ['unidad_precio','Precio cotizado por (pieza / caja)',['price per','price unit','unidad de precio','precio por']],['fob_usd','FOB US$',['unit price','fob','price','precio','usd','valor']],
+ ['piezas_por_caja','Piezas por caja',['units per box','pieces per carton','pcs/ctn','qty/ctn','pcs per carton','piezas por caja']],['cajas_por_unidad','Cajas por producto completo',['boxes per unit','cartons per','packages per','ctns per','cajas por']],
  ['cantidad','Cantidad de la línea (si es una proforma)',['quantity','qty','cantidad']],
- ['caja2_med','Caja 2: medidas (cm)',['carton 2 size','caja 2']],['caja2_peso','Caja 2: peso bruto kg',['carton 2 gross','carton 2 weight']],
+ ['caja2_med','Caja 2: medidas (cm)',['box 2','carton 2 size','caja 2']],['caja2_peso','Caja 2: peso bruto kg',['carton 2 gross','carton 2 weight']],
  ['caja1_med','Caja: medidas (cm)',['carton 1 size','carton size','ctn size','carton dim','package size','medida caja','meas']],['caja1_peso','Caja: peso bruto kg',['carton 1 gross','gross weight per carton','carton weight','gw/ctn','g.w/ctn']],
  ['cbm_caja','m³ por caja',['cbm/ctn','cbm per carton','carton cbm','cbm/carton']],['cbm_total','m³ total de la línea',['total cbm','cbm total','total volume']],
  ['cbm','m³ por pieza',['unit cbm','cbm','m3','m³','volume','volumen']],['moq','MOQ',['moq','minimum','min']],['peso_kg','Peso por pieza kg',['weight per piece','g.w','gw','weight','peso','kg']],
@@ -157,7 +157,11 @@ async function drawImportar(){
     $('#mback').onclick=()=>{MVIEW='lista';IMP=null;drawMaster()};
     $('#igo').onclick=async()=>{const prov=$('#ip').value.trim().toUpperCase(),f=$('#if').files[0];
       if(!/^PROV-[A-Z]{3}-[A-Z0-9]{3}$/.test(prov))return $('#ie').textContent='El proveedor tiene que tener la forma PROV-CHN-ABC.';if(!f)return $('#ie').textContent='Elegí el archivo.';
-      try{await loadXLSX();const wb=XLSX.read(await f.arrayBuffer(),{type:'array',raw:/.csv$/i.test(f.name)});const ws=wb.Sheets[wb.SheetNames[0]];const A=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+      try{await loadXLSX();const wb=XLSX.read(await f.arrayBuffer(),{type:'array',raw:/.csv$/i.test(f.name)});/* la planilla RFQ trae una hoja por subcategoría: se juntan todas las que tienen encabezados */
+        const hojas=wb.SheetNames.map(n=>XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',raw:true}));
+        const hsc=H=>{let b=-1,i0=0;H.slice(0,25).forEach((r,i)=>{const s=r.filter(c=>IMPC.some(([, ,syn])=>syn.some(w=>String(c).toLowerCase().includes(w)))).length;if(s>b){b=s;i0=i}});return [i0,b]};
+        const sc=hojas.map(hsc);let bi=sc.reduce((m,x,i)=>x[1]>sc[m][1]?i:m,0);let A=hojas[bi].slice();
+        hojas.forEach((H,i)=>{if(i!==bi&&sc[i][1]>=3)A=A.concat(H.slice(sc[i][0]+1))});
         const {data:mp}=await sb.from('import_mapeo').select('*').eq('proveedor',prov).maybeSingle();
         /* fila de encabezados: la guardada, o la que más se parece a nombres de columnas conocidos */
         let hr=mp&&mp.fila_encabezado!=null?mp.fila_encabezado:0,best=-1;if(!mp)A.slice(0,20).forEach((r,i)=>{const s=r.filter(c=>String(c).trim()).length+3*r.filter(c=>IMPC.some(([, ,syn])=>syn.some(w=>String(c).toLowerCase().includes(w)))).length;if(s>best){best=s;hr=i}});
@@ -192,7 +196,7 @@ async function drawImportar(){
       /* fila de continuación (proformas tipo Rudi: la 2ª caja de la mesa va en la fila de abajo, sin código ni precio) */
       if(!f.cod_proveedor&&!f.descripcion&&f.fob_usd==null){const prev=filas[filas.length-1];if(prev&&(k1||cc)){prev.aux.K.push(k1?{...k1,peso_bruto_kg:pnum(g('caja1_peso'))}:{cbm:cc});const cb=pnum(g('cbm')),ct=pnum(g('cbm_total'));if(cb!=null&&prev.f.cbm!=null)prev.f.cbm+=cb;if(ct!=null&&prev.aux.cbmT!=null)prev.aux.cbmT+=ct}return}
       const K=[];if(k1)K.push({...k1,peso_bruto_kg:pnum(g('caja1_peso'))});else if(cc)K.push({cbm:cc});if(k2)K.push({...k2,peso_bruto_kg:pnum(g('caja2_peso'))});
-      filas.push({fila,f,r,aux:{K,cant:pnum(g('cantidad')),cbmT:pnum(g('cbm_total')),pz:pnum(g('piezas_por_caja')),cj:pnum(g('cajas_por_unidad')),pk:tx('packing_txt'),up:tx('unidad_precio'),arm:tx('armado'),sv:tx('subcategoria'),inc:tx('incoterm')}})});
+      filas.push({fila,f,r,aux:{K,fc:tx('codigo_forma'),cant:pnum(g('cantidad')),cbmT:pnum(g('cbm_total')),pz:pnum(g('piezas_por_caja')),cj:pnum(g('cajas_por_unidad')),pk:tx('packing_txt'),up:tx('unidad_precio'),arm:tx('armado'),sv:tx('subcategoria'),inc:tx('incoterm')}})});
     S.filas=filas.map(({fila,f,aux})=>{const E=[],W=[];
       /* packing */
       const pk=aux.pk.toUpperCase(),mP=pk.match(/(\d+)\s*PCS?\s*\/\s*(CTN|CARTON|BOX)/),mC=pk.match(/(\d+)\s*(PACKAGES|PKGS|CARTONS|CTNS)/);
@@ -214,7 +218,7 @@ async function drawImportar(){
       const a=(aux.arm||aux.pk).toUpperCase();f.armado=/KD|KNOCK/.test(a)?'KD':/ASSEMBL|ARMADO/.test(a)?'ARMADO':null;
       if(aux.inc)f.incoterm=aux.inc.toUpperCase().slice(0,3);
       const sm=subs.find(x=>x.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')===aux.sv.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));f.subcategoria=sm||S.def.subcategoria||null;
-      const k=(f.cod_proveedor||'').toUpperCase(),ex=k?master.find(m=>m.proveedor===S.prov&&(m.cod_proveedor||'').toUpperCase()===k):null;
+      const k=(f.cod_proveedor||'').toUpperCase(),fc=String(aux.fc||'').trim().toUpperCase(),ex=(fc&&master.find(m=>m.codigo.toUpperCase()===fc))||(k?master.find(m=>m.proveedor===S.prov&&(m.cod_proveedor||'').toUpperCase()===k):null);
       /* si ya existe en el Maestro no hace falta que el archivo traiga descripción ni subcategoría */
       if(!f.descripcion&&!ex)E.push('sin descripción');if(!(f.fob_usd>0))E.push('FOB inválido');if(!(f.cbm>0))E.push('m³ inválido');if(!f.subcategoria&&!ex)E.push(aux.sv?`subcategoría "${aux.sv}" no está en la lista`:'sin subcategoría');
       if(f.cbm>5)W.push('m³ muy alto: ¿no estará en otra unidad?');if(f.fob_usd>3000)W.push('FOB muy alto');

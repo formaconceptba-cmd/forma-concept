@@ -468,7 +468,8 @@ body.home #app>.full:first-child{border-bottom:12px solid var(--bg)}
 .pmw .ph img{width:100%;height:100%;object-fit:contain}.pdr{display:flex;align-items:center;justify-content:center;height:100%}.pdr svg{width:70%}
 .pth{grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:10px;max-height:calc(100svh - 110px);overflow:auto;scrollbar-width:none}.pth::-webkit-scrollbar{display:none}
 .pth button{width:88px;aspect-ratio:3/4;flex:0 0 auto;background:var(--box);border:1px solid transparent;padding:0;cursor:pointer}.pth button.on{border-color:var(--ink)}.pth img{width:100%;height:100%;object-fit:cover}.pth .dr svg{width:100%;height:100%;padding:6px}
-.pdp.pre .pics>.pmw{visibility:hidden}
+.pdp.pre .pics>.pmw,.pdp.pre .pics>.psw .psw-s:first-child img{visibility:hidden}
+
 .bc{font-size:11px;color:#8a877f;margin-bottom:10px}.bc a{color:inherit;text-decoration:none}.bc span{color:var(--ink)}
 .pdp h1{font:400 22px/1.25 var(--f)!important;letter-spacing:0!important;margin-bottom:16px!important}
 .pr1{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}.pp{font-size:16px}.pp s{color:#8a877f;font-size:12px;margin-right:8px}.pc{font-size:11px;color:#55534d}
@@ -534,14 +535,48 @@ body.home #app>.full:first-child{border-bottom:12px solid var(--bg)}
 .rv-t.rv-mini b{display:block;margin-top:5px;font-size:15px!important;font-weight:400!important;color:#fff;line-height:1}
 /* la foto que aparece al bajar: en celular queda pegada a su banda (no se traba) */
 .rv-i{will-change:transform;transform:translateZ(0);backface-visibility:hidden}
-@media (hover:none),(max-width:900px){.rv{clip-path:none;overflow:hidden}.rv-i{position:absolute}}
-/* cinta de provincias */
-.sil-prov{padding:30px 0 22px}
-.sil-prov figure{flex:none;margin:0 22px;display:flex;flex-direction:column;align-items:center;gap:10px}
-.sil-prov svg{height:96px;width:auto;fill:#000;opacity:.62;display:block}
-.sil-prov figcaption{font-size:10px!important;color:#77756F;white-space:nowrap}
-@media (max-width:700px){.sil-prov svg{height:68px}.sil-prov figure{margin:0 14px}}
-/* tienda: botón Filtrar */
+/* cinta de provincias: sólo el contorno, como la de sillas, justo arriba de Productos nacionales */
+.sil-prov{padding:46px 0 0}
+.sil-prov svg{height:78px;width:auto;flex:none;margin:0 30px;fill:none;stroke:#000;stroke-width:1.1px;vector-effect:non-scaling-stroke;stroke-linejoin:round;opacity:.62;display:block;overflow:visible}
+@media (max-width:700px){.sil-prov{padding-top:34px}.sil-prov svg{height:54px;margin:0 18px}}
+/* inicio: video y Acero a lo ancho */
+.full.vid,.full.acero{height:92svh}
+.full.vid{border-top:14px solid var(--bg)}.full.acero{border-top:14px solid var(--bg)}
+/* profesionales: en la compu igual que FRM Studio; en el celular, la tarjeta */
+.pro-std{padding-top:20px}
+.pro-std .k{max-width:520px;line-height:1.15!important}
+.car-pro{display:block;background:var(--box)}
+.car-pro img{object-fit:contain;padding:8% 16%;mix-blend-mode:multiply}
+.pro-m{display:none}
+@media (max-width:720px){.pro-std{display:none}.pro-m{display:block}}
+.fs-cta .fs-ig{display:block;width:22px;margin:30px auto 0;color:inherit;opacity:.85}.fs-cta span.fs-ig{opacity:.4;cursor:default}
+/* tienda al estilo ESE:
+ en la compu, categorías a la izquierda y orden arriba; en el celular, título + botón Filtrar que abre la pantalla de filtros */
+.shop{display:grid;grid-template-columns:190px minmax(0,1fr);gap:34px;padding:22px var(--g) 0}
+.shop .grid{padding:0 0 80px}
+.fside .bc{margin-bottom:14px}
+.fg{display:flex;flex-direction:column;align-items:flex-start;gap:9px;margin-bottom:26px}
+.fg b{font-weight:600!important;margin-bottom:4px}
+.fg a,.fg button{color:#77756F;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.fg a.on,.fg button.on,.fg a:hover,.fg button:hover{color:var(--ink)}.fg a.on,.fg button.on{text-decoration:underline;text-underline-offset:3px}
+.fg .fclr{text-decoration:underline;color:var(--ink)}
+.shead{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:18px}
+.shead .bc{display:none}.shead h1{font-size:12px!important;font-weight:600!important}
+.fbtn{display:none;align-items:center;gap:10px;border:1px solid #9a988f;background:none;padding:7px 10px;cursor:pointer;color:var(--ink)}
+.fsort{border:1px solid #9a988f;background:none;padding:7px 28px 7px 10px;cursor:pointer;color:var(--ink)}
+.fmod{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;animation:fmin .28s var(--ease)}
+@keyframes fmin{from{transform:translateX(100%)}to{transform:none}}
+.fmh{display:flex;align-items:center;justify-content:center;position:relative;height:52px;border-bottom:1px solid var(--line)}
+.fmh button{position:absolute;right:var(--g);top:50%;transform:translateY(-50%);background:none;border:0;font-size:24px!important;cursor:pointer;line-height:1}
+.fmb{padding:22px var(--g);overflow:auto}.fmb .fsort{display:block;margin-top:2px}
+.fmb .fg{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:18px}
+body.fopen{overflow:hidden}
+@media (max-width:900px){
+ .shop{grid-template-columns:1fr;padding:14px var(--g) 0;gap:0}
+ .fside{display:none}.shead .bc{display:block;margin-bottom:8px}.shead h1{font-size:20px!important;text-transform:none!important;letter-spacing:0!important;font-weight:400!important}
+ .shead .fbtn{display:inline-flex}.shead .fsort{display:none}
+}
+@media (max-width:720px){.shop{padding:14px 8px 0}.shead{padding:0 6px}}
 .flt{flex-wrap:wrap}
 .flt .fbar{display:flex;align-items:center;gap:16px!important;flex-wrap:nowrap!important;overflow:visible!important;margin:0!important;padding:0!important}
 .flt .fbtn{border:1px solid var(--ink);color:var(--ink);padding:8px 14px;gap:8px;cursor:pointer;background:none}
@@ -713,7 +748,7 @@ function card(p,ci){
 /* toda la foto es un link, no solo el botón */
 function proTile(){const S=P.filter(p=>p.cat==='Butacas'&&p.img);const L=S.length?S:P.filter(p=>p.img).slice(0,4);
   return `<a class="full w pslide" href="#proyectos"><div class="psl">${L.map((p,i)=>`<img class="${i?'':'on'}" src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">`).join('')}</div><div class="t"><h2>¿Sos profesional o querés comercializar nuestros productos?</h2><div><span class="ob">Panel para profesionales</span></div></div></a>`}
-setInterval(()=>{const w=document.querySelector('.psl');if(!w||document.hidden)return;const im=[...w.querySelectorAll('img')];if(im.length<2)return;const i=im.findIndex(x=>x.classList.contains('on'));im[i].classList.remove('on');im[(i+1)%im.length].classList.add('on')},2800);
+setInterval(()=>{if(document.hidden)return;document.querySelectorAll('.psl').forEach(w=>{if(!w.offsetParent)return;const im=[...w.querySelectorAll('img')];if(im.length<2)return;const i=im.findIndex(x=>x.classList.contains('on'));im[i].classList.remove('on');im[(i+1)%im.length].classList.add('on')})},2800);
 function full(img,h,txt,btn,href,cls=''){
   return `<a class="full ${cls}" href="${href}"><img src="${src(img)}" alt="" loading="lazy"><div class="t"><h2>${h}</h2><div>${txt?`<p>${txt}</p>`:''}<span class="ob">${btn}</span></div></div></a>`;
 }
@@ -732,19 +767,21 @@ document.addEventListener('submit',e=>{if(e.target.id==='ckForm'){e.preventDefau
   $('#cpRes').innerHTML=o?o.map(x=>`<div class="o"><span>${x.t}<small>${x.s}</small></span><span>${x.txt}</span></div>`).join(''):'<div class="nt">Escribí un código postal de 4 números.</div>'});
 function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,8);
+  const PS=(()=>{const S=P.filter(p=>p.cat==='Butacas'&&p.img);return S.length?S:P.filter(p=>p.img).slice(0,4)})();
   return `${full(FX('inicio_portada','ctx_pause'),'Objetos para habitar','Diseño en madera, acero y laca, directo de fábrica.','Ver toda la colección','#tienda').replace('loading="lazy"','loading="eager" fetchpriority="high"')}
-  ${askBox()}
-  <section class="rv rv1"><div class="rv-i"><img src="${src(FX('banda_probalo','hv_varilla'))}" alt="" decoding="async"></div><div class="rv-t rv-mini"><span>Próximamente</span><b>Probalo en tu casa</b></div></section>
   ${cats()}
   <section class="sil on" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
   <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3><div class="grid">${feat.map(x=>card(x)).join('')}</div></section>
-  <div class="two">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}<a class="full vid" href="#tienda/Fresno"><video data-src="img/teaser-ambientes.mp4" muted loop playsinline preload="none" aria-label="Ambientes con muebles FORMA"></video><div class="t"><h2>Colección Fresno</h2><div><span class="ob">Ver Fresno</span></div></div></a></div>
-  <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-nac" href="#nacional"><span>Hecho en Argentina</span><h2>Productos nacionales</h2><p>Piezas únicas fabricadas en Buenos Aires, a pedido y en stock.</p><b class="rv-go">Ver productos nacionales →</b></a></section>
+  <a class="full vid" href="#tienda/Fresno"><video data-src="img/teaser-ambientes.mp4" muted loop playsinline preload="none" aria-label="Ambientes con muebles FORMA"></video><div class="t"><h2>Colección Fresno</h2><div><span class="ob">Ver Fresno</span></div></div></a>
+  ${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero','acero')}
+  <section class="rv rv2"><div class="rv-i"><img src="${src(FX('banda_nacional','nac_1'))}" alt=""></div><a class="rv-t rv-mini" href="#nacional"><span>Hecho en Argentina</span><b>Productos nacionales</b></a></section>
+  ${(window.PROV||[]).length?`<section class="sil sil-prov on" aria-hidden="true"><div class="sil-t" data-dur="45000"><div class="sil-s">${PROV.map(p=>`<svg viewBox="-2 -2 ${p[1]+4} ${p[2]+4}"><path d="${p[3]}"/></svg>`).join('')}</div></div></section>`:''}
   ${(()=>{const N=P.filter(p=>p.fam==='Nacional'&&p.img);return N.length?`<section class="sec ctr"><h3><span>Productos nacionales</span><a href="#nacional">Ver todos</a></h3><div class="grid">${N.slice(0,8).map(x=>card(x)).join('')}</div></section>`:''})()}
-  ${(window.PROV||[]).length?`<section class="sil sil-prov on"><div class="sil-t" data-dur="60000" role="img" aria-label="Las 23 provincias y la Ciudad de Buenos Aires"><div class="sil-s">${PROV.map(p=>`<figure><svg viewBox="-1 -1 ${p[1]+2} ${p[2]+2}" aria-hidden="true"><path d="${p[3]}"/></svg><figcaption>${p[0]}</figcaption></figure>`).join('')}</div></div></section>`:''}
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
    <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="${src(FX('estudio_'+(i+1),s[0]))}" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>
-  <div class="one">${proTile()}</div>`;
+  <section class="std pro-std"><div><span class="k">¿Sos profesional o querés comercializar nuestros productos?</span><p>Precios especiales para estudios de arquitectura, interiorismo, desarrolladores y comercios. Mismo catálogo, condiciones para profesionales.</p><a class="ob" href="#proyectos" style="margin-top:28px">Panel para profesionales</a></div>
+   <a class="car car-pro psl" href="#proyectos">${PS.map((p,i)=>`<img class="${i?'':'on'}" src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">`).join('')}</a></section>
+  <div class="one pro-m">${proTile()}</div>`;
 }
 const EMPRESA={razon:'DEL GRUPPO S.R.L.',cuit:'30-71294990-9',dom:'Domicilio legal: Av. Belgrano 148, piso 7, Ciudad Autónoma de Buenos Aires',mail:'formaconcept.ba@gmail.com',wa:'+54 11 3944 3055'};
 function viewLegal(k){
@@ -941,7 +978,11 @@ const FSP=[['std_06','Comedor con techo de bovedilla','Interiorismo'],['std_02',
 /* Proyectos de FRM Studio: se editan desde el panel (tabla frm_proyectos). Si la base no responde, quedan los de arriba. */
 let FRMP=FSP.map((s,i)=>({slug:'p'+i,titulo:s[1],rubro:s[2],portada:s[0],imagenes:[s[0]],texto:''}));
 async function frmLoad(){try{const r=await fetch(SB_URL+'/rest/v1/frm_proyectos?select=*&activo=eq.true&order=orden',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});if(!r.ok)return;const d=await r.json();if(d.length){FRMP=d;const h=location.hash;if(!animating&&(h.startsWith('#frm')))render()}}catch(e){}}
+/* Instagram de FRM Studio: cuando exista la cuenta, se pone el link acá y el ícono pasa a funcionar */
+const FRM_IG='';
+const igFRM=()=>`<${FRM_IG?`a href="${FRM_IG}" target="_blank" rel="noopener"`:'span aria-disabled="true" title="Próximamente"'} class="fs-ig" aria-label="Instagram de FRM Studio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r=".9" fill="currentColor" stroke="none"/></svg></${FRM_IG?'a':'span'}>`;
 function viewFrmProject(slug){
+
   const i=FRMP.findIndex(x=>x.slug===slug),p=FRMP[i];if(!p)return viewStudio();
   const nx=FRMP[(i+1)%FRMP.length],imgs=(p.imagenes||[]).filter(Boolean);
   return `<div class="fs fsx">
@@ -949,7 +990,7 @@ function viewFrmProject(slug){
   <section class="fs-sec fsx-i"><span class="k">(${esc(p.rubro||'Proyecto')})</span><div>${p.lugar?`<p>${esc(p.lugar)}</p>`:''}</div><div>${String(p.texto||'').split(/\n+/).map(t=>`<p>${esc(t)}</p>`).join('')}</div></section>
   ${imgs.map((im,k)=>`<figure class="fsx-f ${k%3===1?'l':k%3===2?'r':''}"><img src="${src(im)}" alt="${esc(p.titulo)}, imagen ${k+1}" loading="lazy"></figure>`).join('')}
   ${nx&&nx!==p?`<a class="fsx-next" href="#frm/${esc(nx.slug)}"><span class="k">(Siguiente proyecto)</span><b>${esc(nx.titulo)}</b><img src="${src(nx.portada)}" alt="" loading="lazy"></a>`:''}
-  <section class="fs-cta"><p>¿Tenés un proyecto en mente?</p><a class="ob" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto con FRM Studio')}" target="_blank" rel="noopener">Contanos tu proyecto</a></section></div>`;
+  <section class="fs-cta"><p>¿Tenés un proyecto en mente?</p><a class="ob" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto con FRM Studio')}" target="_blank" rel="noopener">Contanos tu proyecto</a>${igFRM()}</section></div>`;
 }
 /* Probalo en tu casa: cámara en vivo (o foto) + producto encima (arrastrar, tamaño, girar). */
 let AR={id:null,room:null,cam:false,x:50,y:66,s:24,flip:false},arStream=null;
@@ -1010,7 +1051,7 @@ function viewStudio(){
   <section class="fs-sec"><span class="k">(Fundadores)</span>
     <div><span class="nm">María Peruzzotti</span></div>
     <div><span class="nm">Franco Scasso</span></div></section>
-  <section class="fs-cta"><p>¿Tenés un proyecto en mente?</p><a class="ob" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto con FRM Studio')}" target="_blank" rel="noopener">Contanos tu proyecto</a></section>
+  <section class="fs-cta"><p>¿Tenés un proyecto en mente?</p><a class="ob" href="https://wa.me/541139443055?text=${encodeURIComponent('Hola, quiero consultar por un proyecto con FRM Studio')}" target="_blank" rel="noopener">Contanos tu proyecto</a>${igFRM()}</section>
   </div>`;
 }
 /* las fotos de proyectos crecen al acercarse al centro de la pantalla */
@@ -1019,17 +1060,24 @@ function fsScroll(){if(innerWidth<=720)return;document.querySelectorAll('.fs-p')
 /* ---------- tienda ---------- */
 let view='grid';
 const FAMS=['Fresno','Acero','Laca','Nacional'];
-let selF=new Set(),selC=new Set(),FOPEN=false;
+let selF=new Set(),selC=new Set(),FOPEN=false,SORT='dest';const SORTS=[["dest","Destacado"],["pmin","Precio: menor a mayor"],["pmax","Precio: mayor a menor"],["az","Nombre: A - Z"]];
 function viewShop(f){
-  const items=P.filter(p=>(f==='Todos'||p.cat===f)&&(!selF.size||selF.has(p.fam))&&(!selC.size||(p.skus&&p.colors.some(c=>selC.has(c[0]))))).sort((a,b)=>(!a.price)-(!b.price));
+  let items=P.filter(p=>(f==='Todos'||p.cat===f)&&(!selF.size||selF.has(p.fam))&&(!selC.size||(p.skus&&p.colors.some(c=>selC.has(c[0]))))).sort((a,b)=>(!a.price)-(!b.price));
+  if(SORT==='pmin')items.sort((a,b)=>(a.price||9e12)-(b.price||9e12));else if(SORT==='pmax')items.sort((a,b)=>(b.price||0)-(a.price||0));else if(SORT==='az')items.sort((a,b)=>title(a).localeCompare(title(b)));
   /* en una categoría o colección, cada color es una tarjeta (en "Todos", una por producto) */
   const expand=f!=='Todos'||selF.size>0;
   const tarjetas=expand?items.flatMap(p=>p.skus&&p.colors.length>1?p.colors.map((c,i)=>[p,i]).filter(([,i])=>!selC.size||selC.has(p.colors[i][0])):[[p,null]]):items.map(p=>[p,null]);
-  const body=view==='grid'?`<div class="grid">${tarjetas.map(([p,i])=>card(p,i)).join('')}</div>`
-   :`<div class="list">${items.map(p=>`<a class="row c" href="#${slug(p.id)}" data-p="${p.id}"><div class="ph"><img src="${src(p.img)}" alt="" loading="lazy"></div><span>${esc(title(p))}</span><span>Colección ${p.fam}</span><span>${dims(p)}</span><span class="pz">${p.price?`${p.list>p.price?`<s>${ars(p.list)}</s>`:""}<b>${ars(p.price)}</b>`:"Consultar"}</span></a>`).join('')}</div>`;
+  const cat=CATS.find(c=>c[2]==='#tienda/'+f),tit=f!=='Todos'?(cat?cat[0]:f):selF.size===1?'Colección '+[...selF][0]:'Productos';
   const nf=selF.size+(f!=='Todos'?1:0);
-  return `<div class="flt"><div class="fbar"><button class="fbtn ${FOPEN?'on':''}" data-ftog aria-expanded="${FOPEN}"><svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor"><path d="M0 2h14M0 6h14M0 10h14"/><circle cx="4" cy="2" r="1.6" fill="#F7F7F5"/><circle cx="10" cy="6" r="1.6" fill="#F7F7F5"/><circle cx="6" cy="10" r="1.6" fill="#F7F7F5"/></svg>Filtrar${nf?` (${nf})`:''}</button><span class="lb2">${tarjetas.length} producto${tarjetas.length===1?'':'s'}</span></div>
-   <div class="vw"><a href="#" data-view="grid" class="${view==='grid'?'on':''}">Grilla</a><a href="#" data-view="list" class="${view==='list'?'on':''}">Lista</a></div>${FOPEN?`<div class="fpan"><div><span class="lb2">Categoría</span>${[['Todos','#tienda'],...CATS.map(c=>[c[0],c[2]])].map(([t,h])=>`<a href="${h}" class="${(h==='#tienda'?f==='Todos':decodeURIComponent(location.hash)===h)?'on':''}">${t}</a>`).join('')}</div><div><span class="lb2">Colección</span>${FAMS.map(x=>`<button data-fam="${x}" class="${selF.has(x)?'on':''}" aria-pressed="${selF.has(x)}">${x}</button>`).join('')}</div>${nf?'<div><a href="#tienda" data-fclr style="text-decoration:underline">Limpiar filtros</a></div>':''}</div>`:''}</div>${selF.has('Nacional')?'<p class="nac">Colección Nacional: próximamente. Piezas únicas, hechas en Argentina.</p>':''}${items.length||selF.has('Nacional')?body:'<p class="nac">No hay piezas con esa combinación.</p>'}`;
+  const ord=`<select class="fsort" data-sort aria-label="Ordenar por">${SORTS.map(([k,l])=>`<option value="${k}" ${SORT===k?'selected':''}>${l}</option>`).join('')}</select>`;
+  const lista=`<div class="fg"><b>Categorías</b>${[['Todos','#tienda'],...CATS.map(c=>[c[0],c[2]])].map(([t,h])=>`<a href="${h}" data-fcat class="${(h==='#tienda'?f==='Todos':'#tienda/'+f===h)?'on':''}">${t==='Todos'?'Ver todo':t}</a>`).join('')}</div>
+   <div class="fg"><b>Colecciones</b>${FAMS.map(x=>`<button data-fam="${x}" class="${selF.has(x)?'on':''}" aria-pressed="${selF.has(x)}">${x}</button>`).join('')}</div>
+   ${nf?'<div class="fg"><a href="#tienda" data-fclr class="fclr">Limpiar filtros</a></div>':''}`;
+  const body=`<div class="grid">${tarjetas.map(([p,i])=>card(p,i)).join('')}</div>`;
+  return `<div class="shop"><aside class="fside fx"><nav class="bc"><a href="#inicio">Inicio</a> . <span>${esc(tit)}</span></nav>${lista}</aside>
+   <div class="smain"><div class="shead"><div><nav class="bc"><a href="#inicio">Inicio</a> . <span>${esc(tit)}</span></nav><h1>${esc(tit)}</h1></div><button class="fbtn" data-ftog>Filtrar${nf?` (${nf})`:''}<svg width="13" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor"><path d="M0 2h14M0 6h14M0 10h14"/><circle cx="4" cy="2" r="1.6" fill="#F7F7F5"/><circle cx="10" cy="6" r="1.6" fill="#F7F7F5"/><circle cx="6" cy="10" r="1.6" fill="#F7F7F5"/></svg></button>${ord}</div>
+   ${selF.has('Nacional')?'<p class="nac">Colección Nacional: piezas únicas, hechas en Argentina.</p>':''}${items.length||selF.has('Nacional')?body:'<p class="nac">No hay piezas con esa combinación.</p>'}</div></div>
+   ${FOPEN?`<div class="fmod fx" role="dialog" aria-label="Filtros"><div class="fmh"><span>Filtros</span><button data-ftog aria-label="Cerrar">×</button></div><div class="fmb"><div class="fg"><b>Ordenar por</b>${ord}</div>${lista}</div></div>`:''}`;
 }
 
 /* ---------- producto ---------- */
@@ -1229,7 +1277,8 @@ function openProduct(a){
     document.body.appendChild(fly);
     animating=true; app.classList.remove('leaving');
     history.pushState(null,'',hash); render(); scrollTo(0,0);
-    const pm=$('#pmain'), t=pm.getBoundingClientRect();
+    const pm=[$('#pmain'),document.querySelector('.psw-s')].find(e=>e&&e.offsetWidth)||$('#pmain'), t=pm.getBoundingClientRect();
+
     const anim=fly.animate([{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'},{left:t.left+'px',top:t.top+'px',width:t.width+'px',height:t.height+'px'}],{duration:750,easing:'cubic-bezier(.7,0,.2,1)',fill:'forwards'});
     setTimeout(()=>$('#pdp')&&$('#pdp').classList.remove('pre'),350);
     anim.onfinish=()=>{animating=false;const pdp=$('#pdp');if(pdp){pdp.classList.remove('pre')}fly.remove()};
@@ -1249,9 +1298,10 @@ document.addEventListener('click',e=>{
   if(a.id==='menuBtn'){document.body.classList.contains('menu-on')?closeMenu():openMenu();return}
   if(a.closest('#mn'))closeMenu();
   if(a.dataset.colf!==undefined&&a.closest('.flt')){const x=a.dataset.colf;if(!x)selC.clear();else selC.has(x)?selC.delete(x):selC.add(x);render();return}
-  if(a.dataset.ftog!==undefined){FOPEN=!FOPEN;render();return}
-  if(a.dataset.fclr!==undefined){selF.clear();selC.clear();if(location.hash==='#tienda'){e.preventDefault();render();return}}
-  if(a.dataset.fam!==undefined&&a.closest('.flt')){const x=a.dataset.fam;if(!x)selF.clear();else selF.has(x)?selF.delete(x):selF.add(x);render();return}
+  if(a.dataset.ftog!==undefined){FOPEN=!FOPEN;document.body.classList.toggle('fopen',FOPEN);render();return}
+  if(a.dataset.fcat!==undefined){FOPEN=false;document.body.classList.remove('fopen');if(decodeURIComponent(location.hash)===a.getAttribute('href')){e.preventDefault();render();return}}
+  if(a.dataset.fclr!==undefined){selF.clear();selC.clear();FOPEN=false;document.body.classList.remove('fopen');if(location.hash==='#tienda'){e.preventDefault();render();return}}
+  if(a.dataset.fam!==undefined&&a.closest('.fx')){FOPEN=false;document.body.classList.remove('fopen');const x=a.dataset.fam;if(!x)selF.clear();else selF.has(x)?selF.delete(x):selF.add(x);render();return}
   if(a.id==='cartBtn'){closeMenu();openCart();return}
   if(a.id==='adminBtn'){fadeTo('#pro');return}
   if(a.id==='proQuote'){const t=cart.reduce((s,l)=>s+(byId(l.id).price||0)*l.q,0);
@@ -1370,22 +1420,14 @@ function silRun(t){t.dataset.ok=1;const DUR=+t.dataset.dur||15000;
     if(W){if(x<0)x=W;if(x>=W*1.5)x-=W;if(x<W*.5)x+=W}
     if(Math.abs(t.scrollLeft-x)>.5)t.scrollLeft=x;set=t.scrollLeft;requestAnimationFrame(loop)};
   requestAnimationFrame(loop)}
-/* video del inicio: se baja recién cuando aparece en pantalla y se pausa al salir */
+/* tienda: ordenar (cierra el panel de filtros y muestra los productos) */
+document.addEventListener('change',e=>{if(!e.target.matches||!e.target.matches('[data-sort]'))return;SORT=e.target.value;FOPEN=false;document.body.classList.remove('fopen');render()});
+/* video del inicio:
+ se baja recién cuando aparece en pantalla y se pausa al salir */
 function vidInit(){document.querySelectorAll('video[data-src]').forEach(v=>{if(v.dataset.ok)return;v.dataset.ok=1;
   const go=()=>{if(!v.src)v.src=v.dataset.src;v.play().catch(()=>{})};
   if(!('IntersectionObserver' in window)){go();return}
   new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting?go():v.pause()),{rootMargin:'200px'}).observe(v)})}
-/* buscador con IA: responde con lo que hay en la tienda (api/preguntar) */
-let ASK={q:'',a:'',ids:[],busy:false,h:[]};
-function askBox(){const A=ASK,L=A.ids.map(byId).filter(Boolean).slice(0,4);
-  return `<section class="ask" id="ask"><form id="askF"><label for="askQ">Preguntale a FORMA</label><div class="ask-r"><input id="askQ" value="${esc(A.q)}" placeholder="Ej.: ¿qué mesa me entra en un comedor de 3 × 3 m?" autocomplete="off" maxlength="300"><button type="submit" ${A.busy?'disabled':''}>${A.busy?'Pensando…':'Preguntar'}</button></div></form>
-   ${A.a?`<div class="ask-a"><p>${esc(A.a).replace(/\n+/g,'</p><p>')}</p></div>`:''}${L.length?`<div class="grid ask-g">${L.map(x=>card(x)).join('')}</div>`:''}</section>`}
-document.addEventListener('submit',async e=>{if(e.target.id!=='askF')return;e.preventDefault();const q=$('#askQ').value.trim();if(q.length<3||ASK.busy)return;
-  Object.assign(ASK,{q,a:'',ids:[],busy:true});const pint=()=>{const s=$('#ask');if(s)s.outerHTML=askBox()};pint();track('pregunta_ia',{});
-  try{const r=await fetch('/api/preguntar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q,h:ASK.h.slice(-4)})});const d=await r.json();
-    ASK.a=d.respuesta||d.error||'No pude responder ahora. Escribinos por WhatsApp y te ayudamos.';ASK.ids=(d.productos||[]).filter(id=>byId(id));if(d.respuesta)ASK.h.push({q,a:d.respuesta})}
-  catch(x){ASK.a='No pude responder ahora. Escribinos por WhatsApp y te ayudamos.'}
-  ASK.busy=false;pint()});
 /* fotos de las bandas: se mueven un poco más lento que la página, sin saltos */
 let VH=innerHeight,VW=innerWidth,rvQ=false;
 addEventListener('resize',()=>{if(innerWidth!==VW){VW=innerWidth;VH=innerHeight;rvPar()}});
