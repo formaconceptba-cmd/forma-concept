@@ -20,7 +20,7 @@ window.AYUDA2={
   <p><b>Ojo:</b> si un producto tiene un error (por ejemplo stock negativo), la web lo oculta sola aunque esté publicado. Lo ves en Alertas / pendientes.</p>`,
  nacionales:`<p><b>De dónde sale:</b> los productos fabricados en Argentina por talleres. No pasan por contenedores: el stock lo manejás a mano marcando si están en stock, a pedido o sin stock.</p>`,
  stock:`<p><b>De dónde sale el inventario:</b> Pailos (el depósito de Lanús) guarda <b>cajas</b>, no productos. Por eso el stock se cuenta por caja y en piezas. Cada producto que se vende con su color (el "SKU de venta", ej. Silla Varilla Café) viene en una o más cajas (el "SKU de caja").</p>
-  <ul><li><b>ÚNICA</b>: el producto entra entero en una sola caja.</li>
+  <ul><li><b>ÚNICA</b> o <b>COMPLETA</b>: el producto entra entero en una sola caja.</li>
   <li><b>TAPA</b> y <b>BASE</b>: el producto viene en 2 cajas. Por ejemplo una mesa: en una caja la tapa y en otra la base o las patas. Para vender 1 mesa tienen que estar las 2.</li></ul>
   <p><b>Cómo se mueve (nada se pisa, todo queda registrado):</b></p>
   <ul><li><b>Entra</b> cuando un contenedor pasa a "Recibido": las cajas cargadas en "Ingreso y packing list" se suman solas.</li>
