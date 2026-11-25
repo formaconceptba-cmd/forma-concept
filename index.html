@@ -736,7 +736,11 @@ async function loadDB(){
     try{const q=await fetch(SB_URL+'/rest/v1/rpc/ficha_publica',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const F=Object.fromEntries((await q.json()).map(x=>[x.id,x]));list.forEach(p=>{const f=F[p.id];if(f){p.peso=f.peso_kg;p.arm=f.armado;p.pz=f.piezas_por_caja||1;p.bul=f.cajas_por_unidad||1}})}}catch(e){}
     try{const q=await fetch(SB_URL+'/rest/v1/config_tienda?select=key,value',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}});if(q.ok)(await q.json()).forEach(x=>CFGT[x.key]=x.value)}catch(e){}
     try{const q=await fetch(SB_URL+'/rest/v1/rpc/stock_publico',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const m=Object.fromEntries((await q.json()).map(x=>[x.id,x.disponible]));list.forEach(p=>{if(m[p.id]!=null){p.units=m[p.id];if(p.units<=0&&p.fam!=='Nacional'&&p.price)p.disp='sin_stock'}})}}catch(e){}
-    P.splice(0,P.length,...list);
+    /* productos con error (ej. stock negativo): se ocultan solos hasta que se corrija en el panel */
+    let lista=list;try{const q=await fetch(SB_URL+'/rest/v1/rpc/productos_bloqueados',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:'{}'});if(q.ok){const B=new Set((await q.json()).map(x=>x.id));lista=list.filter(p=>!B.has(p.id))}}catch(e){}
+    P.splice(0,P.length,...lista);
+    /* si algo del carrito quedó oculto, se saca para que no falle el pago */
+    try{const n=cart.length;cart=cart.filter(l=>byId(l.id));if(cart.length!==n)save()}catch(e){}
     if(!animating)render();
   }catch(e){console.warn('DB',e)}
 }

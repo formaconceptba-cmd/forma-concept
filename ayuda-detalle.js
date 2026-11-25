@@ -1,0 +1,55 @@
+/* ---------- Explicación a fondo de cada pantalla del panel: de dónde salen los datos, cómo se arma y qué se toca ----------
+   Sale abajo del título, en "¿Cómo funciona esta pantalla?", junto con el botón para preguntar. */
+window.AYUDA2={
+ inicio:`<p><b>De dónde sale:</b> junta datos de Ventas (pedidos y cobros), Facturas, Contenedores y Alertas. No se carga nada acá: es una foto del momento.</p>
+  <p><b>Para qué sirve:</b> abrirlo a la mañana y ver en 1 minuto cómo viene el día y si hay algo urgente.</p>`,
+ alertas:`<p><b>De dónde sale:</b> el panel revisa solo, cada vez que entrás, pedidos sin pagar vencidos, despachos sin entregar, facturas sin CAE, stock negativo, productos publicados sin stock o con colores que no vienen, contenedores que no entran, alertas del Maestro y datos que faltan configurar.</p>
+  <p><b>Cómo se usa:</b> arriba están los cuadros por categoría (rojo = grave, amarillo = para revisar, verde = todo en orden). Tocá un cuadro para ir a esa parte, y tocá cada alerta para ver <b>qué hacer</b> paso a paso. Cuando lo resolvés, la alerta desaparece sola.</p>
+  <p><b>Productos ocultos automáticamente:</b> si un producto tiene un error grave (por ejemplo stock negativo), la web lo saca sola para que nadie compre algo que no se puede entregar. Vuelve solo cuando se corrige.</p>`,
+ campanias:`<p><b>De dónde sale:</b> de los anuncios de Meta (Instagram/Facebook) y Google, cruzado con las ventas de la tienda (cada venta guarda de qué campaña vino).</p>
+  <p><b>Qué falta:</b> cargar los tokens de Meta y de Google Analytics para que traiga los gastos de cada campaña.</p>`,
+ pedidos:`<p><b>De dónde sale:</b> cada compra en la web crea un pedido. Si pagan con Mercado Pago, pasa solo a <b>pagado</b>. Si eligen transferencia, queda <b>pendiente</b> hasta que vos confirmes que llegó la plata.</p>
+  <p><b>Estados:</b> pendiente (sin pagar) → pagado (sale el mail al cliente y se encola la factura) → en camino (se despachó) → entregado. También cancelado.</p>
+  <p><b>Qué se toca:</b> el estado de cada pedido, confirmar transferencias, generar la orden de despacho para Pailos y registrar devoluciones (si estaba facturado, sale sola la nota de crédito). Los pendientes sin pagar se cancelan solos pasado el plazo.</p>`,
+ facturas:`<p><b>De dónde sale:</b> cuando un pedido pasa a pagado, se crea una Factura B a nombre del cliente (con su DNI). Un reloj revisa cada 15 minutos y le pide el CAE a ARCA. Con el CAE se arma el PDF con el QR y se manda por mail.</p>
+  <p><b>Si algo falla:</b> reintenta solo (5 min, 15 min, 1 h, 3 h y después cada 12 h) y te avisa por mail. Si cancelás un pedido facturado o registrás una devolución, sale sola la nota de crédito.</p>
+  <p><b>Modo prueba:</b> mientras ARCA esté en prueba no se emite nada real. La Factura A (a empresas) se hace a mano por fuera y se puede registrar acá con "Cargar emitida a mano".</p>`,
+ ppedidos:`<p><b>De dónde sale:</b> los pedidos que hacen los profesionales aprobados desde su catálogo, con su precio especial.</p>`,
+ productos:`<p><b>De dónde sale:</b> cada producto de la tienda nace en el Maestro (lo que cotizó el proveedor). Acá le das la cara para la web: nombre, fotos, descripción, colores y si está publicado o destacado.</p>
+  <p><b>El precio</b> sale de las reglas de Configuración → Precios (preventa, transferencia, cuotas) y de la pestaña Precios de cada contenedor. <b>El stock</b> sale de los contenedores y de Pailos.</p>
+  <p><b>Ojo:</b> si un producto tiene un error (por ejemplo stock negativo), la web lo oculta sola aunque esté publicado. Lo ves en Alertas / pendientes.</p>`,
+ nacionales:`<p><b>De dónde sale:</b> los productos fabricados en Argentina por talleres. No pasan por contenedores: el stock lo manejás a mano marcando si están en stock, a pedido o sin stock.</p>`,
+ stock:`<p><b>De dónde sale el inventario:</b> Pailos (el depósito de Lanús) guarda <b>cajas</b>, no productos. Por eso el stock se cuenta por caja y en piezas. Cada producto que se vende con su color (el "SKU de venta", ej. Silla Varilla Café) viene en una o más cajas (el "SKU de caja").</p>
+  <ul><li><b>ÚNICA</b>: el producto entra entero en una sola caja.</li>
+  <li><b>TAPA</b> y <b>BASE</b>: el producto viene en 2 cajas. Por ejemplo una mesa: en una caja la tapa y en otra la base o las patas. Para vender 1 mesa tienen que estar las 2.</li></ul>
+  <p><b>Cómo se mueve (nada se pisa, todo queda registrado):</b></p>
+  <ul><li><b>Entra</b> cuando un contenedor pasa a "Recibido": las cajas cargadas en "Ingreso y packing list" se suman solas.</li>
+  <li><b>Sale</b> cuando generás la orden de despacho de un pedido: se descuentan las cajas que saca Pailos.</li>
+  <li><b>Ajuste</b>: los casilleros "±" al lado de TAPA, BASE o ÚNICA. Escribís cuántas piezas sumar (ej. 4) o restar (ej. −2) de esa caja, te pide el motivo (conteo de Pailos, rotura, error) y queda registrado con fecha y quién lo hizo.</li>
+  <li><b>Importar stock de Pailos</b>: subís el Excel con el conteo de Pailos y el panel ajusta cada caja para que quede igual, mostrándote antes la diferencia.</li></ul>
+  <p><b>Columnas:</b> <b>Disponible</b> = cuántas unidades completas se pueden vender (el mínimo entre sus cajas, más lo que viene en camino, menos lo reservado por pedidos sin pagar). <b>Físico</b> = lo que está en Pailos. <b>En camino</b> = lo que viene en contenedores confirmados o en tránsito.</p>
+  <p><b>Stock negativo</b> = salieron más piezas de las que entraron (por ejemplo, se despachó antes de que llegara el contenedor). El producto se oculta solo de la web hasta que lo corrijas con un ajuste.</p>`,
+ paleta:`<p><b>De dónde sale:</b> cada proveedor llama distinto a sus colores (ej. "BC81 Brick Red"). Acá está la paleta FORMA (los nombres que ve el cliente, ej. "Bordó") y a qué color de cada proveedor equivale. Así la web, los pedidos y las órdenes al proveedor hablan el mismo idioma.</p>`,
+ clientes:`<p><b>De dónde sale:</b> cada persona que compró en la web, con sus pedidos y el total gastado. Se arma solo con los pedidos.</p>`,
+ pcuentas:`<p><b>De dónde sale:</b> los arquitectos, estudios y comercios que piden acceso desde la web (sección Profesionales). Cuando los aprobás, ven la tienda con sus precios especiales.</p>`,
+ pro:`<p><b>De dónde sale:</b> las cuentas mayoristas, con sus condiciones y reservas de stock.</p>`,
+ pprecios:`<p><b>De dónde sale:</b> el precio de cada producto para profesionales. Se calcula desde el costo (contenedor) con el margen que definas, o se fija a mano por producto.</p>`,
+ mails:`<p><b>De dónde sale:</b> los mails que el sistema manda solo (pedido recibido, pago confirmado, datos de transferencia, factura, despacho, cancelación). Acá editás el texto. Las palabras entre llaves, como {nombre} o {pedido}, se reemplazan solas por los datos de cada cliente.</p>`,
+ frm:`<p><b>De dónde sale:</b> los proyectos del estudio que se muestran en la web (FRM Studio). Cada uno tiene título, rubro, texto y fotos. Los que marcás como activos aparecen en la página.</p>`,
+ fotos:`<p><b>De dónde sale:</b> las fotos grandes de la página (portada, Colección Acero y Fresno, estudio, profesionales, etc.). Cada lugar de la web tiene un nombre; cambiás la foto y la web la toma sola, sin tocar código.</p>`,
+ maestro:`<p><b>De dónde sale:</b> de las cotizaciones de los proveedores. Lo normal es mandarles la <b>Plantilla RFQ</b>, que la completen y subirla con <b>Importar cotización</b>. También se puede cargar a mano con <b>+ Nuevo producto</b>.</p>
+  <p><b>Datos clave, siempre por pieza:</b> FOB (precio en el puerto de origen, en US$) y m³ (volumen). Con esos dos se calcula cuánto cuesta traerlo y cuánto ocupa en el contenedor. El <b>packing</b> (piezas por caja, cajas por producto, medidas y peso de cada caja) sirve para comprobar que el m³ esté bien.</p>
+  <p><b>Recorrido:</b> Maestro → se suma a un contenedor → se le pone precio → se publica en la tienda.</p>`,
+ 'maestro|nuevo':`<p>El código se arma solo: prefijo de la subcategoría + número correlativo + proveedor (ej. SIL-MAD-187-BAI). Si no sabés el m³, cargá las medidas de las cajas y se calcula.</p>`,
+ 'maestro|importar':`<p>La planilla RFQ que armamos tiene la columna "FORMA Code": si viene completa, el producto se actualiza aunque el proveedor haya cambiado su propio código. Lo que cambia (FOB, m³, packing) queda en "Últimos cambios".</p>`,
+ eco:`<p><b>De dónde sale:</b> cada contenedor se arma con productos del Maestro, y lo que manda es la <b>orden de compra final</b> del proveedor: se sube en la pestaña "Orden de compra y proformas" y con "Usar esta orden" se cargan cantidades, FOB y m³.</p>
+  <p><b>Qué calcula:</b> con los Parámetros de importación (flete, seguro, aduana, impuestos) calcula el costo de cada producto puesto en el galpón, el precio de venta sugerido, la plata que hay que poner y cuánto deja.</p>
+  <p><b>Estados:</b> Borrador → Confirmado → En tránsito → Recibido (se congela la proyección y las cajas entran al stock) → Cerrado.</p>`,
+ compras:`<p><b>De dónde sale:</b> las órdenes de compra que armás desde el Maestro y todas las proformas y órdenes que subiste en cada contenedor, agrupadas por proveedor.</p>`,
+ ecopar:`<p><b>De dónde sale:</b> son los números base de la importación (tipo de cambio, flete de cada contenedor, capacidad, seguro, despachante, impuestos, galpón). Los usan todos los contenedores que no estén congelados: si cambiás uno, se recalculan los costos y precios sugeridos.</p>`,
+ rent:`<p><b>De dónde sale:</b> las reglas que arman el precio que ve el cliente: el descuento de preventa sobre la lista, el descuento por transferencia, las cuotas sin interés y el costo de cobrar con Mercado Pago.</p>`,
+ envios:`<p><b>De dónde sale:</b> las zonas por código postal (CABA, GBA, interior), los días de entrega, el precio del envío express y el retiro en el depósito de Lanús. Es lo que ve el cliente al poner su código postal.</p>`};
+window.ayudaHTML=function(k){const a=(window.AYUDA||{})[k]||'',b=window.AYUDA2[k]||'';if(!a&&!b)return '';
+  return `${a}<div class="tn-more">${b?`<details class="tn-det"><summary>¿Cómo funciona esta pantalla? (explicación completa)</summary><div class="tn-deep">${b}</div></details>`:''}<button class="tn-q" data-preg>Preguntar sobre esta pantalla</button></div>`};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-preg]');if(!b)return;if(typeof chatAbrir==='function'){chatAbrir();const q=document.getElementById('tcq');const t=(document.getElementById('tnt')||{}).textContent||'';if(q&&!q.value)q.value=`Sobre la pantalla "${t}": `;q&&q.focus()}});
+document.head.insertAdjacentHTML('beforeend',`<style>.tn-more{display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px 16px;margin-top:6px}.tn-more .tn-det{margin-top:0;flex:1 1 420px}.tn-deep{margin-top:8px;padding:12px 14px;background:#f6f6f7;border-radius:8px;max-width:900px}.tn-deep p{margin:0 0 8px}.tn-deep ul{margin:0 0 8px;padding-left:18px}.tn-deep li{margin:3px 0}.tn-q{background:none;border:0;padding:0;color:#2c6ecb;cursor:pointer;font:inherit;font-weight:500}</style>`);

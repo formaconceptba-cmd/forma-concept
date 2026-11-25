@@ -47,7 +47,7 @@ const item=g=>{const act=g[2].some(s=>s[0]===tab),uno=g[2].length===1,ab=estaAbi
 window.drawNav=function(){const n=document.getElementById('gnav'),f=document.getElementById('gfoot');if(!n)return;
   n.innerHTML=MENU.map(item).join('');f.innerHTML=item(PIE);
   const lab=[...MENU,PIE].flatMap(g=>g[2]).find(s=>s[0]===tab);const t=document.getElementById('tnt');if(t)t.textContent=lab?lab[1]:'';document.title=(lab?lab[1]+' · ':'')+'FORMA Admin';
-  const hp=document.getElementById('tnh');if(hp){const k=tab==='maestro'&&mv()!=='lista'?'maestro|'+mv():tab;hp.innerHTML=(window.AYUDA||{})[k]||''}
+  const hp=document.getElementById('tnh');if(hp){const k=tab==='maestro'&&mv()!=='lista'?'maestro|'+mv():tab;hp.innerHTML=window.ayudaHTML?ayudaHTML(k):((window.AYUDA||{})[k]||'')}
   document.querySelectorAll('.tn-side [data-gk]').forEach(b=>b.onclick=()=>{const g=GRUPOS.find(x=>x[0]===b.dataset.gk);if(g[2].length===1){tab=g[2][0][0];cerrarMenu();draw();return}
     /* la flechita sólo abre o cierra: no cambia de pantalla */
     if(estaAbierto(g)){abiertos.delete(g[0]);cerrados.add(g[0])}else{abiertos.add(g[0]);cerrados.delete(g[0])}
