@@ -5,7 +5,9 @@ FORMA Concept vende muebles de diseño. La mayoría se importa de China en conte
 Recorrido de un producto: se cotiza al proveedor (planilla RFQ) → entra al Maestro de productos → se suma a un contenedor → se le pone precio de venta → se publica en la tienda → se vende → se factura → se despacha.
 
 MENÚ DEL PANEL (pantalla por pantalla)
-- Inicio: resumen del día (ventas, pedidos nuevos, lo que hay que mirar).
+- Inicio → Inicio: todo el negocio en detalle (ventas, ganancia, márgenes, anuncios, medios de pago, contenedores).
+- Inicio → Resumen: vista rápida estilo app de Shopify (en vivo, ventas, pedidos, "Tu actividad" con lo que hay que hacer hoy, últimos pedidos). La app del celular arranca acá.
+- Inicio → Cómo funciona todo: el recorrido completo en 10 pasos (cotizar → colores y cajas → borrador del contenedor → proforma final → costos extra y pagos → precio → publicar → vender → recibir → despachar), qué manda en cada cosa, qué es manual y qué automático, y cómo le llega a Pailos.
 - Alertas / pendientes: todo lo que necesita una acción. Cada alerta se toca y abajo explica qué hacer para resolverla.
 - Estadísticas → Anuncios por campaña: cuánto se vendió por cada campaña de anuncios (Meta, Google). Necesita los tokens de Meta y GA4 cargados.
 - Ventas → Lista de ventas: todos los pedidos de la web. Estados: pendiente (sin pagar), pagado, en camino, entregado, cancelado. Las transferencias se confirman acá a mano (al marcar "pagado" se manda el mail y se encola la factura). Los pedidos sin pagar se cancelan solos pasado el plazo. Desde un pedido se registra una devolución.
@@ -33,7 +35,8 @@ MENÚ DEL PANEL (pantalla por pantalla)
   · Las alertas ⚠ V1–V4 marcan productos cuyo m³, packing o medidas no cierran (por ejemplo, m³ de la caja cargado como si fuera de una pieza).
 - Importación → Contenedores: cada contenedor (pedido de importación). Pestañas:
   · Tablero: el resumen para decidir: cuánta plata hay que poner (pico), cuánto queda al final y cuánto rinde por año. No se edita.
-  · Orden de compra y proformas: se suben las proformas (PI) y la orden de compra final del proveedor. "Usar esta orden" lee el Excel y actualiza cantidades, FOB y m³ del contenedor. La orden manda.
+  · Orden de compra y proformas: se suben las proformas de cada fábrica (respaldo) y la PROFORMA FINAL (la que manda, ej. la de PRE/Lester "PRE_PI_Del_Gruppo_CONCEPT01"). Si la proforma trae una línea por color (SKU de venta, ej. MES-163-BLA), "Usar esta orden" actualiza de una vez: cantidades, FOB y m³ por producto del contenedor; las cajas de "Ingreso y packing list" (calculadas con las piezas por caja de cada color: es el packing list para Pailos y el stock "en camino" de la tienda); y los renglones sin código (ej. "Inland transport", el flete de Rudi hasta Baicheng) van a "Flete interno hasta el puerto". Antes de aplicar muestra una vista previa: en amarillo lo que no cierra (un color que no existe en el panel, por ejemplo SIL-008-BOR cuando en el panel está SIL-008-CAF: se elige en el desplegable o se crea con + Color; un color sin cajas cargadas; cajas que no suman lo mismo que la proforma). Si la proforma no trae colores, se lee por producto como antes.
+  · Costos extra del pedido (arriba, en la pestaña Productos): flete interno hasta el puerto, consolidación, otros en origen (se suman al flete y se reparten por m³) y comisión del agente de compra en % del FOB (ej. Lester 4,5%: se reparte por valor y en Caja se paga junto con el saldo).
   · Productos: qué viene en el contenedor. Los productos entran de dos formas: aplicando la orden de compra (lo normal) o sumándolos a mano desde el buscador (sirve para armar el borrador antes de tener la orden). Ahí se pueden corregir cantidad, m³ y FOB por pieza: valen sólo para ese contenedor; el Maestro no cambia.
   · Precios: precio de venta de cada producto y margen. Desde ahí se pasan los precios a la tienda.
   · Costos: cómo se arma el costo puesto en el galpón (FOB + flete repartido por m³ + seguro + aduana + impuestos + gastos).
