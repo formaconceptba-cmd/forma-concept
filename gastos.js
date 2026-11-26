@@ -65,7 +65,7 @@ async function equilibrio(){const w=$('#m').querySelector('#gpe');if(!w)return;a
   const vpu=L.length?venta/L.length:0,need=cm>0?fij/cm:null;
   w.innerHTML=`<h4 style="margin:0 0 6px">Punto de equilibrio</h4>
    <p style="margin:0 0 6px">De cada $100 que vendés (sin IVA), después de pagar el producto y los gastos de cada venta (cobro, IIBB, marketing, envío, garantía, galpón) te quedan <b>$${eN(cm*100,1)}</b> para cubrir los gastos fijos.</p>
-   ${fij>0&&need?`<p style="margin:0">Para cubrir <b>${ars(fij)}</b> por mes (fijos + depósito) tenés que vender <b>${ars(need)}</b> por mes sin IVA (${ars(need*1.21)} con IVA), unas <b>${Math.ceil(need/vpu)}</b> unidades al precio promedio. Arriba de eso, es ganancia.</p>`:'<p class="hint" style="margin:0">Cargá los gastos fijos para ver cuánto hay que vender por mes.</p>'}
+   ${fij>0&&need?`<p style="margin:0">Para cubrir <b>${ars(fij)}</b> por mes (fijos + depósito) tenés que vender <b>${ars(need)}</b> por mes sin IVA (${ars(need*1.21)} con IVA), ${Math.ceil(need/vpu)>1?`unas <b>${Math.ceil(need/vpu)}</b> unidades`:"<b>1</b> unidad"} al precio promedio. Arriba de eso, es ganancia.</p>`:'<p class="hint" style="margin:0">Cargá los gastos fijos para ver cuánto hay que vender por mes.</p>'}
    <p class="hint" style="margin:6px 0 0">Los gastos fijos no se meten en el "mínimo sin perder" de cada producto: no dependen de cuánto vendas de cada uno. Se cubren con el volumen; por eso acá ves cuánto hay que vender por mes.</p>`}
 
 async function mercaderia(){const w=$('#m').querySelector('#gmerc');if(!w)return;
