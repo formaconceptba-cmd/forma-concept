@@ -105,7 +105,7 @@ if(typeof window.drawNav==='function'){const _dn=window.drawNav;window.drawNav=f
 if(typeof draw==='function'){const _d=draw;draw=async function(){if(tab!=='inicio')AP.full=false;const r=await _d.apply(this,arguments);try{barra()}catch(e){}return r}}
 
 /* si el panel ya se dibujó antes de que cargue este archivo, se vuelve a dibujar con el Inicio del celular */
-let vig=0;const vigT=setInterval(()=>{vig++;if(vig>60)return clearInterval(vigT);try{if(typeof user!=='undefined'&&user&&document.querySelector('.tn')){if(!document.getElementById('apbar'))barra();if(tab==='inicio'&&MOV()&&!AP.full&&!document.querySelector('.ap')&&!/Cargando/.test((()||{}).textContent||'')){clearInterval(vigT);drawInicioMovil()}}}catch(e){}},500);
+let vig=0;const vigT=setInterval(()=>{vig++;if(vig>60)return clearInterval(vigT);try{if(typeof user!=='undefined'&&user&&document.querySelector('.tn')){if(!document.getElementById('apbar'))barra();if(tab==='inicio'&&MOV()&&!AP.full&&!document.querySelector('.ap')&&!/Cargando/.test(($m()||{}).textContent||'')){clearInterval(vigT);drawInicioMovil()}}}catch(e){}},500);
 /* app instalable */
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw-admin.js',{scope:'/admin'}).catch(()=>{}));
 
