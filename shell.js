@@ -26,7 +26,8 @@ const MENU=[
  ['prods','2. Productos',[['productos','Lista de productos'],['paleta','Colores'],['nacionales','Productos nacionales'],['stock','Inventario (Pailos)']]],
  ['desc','3. Precios y promociones',[['promos','Promociones y códigos'],['rent','Reglas de precio y medios de pago'],['pprecios','Precios profesionales']]],
  ['online','4. Tienda online',[['fotos','Fotos de la página'],['cartel','Cartel de arriba'],['frm','FRM Studio'],['envios','Envíos y retiro']]],
- ['mkt','5. Marketing',[['mailpromo','Mail a toda la lista'],['mails','Mails automáticos']]]];
+ ['mkt','5. Marketing',[['mailpromo','Mail a toda la lista'],['mails','Mails automáticos']]],
+ ['gastos','6. Gastos',[['gastos','Gastos y depósito']]]];
 const PIE=['config','Configuración',[['ecopar','Costos y parámetros']]];
 /* cualquier pantalla que exista y no esté en el menú, se suma para no perder nada */
 const todas=new Set([...MENU,PIE].flatMap(g=>g[2].map(s=>s[0])));

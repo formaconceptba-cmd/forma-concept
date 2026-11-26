@@ -86,15 +86,16 @@ async function abrirVariantes(cod){
 /* ===== Administración → Stock Pailos: por SKU de caja, en piezas ===== */
 let STKQ='';
 async function drawStock(){
-  $('#m').innerHTML='<p class="hint">Cargando…</p>';await Promise.all([loadSkus(),master.length?0:loadMaster()]);
+  $('#m').innerHTML='<p class="hint">Cargando…</p>';await Promise.all([loadSkus(),master.length?0:loadMaster(),typeof prods!=='undefined'&&prods.length?0:loadProds()]);
   const vs=VARS.filter(v=>v.estado!=='discontinuado'&&(!STKQ||(v.sku+' '+v.descripcion+' '+colNom(v.color)).toLowerCase().includes(STKQ.toLowerCase())));
   const tot=CAJAS.reduce((a,k)=>a+((STKC[k.sku_caja]||{}).fisico||0),0);
   $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Stock en Pailos</b><span class="sp"></span><input id="sq" placeholder="Buscar SKU, producto o color" value="${esc(STKQ)}"><button class="btn" id="simp">Importar stock de Pailos (.xlsx / .csv)</button></div>
   <p class="hint" style="max-width:820px">Pailos cuenta por <b>caja</b>, en piezas. Lo que se vende es la variante: su disponible es el <b>mínimo entre sus cajas</b> (si falta una, no se puede vender). El stock es la suma de movimientos (ingresos, ventas, ajustes): nada se pisa, todo queda registrado.</p>
   <div class="kps">${[['Piezas en Pailos',tot],['Variantes',vs.length],['Sin stock para vender',vs.filter(v=>(STKV[v.sku]||{}).disponible<=0).length]].map(([t,v])=>`<div class="card kp"><span>${t}</span><b>${v}</b></div>`).join('')}</div>
-  <div class="card wrap"><table><thead><tr><th>SKU de venta</th><th>Producto</th><th>Color</th><th class="n">Disponible</th><th>Cajas (físico · en camino)</th><th>Ajuste</th></tr></thead><tbody>
+  <div class="card wrap"><table><thead><tr><th></th><th>SKU de venta</th><th>Producto</th><th>Color</th><th class="n">Disponible</th><th>Cajas (físico · en camino)</th><th>Ajuste</th></tr></thead><tbody>
   ${vs.map(v=>{const K=CAJAS.filter(k=>k.sku===v.sku),s=STKV[v.sku]||{},falta=K.length&&K.some(k=>((STKC[k.sku_caja]||{}).total||0)<=0)&&K.some(k=>((STKC[k.sku_caja]||{}).total||0)>0);
-   return `<tr><td><b>${esc(v.sku)}</b></td><td>${esc(v.descripcion||'')}</td><td>${dot(v.color)}${esc(colNom(v.color))}</td><td class="n"><b class="${(s.disponible||0)<=0?'neg':''}">${s.disponible??0}</b>${falta?'<div class="hint neg">falta una caja</div>':''}</td>
+   const fo=(Array.isArray(v.fotos)&&v.fotos[0])||((typeof prods!=='undefined'?prods:[]).find(p=>p.id===v.codigo_master)||{}).img;
+   return `<tr><td>${fo?`<img src="${esc(src(fo))}" alt="" style="width:52px;height:52px;object-fit:cover;background:#eee">`:''}</td><td><b>${esc(v.sku)}</b></td><td>${esc(v.descripcion||'')}</td><td>${dot(v.color)}${esc(colNom(v.color))}</td><td class="n"><b class="${(s.disponible||0)<=0?'neg':''}">${s.disponible??0}</b>${falta?'<div class="hint neg">falta una caja</div>':''}</td>
     <td>${K.map(k=>{const st=STKC[k.sku_caja]||{};return `<div style="white-space:nowrap"><span class="hint">${esc(k.sku_caja)}</span> <b>${st.fisico??0}</b>${st.en_camino?` · <span class="hint">${st.en_camino} en camino</span>`:''}</div>`}).join('')||'<span class="hint neg">sin cajas</span>'}</td>
     <td>${K.map(k=>`<div class="bar" style="gap:4px;margin:2px 0"><input class="num" style="width:60px" data-aj="${esc(k.sku_caja)}" placeholder="±" inputmode="numeric"><span class="hint">${esc(k.parte)}</span></div>`).join('')}</td></tr>`}).join('')}</tbody></table></div>
   <p class="hint">Ajuste: escribí cuántas piezas sumar (ej. 5) o restar (ej. −2) y te pide el motivo. Queda registrado con fecha y quién lo hizo.</p><div id="simpw"></div>`;

@@ -38,7 +38,8 @@ async function drawInicio(silencioso){
     sb.from('eventos').select('created_at,visitante,sesion,tipo,producto,ref,utm,dispositivo,valor').gte('created_at',(prev||from).toISOString()).order('created_at',{ascending:false}).limit(20000),
     sb.from('orders').select('*,order_items(*,products(tipo,nombre))').eq('estado','pendiente').order('created_at',{ascending:false}).limit(60),
     sb.from('precio_historial').select('*').order('fecha',{ascending:false}).limit(200),sb.rpc('precios_admin'),sb.from('settings').select('*'),sb.rpc('stock_admin')]);
-  const {data:AC}=await sb.from('ads_campania').select('fecha,gasto');
+  const {data:AC}=await sb.from('ads_campania').select('fecha,gasto');const {data:GU}=await sb.from('gastos').select('fecha,monto').eq('tipo','unico');
+  const gUni=(d0,d1)=>(GU||[]).filter(x=>{const t=+new Date(x.fecha+'T12:00');return t>=+d0&&t<+d1}).reduce((s,x)=>s+(+x.monto),0);
   if(tab!=='inicio')return;
   ST=Object.fromEntries((st||[]).map(x=>[x.key,+x.value]));
   const T=TX(),PB=Object.fromEntries(prods.map(p=>[p.id,p])),PCA=Object.fromEntries((pca||[]).map(x=>[x.id,x])),nom=id=>PB[id]?PB[id].tipo+' '+PB[id].nombre:id;
@@ -46,7 +47,7 @@ async function drawInicio(silencioso){
   const cur=V.filter(v=>inP(v.f)),old=V.filter(v=>inPrev(v.f));
   const ini0=PER?+from:Math.min(now-DIA,V.reduce((m,v)=>Math.min(m,+new Date(v.f)),now),(ev||[]).reduce((m,x)=>Math.min(m,+new Date(x.created_at)),now)),dias=Math.max(1,(now-ini0)/DIA),S=(a,k)=>a.reduce((s,v)=>s+v[k],0);
   const adsDe=(d0,d1)=>(AC||[]).length?(AC||[]).filter(x=>{const t=+new Date(x.fecha+'T12:00');return t>=+d0&&t<+d1}).reduce((s,x)=>s+(+x.gasto),0):T.ADS*dias/30;
-  const res=(a,d0,d1)=>{const venta=S(a,'venta'),g=S(a,'g'),ads=adsDe(d0,d1),fij=T.FIJ*dias/30,antes=g-ads-fij,gan=Math.max(0,antes)*T.GAN;return {total:S(a,'total'),venta,g,ads,fij,antes,gan,neto:antes-gan,n:a.length}};
+  const res=(a,d0,d1)=>{const venta=S(a,'venta'),g=S(a,'g'),ads=adsDe(d0,d1),fij=T.FIJ*dias/30+gUni(d0,d1),antes=g-ads-fij,gan=Math.max(0,antes)*T.GAN;return {total:S(a,'total'),venta,g,ads,fij,antes,gan,neto:antes-gan,n:a.length}};
   const R=res(cur,PER?from:new Date(ini0),new Date(now+DIA)),RP=res(old,prev||new Date(0),from);
   const E=(ev||[]).filter(x=>inP(x.created_at)),EP=(ev||[]).filter(x=>inPrev(x.created_at));
   const uv=(a,t)=>new Set(a.filter(x=>!t||x.tipo===t).map(x=>x.visitante)).size;
@@ -57,7 +58,7 @@ async function drawInicio(silencioso){
   const D=[...Array(nd)].map((_,i)=>{const d=new Date(hoy0-(nd-1-i)*DIA),k=d.toDateString(),x=V.filter(v=>key(v.f)===k);
     return {l:fmtD(d),hoy:i===nd-1,v:S(x,'venta'),g:S(x,'g'),n:x.length,t:S(x,'total'),u:new Set((ev||[]).filter(e=>key(e.created_at)===k).map(e=>e.visitante)).size,pc:(hi||[]).filter(h=>key(h.fecha)===k).length}});
   /* de cada $100 que cobrás */
-  const cob=R.total,P100=[['IVA (va a ARCA)',cob-R.venta],['Costo de los productos',S(cur,'cprod')],['Comisión de Mercado Pago',S(cur,'com')],['Envíos que pagás vos',S(cur,'env')],['Ingresos Brutos e impuesto al cheque',S(cur,'iibb')+S(cur,'chq')],['Anuncios',R.ads],['Gastos fijos',R.fij],['Impuesto a las Ganancias (estimado)',R.gan]];
+  const cob=R.total,P100=[['IVA (va a ARCA)',cob-R.venta],['Costo de los productos',S(cur,'cprod')],['Comisión de Mercado Pago',S(cur,'com')],['Envíos que pagás vos',S(cur,'env')],['Ingresos Brutos e impuesto al cheque',S(cur,'iibb')+S(cur,'chq')],['Anuncios',R.ads],['Gastos (fijos, depósito y puntuales)',R.fij],['Impuesto a las Ganancias (estimado)',R.gan]];
   /* canales, medios de pago, productos */
   const grp=(f)=>{const m={};cur.forEach(v=>{const k=f(v);const x=m[k]||(m[k]={k,n:0,t:0,ve:0,g:0,com:0});x.n++;x.t+=v.total;x.ve+=v.venta;x.g+=v.g;x.com+=v.com});return Object.values(m).sort((a,b)=>b.t-a.t)};
   const CAN=['pub','pro','may'].map(c=>{const x=cur.filter(v=>v.canal===c);return {c,n:x.length,ve:S(x,'venta'),g:S(x,'g')}});
