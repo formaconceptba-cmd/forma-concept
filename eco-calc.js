@@ -99,10 +99,14 @@ function calcular(pedido,cat,parBase,aranceles){
     it.desembolsoU=it.cant>0?(it.costoT+creditoTotal*sc)/it.cant:0;
     it.almacenajeU=it.cbmU*p.galponMes*p.meses*p.factorStock;
 
-    const mk=it.markupManual!=null?it.markupManual:p.markupDefault;
-    it.markupUsado=mk;
-    it.sugeridoUsd=it.costoU*(1+mk);
-    it.sugeridoARS=it.sugeridoUsd*(1+p.iva)*p.tc;
+    /* precio sugerido = el que cubre TODOS los costos (producto, cobro/cuotas, IIBB, marketing, envío, garantía,
+       galpón y Ganancias) y deja el retorno mínimo. Si hay un markup manual cargado, manda ese. */
+    it.minSinPerder=(it.costoU+it.almacenajeU)/(1-gvar);
+    it.minObjetivo=(p.retornoMinProd*it.desembolsoU/(1-p.ganancias)+it.costoU+it.almacenajeU)/(1-gvar);
+    const mk=it.markupManual!=null?it.markupManual:null;
+    it.sugeridoUsd=mk!=null?it.costoU*(1+mk):it.minObjetivo;
+    it.markupUsado=it.costoU>0?it.sugeridoUsd/it.costoU-1:0;
+    it.sugeridoARS=Math.ceil(it.sugeridoUsd*(1+p.iva)*p.tc/1000)*1000;
 
     it.precioUsd=it.precioARS>0?it.precioARS/(1+p.iva)/p.tc:it.sugeridoUsd;
     it.precioARSef=it.precioARS>0?it.precioARS:it.sugeridoARS;
@@ -112,7 +116,7 @@ function calcular(pedido,cat,parBase,aranceles){
     it.margenPct=it.precioUsd>0?it.margenU/it.precioUsd:null;
     it.ventaT=it.precioUsd*it.cant;
     it.margenT=it.margenU*it.cant;
-    it.netoU=(it.margenU-it.precioUsd*gvar-it.almacenajeU)*(1-p.ganancias);
+    const antesImp=it.margenU-it.precioUsd*gvar-it.almacenajeU;it.netoU=antesImp-Math.max(0,antesImp)*p.ganancias;
     it.netoT=it.netoU*it.cant;
     it.retorno=it.desembolsoU>0?it.netoU/it.desembolsoU:null;
     it.cobradoU=it.precioUsd*(1-cc.total);
