@@ -22,12 +22,12 @@ const MENU=[
  ['ventas','Ventas',[['pedidos','Lista de ventas'],['facturas','Facturas'],['ppedidos','Ventas a profesionales']]],
  ['clientes','Clientes',[['clientes','Lista de clientes'],['pcuentas','Profesionales'],['pro','Mayoristas']]],
  ['§cargar','Para cargar, en este orden',[]],
- ['imp','1. Importación',[['maestro','Maestro de productos'],['maestro|nuevo','Nuevo producto'],['maestro|importar','Importar cotización (RFQ)'],['ecopar','Parámetros de importación'],['eco','Contenedores (proforma y precios)'],['compras','Órdenes a proveedores']]],
+ ['imp','1. Importación',[['maestro','Maestro de productos'],['maestro|nuevo','Nuevo producto'],['maestro|importar','Importar cotización (RFQ)'],['eco','Contenedores (proforma y precios)'],['compras','Órdenes a proveedores']]],
  ['prods','2. Productos',[['productos','Lista de productos'],['paleta','Colores'],['nacionales','Productos nacionales'],['stock','Inventario (Pailos)']]],
  ['desc','3. Precios y promociones',[['promos','Promociones y códigos'],['rent','Reglas de precio y medios de pago'],['pprecios','Precios profesionales']]],
- ['online','4. Tienda online',[['fotos','Fotos de la página'],['frm','FRM Studio']]],
+ ['online','4. Tienda online',[['fotos','Fotos de la página'],['cartel','Cartel de arriba'],['frm','FRM Studio'],['envios','Envíos y retiro']]],
  ['mkt','5. Marketing',[['mailpromo','Mail a toda la lista'],['mails','Mails automáticos']]]];
-const PIE=['config','Configuración',[['envios','Envíos y retiro']]];
+const PIE=['config','Configuración',[['ecopar','Costos y parámetros']]];
 /* cualquier pantalla que exista y no esté en el menú, se suma para no perder nada */
 const todas=new Set([...MENU,PIE].flatMap(g=>g[2].map(s=>s[0])));
 const extra=GRUPOS.flatMap(g=>g[2]).filter(s=>!todas.has(s[0]));

@@ -29,7 +29,7 @@ img{display:block;max-width:100%}
 
 
 /* encabezado: transparente sobre la foto de inicio, sólido al bajar */
-.pbar{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;background:#141414;color:#fff;padding:11px var(--g);font-size:13px;letter-spacing:.02em;text-align:center}.pbar b{font-weight:600;text-transform:uppercase}.pbar em{font-style:normal;font-variant-numeric:tabular-nums;font-weight:600}.pbar a{color:#fff;text-decoration:underline}
+body.home .pbar{margin-top:52px}.pbar{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;background:#141414;color:#fff;padding:11px var(--g);font-size:13px;letter-spacing:.02em;text-align:center}.pbar b{font-weight:600;text-transform:uppercase}.pbar em{font-style:normal;font-variant-numeric:tabular-nums;font-weight:600}.pbar a{color:#fff;text-decoration:underline}
 .ck2-cup{margin:12px 0}.ck2-cup form{display:flex;gap:6px}.ck2-cup input{flex:1;min-width:0;height:40px;border:1px solid var(--line);padding:0 10px;font:inherit;background:#fff}.ck2-cup button[type=submit]{height:40px;padding:0 14px;border:1px solid #141414;background:#fff;font:inherit;cursor:pointer}.ck2-cup>div{font-size:13px;padding:10px;background:#eef6ee}
 header{position:sticky;top:0;z-index:30;height:52px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 var(--g);background:var(--bg);border-bottom:1px solid var(--line);transition:background .35s,color .35s,border-color .35s}
 body.home:not(.scrolled) header{background:transparent;color:#fff;border-color:transparent}
@@ -776,6 +776,9 @@ const title=p=>`${p.t} ${cap(p.n)}${p.pz>1?' x'+p.pz+' unidades':''}`;
 const slug=id=>'p-'+id.toLowerCase();
 const byId=id=>P.find(p=>p.id===id);
 /* ---- promociones y códigos de descuento ---- */
+function CU(){const n=+((typeof CFGT!=='undefined'&&CFGT.cuotas_si)||3);return n>1?n:3}
+/* más cuotas sin interés en compras grandes (sólo si está activado también en Mercado Pago) */
+function cuPromo(){const c=typeof CFGT!=='undefined'?CFGT:{};return +c.cuotas_promo_ok===1&&+c.cuotas_promo_n>CU()&&+c.cuotas_promo_desde>0?{n:+c.cuotas_promo_n,desde:+c.cuotas_promo_desde}:null}
 let PROMOS=[],CUP=null;try{CUP=JSON.parse(localStorage.getItem('fc_cupon')||'null')}catch(e){}
 const esProfT=()=>typeof isProf==='function'&&isProf();
 const enAlc=(x,p)=>x.alcance==='todo'||(x.alcance==='categoria'&&(x.alcance_valor||[]).includes(p.cat))||(x.alcance==='producto'&&(x.alcance_valor||[]).includes(p.id));
@@ -790,7 +793,9 @@ document.addEventListener('submit',e=>{if(e.target.id==='cupF'){e.preventDefault
 document.addEventListener('click',e=>{if(e.target.closest('[data-cupx]')){CUP=null;try{localStorage.removeItem('fc_cupon')}catch(_){}render()}});
 (()=>{try{const c=new URLSearchParams(location.search).get('cupon');if(c)setTimeout(()=>cupAplicar(c),900)}catch(e){}})();
 /* franja con cuenta regresiva arriba del inicio */
-function promoBar(){const x=PROMOS.find(y=>y.cuenta_regresiva&&y.hasta);if(!x||esProfT())return '';return `<div class="pbar"><b>${esc(x.banner||(x.nombre+' · '+Math.round(x.pct*100)+'% OFF'))}</b><span>Termina en <em data-cd="${esc(x.hasta)}">${cdTxt(x.hasta)}</em></span><a href="#tienda">Ver productos</a></div>`}
+function promoBar(){if(esProfT())return '';const x=PROMOS.find(y=>y.cuenta_regresiva&&y.hasta);
+  if(!x){const c=typeof CFGT!=='undefined'?CFGT:{};const cp=cuPromo();if(+c.cartel_on===1&&c.cartel_txt)return `<div class="pbar"><b>${esc(c.cartel_txt)}</b>${c.cartel_link?`<a href="${esc(c.cartel_link)}">${esc(c.cartel_btn||'Ver más')}</a>`:''}</div>`;
+    if(cp)return `<div class="pbar"><b>Hasta ${cp.n} cuotas sin interés</b><span>en compras desde ${ars(cp.desde)}</span><a href="#tienda">Ver productos</a></div>`;return ''}return `<div class="pbar"><b>${esc(x.banner||(x.nombre+' · '+Math.round(x.pct*100)+'% OFF'))}</b><span>Termina en <em data-cd="${esc(x.hasta)}">${cdTxt(x.hasta)}</em></span><a href="#tienda">Ver productos</a></div>`}
 function cdTxt(h){let t=Math.max(0,Math.floor((new Date(h)-Date.now())/1000));const d=Math.floor(t/86400);t%=86400;const z=n=>String(n).padStart(2,'0');return (d?d+'d ':'')+z(Math.floor(t/3600))+':'+z(Math.floor(t%3600/60))+':'+z(t%60)}
 setInterval(()=>document.querySelectorAll('[data-cd]').forEach(e=>{e.textContent=cdTxt(e.dataset.cd);if(new Date(e.dataset.cd)<=Date.now())e.closest('.pbar')?.remove()}),1000);
 const dims=p=>p.round?`Ø ${p.d[0]} × ${p.d[2]} cm`:`${p.d[0]} × ${p.d[1]} × ${p.d[2]} cm`;
@@ -806,7 +811,7 @@ const save=()=>{try{localStorage.setItem('fc_cart_c',JSON.stringify(cart))}catch
 function card(p,ci){
   const v=ci!=null&&p.colors&&p.colors[ci],G=v?galeria(p,ci):[p.img,p.img2],nm=v?`${title(p)} | ${p.colors[ci][0]}`:title(p);
   return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"${v?` data-ci="${ci}"`:''}><div class="ph">${p.fam==="Nacional"&&p.disp?`<span class="disp d-${p.disp}">${DISP[p.disp]||""}</span>`:p.price&&off(p)>0?`<span class="circ">−${off(p)}%</span>`:""}<img src="${src(G[0])}" alt="${esc(nm)}" loading="lazy">${G[1]?`<img class="alt" src="${src(G[1])}" alt="" loading="lazy">`:''}</div>
-  <div class="n cn"><span class="nm">${esc(nm)}</span>${p.price?`<span class="plp">${p.promo&&!esProfT()?`<s style="font-weight:400;margin-right:4px">${ars(p.price0)}</s><b style="color:#b3261e;margin-right:4px">−${Math.round(p.promo.pct*100)}%</b>`:''}${ars(p.price)}</span><span class="cu">3 cuotas sin interés de <i>${ars(p.price/3)}</i></span>${p.transf?`<span class="pt"><b>${ars(p.transf)}</b><small>con Transferencia</small></span>`:''}`:'<span class="plp">Consultar precio</span>'}</div></a>`;
+  <div class="n cn"><span class="nm">${esc(nm)}</span>${p.price?`<span class="plp">${p.promo&&!esProfT()?`<s style="font-weight:400;margin-right:4px">${ars(p.price0)}</s><b style="color:#b3261e;margin-right:4px">−${Math.round(p.promo.pct*100)}%</b>`:''}${ars(p.price)}</span><span class="cu">${CU()} cuotas sin interés de <i>${ars(p.price/CU())}</i></span>${p.transf?`<span class="pt"><b>${ars(p.transf)}</b><small>con Transferencia</small></span>`:''}`:'<span class="plp">Consultar precio</span>'}</div></a>`;
 }
 /* toda la foto es un link, no solo el botón */
 function proTile(){const S=P.filter(p=>p.cat==='Butacas'&&p.img);const L=S.length?S:P.filter(p=>p.img).slice(0,4);
@@ -879,7 +884,7 @@ function viewLegal(k){
    <h3>Cómo te llega</h3><p>Cada pieza viaja en caja de cartón reforzado, con esquineros y protección en cada cara. Si necesita armado, incluye herrajes e instrucciones; en CABA y GBA te lo podemos dejar armado.</p>`],
   'ayuda-pagos':['Medios de pago',`<p>Podés pagar con <b>Mercado Pago</b> (tarjeta de crédito, débito, dinero en cuenta o efectivo) o con <b>transferencia bancaria</b>. Tus datos de tarjeta nunca pasan por nuestra página.</p>
    <h3>Transferencia: 15% de descuento</h3><p>Si pagás con transferencia tenés <b>15% de descuento</b>. Al finalizar la compra te damos los datos de la cuenta; cuando vemos la plata acreditada te confirmamos el pedido.</p>
-   <h3>Cuotas</h3><p>Con tarjeta de crédito tenés <b>hasta 3 cuotas sin interés</b>. También podés pagar en 6 o 12 cuotas, con el interés de tu tarjeta.</p>
+   <h3>Cuotas</h3><p>Con tarjeta de crédito tenés <b>hasta ${CU()} cuotas sin interés</b>. También podés pagar en 6 o 12 cuotas, con el interés de tu tarjeta.</p>
    <h3>Factura</h3><p>Emitimos factura A o B. Si necesitás factura A, escribinos con tu CUIT después de comprar.</p>
    <h3>¿Problemas con el pago?</h3><p>Escribinos por ${wa} y te ayudamos.</p>`],
   'ayuda-preventa':['Cómo funciona la preventa',`<p>Compramos en contenedores directamente a los fabricantes. Con la preventa reservás tu producto antes de que llegue, con un descuento sobre el precio de lista.</p>
@@ -894,7 +899,7 @@ function viewLegal(k){
    <h3>Cambios de color o modelo</h3><p>Como los productos se fabrican a partir de tu compra, los cambios de color o modelo se pueden hacer hasta que cierre el contenedor. Escribinos y lo vemos.</p>`],
   'ayuda-preguntas':['Preguntas frecuentes',`<h3>¿Cuándo llega mi compra?</h3><p>Los productos de la preventa tienen entrega estimada en ${ENTREGA.toLowerCase()}.</p>
    <h3>¿Por qué es más barato en preventa?</h3><p>Porque lo traemos directo del fabricante y vos pagás antes de que llegue. Sin intermediarios ni stock parado.</p>
-   <h3>¿Puedo pagar en cuotas?</h3><p>Sí: hasta 3 cuotas sin interés con tarjeta de crédito, o 6 y 12 cuotas con interés.</p>
+   <h3>¿Puedo pagar en cuotas?</h3><p>Sí: hasta ${CU()} cuotas sin interés con tarjeta de crédito, o 6 y 12 cuotas con interés.</p>
    <h3>¿Puedo ver los productos antes?</h3><p>Sí, con cita previa en Buenos Aires. Escribinos por ${wa}. También podés probarlos en tu casa con la cámara del celular desde <a href="#en-tu-casa">Probalo en tu casa</a>.</p>
    <h3>¿Hacen envíos al interior?</h3><p>Sí, por transporte. Te pasamos el costo antes de despachar.</p>
    <h3>¿Tienen precios para arquitectos, estudios o comercios?</h3><p>Sí. Entrá en <a href="#proyectos">Profesionales</a> y pedí tu acceso.</p>
@@ -1177,7 +1182,7 @@ function viewProduct(p){
    <div class="info">
     <nav class="bc"><a href="#inicio">Inicio</a> . <a href="#tienda" data-back>${esc(p.cat||'Tienda')}</a> . <span>${esc(title(p))}</span></nav>
     <h1>${esc(title(p))}</h1>
-    ${p.price?`<div class="pr1"><span class="pp">${p.list>p.price?`<s>${ars(p.list)}</s>`:''}${ars(p.price)}</span><span class="pc">3 cuotas sin interés de ${ars(p.price/3)}</span></div>
+    ${p.price?`<div class="pr1"><span class="pp">${p.list>p.price?`<s>${ars(p.list)}</s>`:''}${ars(p.price)}</span><span class="pc">${CU()} cuotas sin interés de ${ars(p.price/CU())}</span></div>
      <div class="psi">Precio sin impuestos ${ars(p.price/1.21)}</div>
      ${p.transf?`<div class="ptr"><b>${ars(p.transf)}</b> con Transferencia</div>`:''}
      ${p.fam!=='Nacional'&&off(p)>0?`<div class="ptag">${isProf()?'Precio profesional':'Precio de preventa'} −${off(p)}%</div>`:''}`:'<div class="psi">Precio a confirmar</div>'}
@@ -1188,7 +1193,7 @@ function viewProduct(p){
     ${p.price?`<div class="pbuy"><div class="qty"><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">${isProf()?(p.min||1):1}</b><button data-qd="1" aria-label="Uno más">+</button></div><button class="buy" data-add="${p.id}" ${p.disp==='sin_stock'?'disabled':''}>${p.disp==='sin_stock'?'Sin stock':'Agregar al carrito'}</button></div>`:`<button class="buy" data-add="${p.id}">Consultanos</button>`}
     ${isProf()&&p.min>1?`<p class="psi">Compra mínima profesional: ${p.min} unidades</p>`:''}
     <details class="acc"><summary>${IC_CARD}<span>Medios de pago</span></summary><div>
-     ${p.price?`<p>3 cuotas sin interés de <b>${ars(p.price/3)}</b></p>`:''}
+     ${p.price?`<p>${CU()} cuotas sin interés de <b>${ars(p.price/CU())}</b></p>`:''}
      ${p.transf?`<p>15% de descuento pagando con Transferencia: <b>${ars(p.transf)}</b></p>`:''}
      <p>También 6 y 12 cuotas, débito, dinero en cuenta o efectivo con Mercado Pago.</p></div></details>
     <details class="acc"><summary>${IC_TRUCK}<span>Medios de envío</span></summary><div>
@@ -1220,7 +1225,7 @@ function drawCart(){
     <div class="cnt"><div><span>Contenedor compartido</span><span>${pc}% lleno</span></div><div class="cbar"><i style="width:${pc0}%"></i><b style="left:${pc0}%;width:${Math.max(0,pc-pc0)}%"></b></div><small>Tu pedido ocupa ${cbm.toFixed(2).replace('.',',')} m³. Lo confirmamos cuando el contenedor se completa con otros pedidos y la preventa.</small></div>
     ${bad.length?`<p class="cwarn">Revisá los mínimos: ${bad.map(l=>esc(title(byId(l.id)))+' ('+(byId(l.id).moq||1)+' u.)').join(', ')}</p>`:''}
     <button class="buy" id="proReserve" ${bad.length?'disabled':''}>Reservar en el contenedor</button><button class="lnk" id="proQuote">Consultar por WhatsApp</button>`:'';return}
-  $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>Entrega estimada</span><span>${ENTREGA}</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="pay">Ir a pagar</button><small class="safe">🔒 Mercado Pago (hasta 3 cuotas sin interés) o transferencia con 15% off</small>`:'';
+  $('#cartFt').innerHTML=cart.length?`<div><span>Total preventa</span><span>${ars(t)}</span></div><div style="color:var(--soft)"><span>Entrega estimada</span><span>${ENTREGA}</span></div><div style="color:var(--soft)"><span>IVA contenido (Ley 27.743)</span><span>${ars(Math.round(t-t/1.21))}</span></div><button class="buy" id="pay">Ir a pagar</button><small class="safe">🔒 Mercado Pago (hasta ${CU()} cuotas sin interés) o transferencia con 15% off</small>`:'';
 }
 const openCart=()=>{drawCart();$('#dr').classList.add('on');$('#dr').setAttribute('aria-hidden','false')};
 const closeCart=()=>{$('#dr').classList.remove('on');$('#dr').setAttribute('aria-hidden','true')};
@@ -1256,7 +1261,7 @@ function viewCheckout(){
     ${z?`<p class="ck2-z">${ZONAS[z].n}${ZONAS[z].dias?` · entregamos los <b>${ZONAS[z].dias}</b>`:''}</p>`:`<p class="mut">Escribí tu código postal de 4 números para ver las opciones y los días de entrega.</p>`}</div></div>
    ${z?`<div class="ck2-b"><span class="ck2-n">2</span><div><b>Elegí cómo te llega</b><div class="env">${ops.map(([k,t,s,p])=>`<button class="env-o ${ENV===k?'on':''}" data-env2="${k}"><i></i><span><b>${t}</b><small>${s}</small></span><em>${p}</em></button>`).join('')}</div></div></div>`:''}
    <div class="ck2-b"><span class="ck2-n">${nPay}</span><div><b>¿Cómo pagás?</b><div class="env">
-    <button class="env-o ${TR?'':'on'}" data-paym="mp"><i></i><span><b>Mercado Pago</b><small>Tarjeta de crédito hasta 3 cuotas sin interés (6 y 12 con interés), débito, dinero en cuenta o efectivo. Tus datos los cargás ahí.</small></span><em>${ars(subMP)}</em></button>
+    <button class="env-o ${TR?'':'on'}" data-paym="mp"><i></i><span><b>Mercado Pago</b><small>Tarjeta de crédito hasta ${cuPromo()&&subMP>=cuPromo().desde?cuPromo().n:CU()} cuotas sin interés (y más cuotas con interés), débito, dinero en cuenta o efectivo. Tus datos los cargás ahí.</small></span><em>${ars(subMP)}</em></button>
     <button class="env-o ${TR?'on':''}" data-paym="transferencia"><i></i><span><b>Transferencia bancaria · 15% off</b><small>Te damos los datos de la cuenta y confirmamos tu pedido cuando se acredita.</small></span><em>${ars(cart.reduce((a,l)=>a+precioCk(byId(l.id),true)*l.q,0))}</em></button></div>
     <div class="ck2-dt"><input id="bu_n" placeholder="Nombre y apellido" value="${esc(BUY.n)}" autocomplete="name"><input id="bu_d" inputmode="numeric" placeholder="DNI" value="${esc(BUY.d)}"><input id="bu_e" type="email" placeholder="Mail" value="${esc(BUY.e)}" autocomplete="email"><input id="bu_t" inputmode="tel" placeholder="Teléfono / WhatsApp" value="${esc(BUY.t)}" autocomplete="tel">${ENV==='retiro'?'':`<input id="bu_a" placeholder="Dirección de entrega (calle, número, piso, localidad)" value="${esc(BUY.a)}" autocomplete="street-address">`}</div><p class="mut">Los necesitamos para la factura y la entrega.${TR?' Te mandamos los datos para transferir a ese mail.':''}</p></div></div>
   </div>
