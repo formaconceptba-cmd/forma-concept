@@ -104,6 +104,8 @@ if(typeof window.drawNav==='function'){const _dn=window.drawNav;window.drawNav=f
 /* si se sale del Inicio, la próxima vez vuelve el Inicio del celular */
 if(typeof draw==='function'){const _d=draw;draw=async function(){if(tab!=='inicio')AP.full=false;const r=await _d.apply(this,arguments);try{barra()}catch(e){}return r}}
 
+/* si el panel ya se dibujó antes de que cargue este archivo, se vuelve a dibujar con el Inicio del celular */
+setTimeout(()=>{try{if(typeof user!=='undefined'&&user&&document.querySelector('.tn')){barra();if(tab==='inicio'&&MOV()&&!document.querySelector('.ap'))draw()}}catch(e){}},0);
 /* app instalable */
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw-admin.js',{scope:'/admin'}).catch(()=>{}));
 
