@@ -554,6 +554,9 @@ body.home #app>.full:first-child{border-bottom:12px solid var(--bg)}
 /* ingreso / registro de profesionales: en el celular nada se corta */
 .pro2>*{min-width:0}.cko input,.cko select,.cko .buy{width:100%;max-width:100%;min-width:0;box-sizing:border-box}.cko select{text-overflow:ellipsis}.cko .buy{white-space:normal}
 .cko .lnk{background:none;border:0;text-align:left;cursor:pointer}
+/* editor visual de fotos */
+.ed-b{position:absolute;z-index:70;background:#2c6ecb;color:#fff!important;border:0;border-radius:6px;padding:8px 12px;font:500 12px/1 system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.ed-on{outline:3px dashed #2c6ecb!important;outline-offset:-8px}
 /* video de la colección Fresno */
 .full.vid video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#2b2926}
 /* banner de profesionales, ahora al final */
@@ -689,7 +692,10 @@ const off=p=>Math.round((1-p.price/p.list)*100);
 P.forEach(norm);
 /* Base de datos (Supabase): si responde, reemplaza la lista de arriba por la real. Si falla, queda la de arriba. */
 const ENTREGA='Marzo 2027';
-let SF={},SP={};const FX=(k,d)=>SF[k]||d;
+let SF={},SP={};
+/* editor visual de fotos: el panel abre la tienda con ?editar=1 adentro de un recuadro y cada foto editable muestra "Cambiar foto" */
+const EDIT=/[?&]editar=1/.test(location.search)&&window.parent!==window;let FXU={};
+const FX=(k,d)=>{const v=SF[k]||d;if(EDIT)try{FXU[src(v)]=k}catch(e){}return v};
 const FDEF={inicio_portada:'ctx_pause',inicio_fresno:'fresno-comedor',banda_probalo:'hv_varilla',inicio_acero:'hv_acanalada60',banda_nacional:'nac_1',frm_portada:'std_hero',nacional_1:'nac_1',nacional_2:'nac_2',nacional_3:'nac_3',profesionales_1:'prj_obra-fachada',profesionales_2:'std_14',embalaje:'pack',estudio_1:'std_06',estudio_2:'std_02',estudio_3:'std_11',estudio_4:'std_05',estudio_5:'prj_cocina-acero',estudio_6:'std_hero','cat_Sillas':'MC-282','cat_Sillones':'C537','cat_Mesas':'1021T1.35','cat_Mesas bajas':'102E1.0','cat_Bancos':'WS-035'};
 /* encuadre elegido en el panel: se aplica a la foto donde aparezca */
 function applyPos(){const ks=Object.keys(SP);if(!ks.length)return;const imgs=[...document.querySelectorAll('img')];ks.forEach(k=>{const u=src(FX(k,FDEF[k]||''));imgs.forEach(i=>{if(i.getAttribute('src')===u)i.style.objectPosition=SP[k]})})}
@@ -1448,7 +1454,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCart();closeMe
 const onScroll=()=>{document.body.classList.toggle('scrolled',scrollY>20);fsScroll()};
 addEventListener('scroll',onScroll,{passive:true});
 /* cinta de siluetas: avanza sola (15 s por vuelta) y se puede arrastrar con el dedo o el mouse */
-function silInit(){document.querySelectorAll('.sil-t:not([data-ok])').forEach(silRun);vidInit();hpromoPos()}
+function silInit(){document.querySelectorAll('.sil-t:not([data-ok])').forEach(silRun);vidInit();setTimeout(edMark,400);hpromoPos()}
 function silRun(t){t.dataset.ok=1;const DUR=+t.dataset.dur||15000;
   const s=t.firstElementChild,c=s.cloneNode(true),c0=s.cloneNode(true);c.classList.add('cl');c0.classList.add('cl');t.appendChild(c);t.insertBefore(c0,s);
   let x=-1,last=0,hold=0,set=-1,drag=null;const now=()=>performance.now();
@@ -1468,6 +1474,19 @@ document.addEventListener('change',e=>{if(!e.target.matches||!e.target.matches('
 /* portada: las cuotas quedan alineadas con "Bancos" del menú de arriba */
 function hpromoPos(){const h=document.getElementById('hpromo'),b=document.querySelector('header a[data-r="Bancos"]');if(!h)return;if(b&&b.offsetParent&&innerWidth>720){h.style.setProperty('--hpx',b.getBoundingClientRect().left+'px')}else h.style.removeProperty('--hpx')}
 addEventListener('resize',hpromoPos);
+/* ---- editor visual de fotos (sólo dentro del panel) ---- */
+const EDLBL={inicio_portada:'Portada',inicio_acero:'Colección Acero',inicio_fresno:'Colección Fresno',frm_portada:'Portada de FRM Studio',nacional_1:'Foto grande',nacional_2:'Foto 2',nacional_3:'Foto 3',profesionales_1:'Foto principal',profesionales_2:'Proyecto a medida',embalaje:'Embalaje'};
+const edLbl=k=>EDLBL[k]||(k.startsWith('cat_')?'Categoría '+k.slice(4):k.startsWith('estudio_')?'FRM Studio · foto '+k.slice(8):k);
+function edMark(){if(!EDIT)return;document.querySelectorAll('.ed-b').forEach(b=>b.remove());document.querySelectorAll('.ed-on').forEach(i=>i.classList.remove('ed-on'));
+  document.querySelectorAll('#app img').forEach(im=>{const k=FXU[im.getAttribute('src')];if(!k)return;const r=im.getBoundingClientRect(),cs=getComputedStyle(im);
+    if(r.width<70||r.height<60||+cs.opacity<.5||cs.visibility==='hidden'||r.bottom<0&&r.top<0)return;
+    im.classList.add('ed-on');const b=document.createElement('button');b.className='ed-b';b.type='button';b.textContent='Cambiar foto · '+edLbl(k);
+    b.style.left=(r.left+scrollX+12)+'px';b.style.top=(r.top+scrollY+12)+'px';b.onclick=e=>{e.preventDefault();e.stopPropagation();edPick(k)};document.body.appendChild(b)})}
+function edPick(k){const P=window.parent;if(!P||typeof P.subirFoto!=='function'){toast('Abrí el editor desde el panel');return}
+  const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=async()=>{const f=i.files[0];if(!f)return;toast('Subiendo la foto…');
+    try{const url=await P.subirFoto(f,'sitio');const {error}=await sbInit().from('sitio_fotos').upsert({clave:k,url});if(error)throw new Error(error.message);SF[k]=url;render();toast('✓ Listo: ya se ve en la tienda');try{P.postMessage({edFoto:k},location.origin)}catch(e){}}
+    catch(e){toast('No se pudo subir: '+(e.message||e))}};i.click()}
+if(EDIT){document.documentElement.classList.add('editando');addEventListener('resize',()=>setTimeout(edMark,200));setInterval(edMark,1500)}
 /* video del inicio:
  se baja recién cuando aparece en pantalla y se pausa al salir */
 function vidInit(){document.querySelectorAll('video[data-src]').forEach(v=>{if(v.dataset.ok)return;v.dataset.ok=1;

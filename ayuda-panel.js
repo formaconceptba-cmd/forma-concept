@@ -1,7 +1,8 @@
 /* ---------- Ayuda del panel: qué es cada pantalla (sale abajo del título) y el asistente "Preguntar" ----------
    Pensado para que alguien nuevo entienda el panel sin tener que preguntar. Lo usa shell.js. */
 window.AYUDA={
- inicio:'El resumen del día: ventas, pedidos nuevos y lo que conviene mirar hoy.',
+ inicio:'Todo el negocio en detalle: ventas, ganancia, márgenes, anuncios, medios de pago, productos y contenedores.',
+ resumen:'La vista rápida, como la app de Shopify: en vivo, ventas, pedidos y lo que tenés que hacer hoy. Tocá cualquier tarjeta para ir a esa pantalla.',
  alertas:'Todo lo que necesita que hagas algo. <b>Tocá cada alerta</b> y abajo te dice qué hacer para resolverla.',
  campanias:'Cuánto vendió cada campaña de anuncios (Meta, Google). Necesita los tokens de Meta y Google Analytics cargados.',
  pedidos:'Todos los pedidos de la web. Acá cambiás el estado (pagado, en camino, entregado, cancelado), confirmás transferencias y registrás devoluciones.',
@@ -17,7 +18,7 @@ window.AYUDA={
  pprecios:'Precio o descuento especial de cada producto para profesionales.',
  mails:'Los textos de los mails automáticos que recibe el cliente (confirmación, pago, factura, despacho). Se pueden editar.',
  frm:'Los proyectos de FRM Studio que aparecen en la web.',
- fotos:'Las fotos grandes de la web (portada, bandas, estudio). Cambiás una y se actualiza la página.',
+ fotos:'Ves la tienda tal cual es y cambiás cada foto en su lugar con el botón azul "Cambiar foto". En "Lista de fotos" elegís el encuadre o volvés a la original.',
  maestro:`La base de <b>todos</b> los productos cotizados a proveedores: FOB (precio en origen, por pieza), m³ por pieza, packing, MOQ, medidas y estado. De acá salen los contenedores y la tienda.
   <details class="tn-det"><summary>¿Para qué es cada botón?</summary><ul>
   <li><b>+ Nuevo producto</b>: cargar a mano un producto cotizado. El código se arma solo.</li>

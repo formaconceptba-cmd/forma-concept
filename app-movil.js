@@ -38,7 +38,7 @@ async function drawInicioMovil(silencioso){
     sb.rpc('productos_bloqueados'),
     sb.from('eco_pedidos').select('nombre,estado'),
     sb.from('profesionales').select('id,estado').eq('estado','pendiente')]);
-  if(tab!=='inicio'||AP.full)return;
+  if(tab!=='resumen')return;
   const O=os||[],E=ev||[],vend=o=>VEND.includes(o.estado);
   const cur=O.filter(o=>vend(o)&&+new Date(o.created_at)>=from),old=O.filter(o=>vend(o)&&+new Date(o.created_at)>=prev&&+new Date(o.created_at)<from);
   const S=a=>a.reduce((s,o)=>s+(+o.total||0),0),tot=S(cur),totP=S(old);
@@ -83,29 +83,30 @@ async function drawInicioMovil(silencioso){
   const m=$m();
   m.querySelectorAll('[data-aper]').forEach(b=>b.onclick=()=>{AP.per=+b.dataset.aper;drawInicioMovil()});
   m.querySelectorAll('[data-ago]').forEach(b=>b.onclick=()=>{tab=b.dataset.ago;draw()});
-  m.querySelector('[data-afull]').onclick=()=>{AP.full=true;draw()};
+  m.querySelector('[data-afull]').onclick=()=>{tab='inicio';draw()};
   m.querySelector('[data-aask]').onclick=()=>{if(typeof chatAbrir==='function')chatAbrir()};
-  AP.t=setTimeout(()=>{if(tab==='inicio'&&!AP.full&&!document.hidden)drawInicioMovil(true)},60000);
+  AP.t=setTimeout(()=>{if(tab==='resumen'&&!document.hidden)drawInicioMovil(true)},60000);
 }
 const appInstalada=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 
-/* el Inicio y los suscriptores: en el celular va el Inicio nuevo (con "Ver informe" se ve el completo) */
-if(typeof drawInicio==='function'){const _di=drawInicio;drawInicio=async function(){if(!AP.full){try{return await drawInicioMovil.apply(this,arguments)}catch(e){console.error(e);AP.full=true}}return _di.apply(this,arguments)}}
-if(typeof drawSubs==='function'){const _ds=drawSubs;drawSubs=async function(){if(!AP.full)return;return _ds.apply(this,arguments)}}
+/* "Resumen" es una pantalla propia (menú Inicio → Resumen); "Inicio" queda como siempre */
 
 /* barra de abajo (sólo celular) */
-const TABS=[['inicio','Inicio','M3 10.5 12 4l9 6.5V20h-6v-6H9v6H3z'],['pedidos','Pedidos','M6 7h12l-1 13H7zM9 7a3 3 0 0 1 6 0'],['productos','Productos','M3 12V4h8l10 10-8 8zM7.5 8.5h.01'],['alertas','Alertas','M12 4 2.5 20h19zM12 10v4M12 17v.5'],['menu','Menú','M4 7h16M4 12h16M4 17h16']];
+const TABS=[['resumen','Resumen','M3 10.5 12 4l9 6.5V20h-6v-6H9v6H3z'],['pedidos','Pedidos','M6 7h12l-1 13H7zM9 7a3 3 0 0 1 6 0'],['productos','Productos','M3 12V4h8l10 10-8 8zM7.5 8.5h.01'],['alertas','Alertas','M12 4 2.5 20h19zM12 10v4M12 17v.5'],['menu','Menú','M4 7h16M4 12h16M4 17h16']];
 function barra(){let b=document.getElementById('apbar');
   if(!document.querySelector('.tn')){if(b)b.remove();return}
   if(!b){document.body.insertAdjacentHTML('beforeend','<nav class="apbar" id="apbar" aria-label="Accesos"></nav>');b=document.getElementById('apbar');
-    b.onclick=e=>{const x=e.target.closest('[data-abt]');if(!x)return;const k=x.dataset.abt;if(k==='menu'){document.body.classList.toggle('tn-open');return}document.body.classList.remove('tn-open');if(k==='inicio')AP.full=false;tab=k;draw()}}
+    b.onclick=e=>{const x=e.target.closest('[data-abt]');if(!x)return;const k=x.dataset.abt;if(k==='menu'){document.body.classList.toggle('tn-open');return}document.body.classList.remove('tn-open');tab=k;draw()}}
   b.innerHTML=TABS.map(([k,l,d])=>`<button data-abt="${k}" class="${tab===k?'on':''}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg><span>${l}</span></button>`).join('')}
 if(typeof window.drawNav==='function'){const _dn=window.drawNav;window.drawNav=function(){const r=_dn.apply(this,arguments);try{barra()}catch(e){}return r}}
-/* si se sale del Inicio, la próxima vez vuelve el Inicio del celular */
-if(typeof draw==='function'){const _d=draw;draw=async function(){if(tab!=='inicio')AP.full=false;const r=await _d.apply(this,arguments);try{barra()}catch(e){}return r}}
+if(typeof draw==='function'){const _d=draw;draw=async function(){
+  if(tab==='resumen'){clearTimeout(AP.t);if(typeof drawNav==='function')drawNav();$m().innerHTML='<p class="hint">Cargando…</p>';try{await drawInicioMovil()}catch(e){console.error(e);$m().innerHTML='<p class="hint">No se pudo cargar el resumen.</p>'}try{barra()}catch(e){}return}
+  const r=await _d.apply(this,arguments);try{barra()}catch(e){}return r}}
+/* la app instalada arranca en el Resumen */
+if(/[?&]app=1/.test(location.search)&&typeof tab!=='undefined'&&tab==='inicio')tab='resumen';
 
 /* si el panel ya se dibujó antes de que cargue este archivo, se vuelve a dibujar con el Inicio del celular */
-let vig=0;const vigT=setInterval(()=>{vig++;if(vig>60)return clearInterval(vigT);try{if(typeof user!=='undefined'&&user&&document.querySelector('.tn')){if(!document.getElementById('apbar'))barra();if(tab==='inicio'&&!AP.full&&!document.querySelector('.ap')&&!/Cargando/.test(($m()||{}).textContent||'')){clearInterval(vigT);drawInicioMovil()}}}catch(e){}},500);
+let vig=0;const vigT=setInterval(()=>{vig++;if(vig>60)return clearInterval(vigT);try{if(typeof user!=='undefined'&&user&&document.querySelector('.tn')){if(!document.getElementById('apbar'))barra();if(/[?&]app=1/.test(location.search)&&tab==='inicio'&&!document.querySelector('.ap')){clearInterval(vigT);tab='resumen';draw()}}}catch(e){}},500);
 /* app instalable */
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw-admin.js',{scope:'/admin'}).catch(()=>{}));
 
