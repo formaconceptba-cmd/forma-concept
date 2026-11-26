@@ -551,6 +551,9 @@ body.home #app>.full:first-child{border-bottom:12px solid var(--bg)}
 @media (max-width:720px){.sec .fpg .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* categorías en el celular: más altas, como ESE, y se asoma la que sigue */
 @media (max-width:720px){.cs{padding:10px 0}.cs .tr{gap:10px;padding:0 8px;scroll-padding:0 8px}.cs a{flex-basis:84%!important;aspect-ratio:9/10!important}.cs a.w img{padding:4% 0 14%;transform:scale(.92)}.cs b{font-size:24px!important}.cs a.w b{padding-bottom:22px;font-size:16px!important}.cs .ar{display:none}}
+/* ingreso / registro de profesionales: en el celular nada se corta */
+.pro2>*{min-width:0}.cko input,.cko select,.cko .buy{width:100%;max-width:100%;min-width:0;box-sizing:border-box}.cko select{text-overflow:ellipsis}.cko .buy{white-space:normal}
+.cko .lnk{background:none;border:0;text-align:left;cursor:pointer}
 /* video de la colección Fresno */
 .full.vid video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#2b2926}
 /* banner de profesionales, ahora al final */
@@ -957,7 +960,7 @@ function viewPro(){
   const adm=ISADM?`<p><a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 32px" href="/admin">Ir al panel de administración</a></p>`:'';
   let b;
   if(!ME) b=`<p>Precios especiales para estudios de arquitectura, interiorismo, desarrolladores y empresas. Mismo catálogo, condiciones para profesionales.</p>
-    <div class="pro2"><div class="cko"><b>Ya tengo acceso</b><input id="pl_e" type="email" placeholder="Tu email" autocomplete="email"><button class="buy" id="proLogin">Enviarme el link para entrar</button><small>Sin contraseña: te llega un link al mail.</small></div>${reg()}</div>`;
+    <div class="pro2"><form class="cko" id="plF" onsubmit="return false"><b>Ya tengo acceso</b><input id="pl_e" type="email" placeholder="Tu mail" autocomplete="username"><input id="pl_p" type="password" placeholder="Contraseña" autocomplete="current-password"><button class="buy" id="proLogin">Entrar</button><button type="button" class="lnk" id="proLink">No tengo contraseña: mandame un link al mail</button></form>${reg()}</div>`;
   else if(isProf()) b=`<p>Hola <b>${esc(PRO.nombre)}</b>${PRO.estudio?` · ${esc(PRO.estudio)}`:''}. Tu cuenta profesional está activa: <b>ya ves toda la tienda con tus precios profesionales</b> y podés comprar en el momento, desde la cantidad mínima de cada producto.</p><p><a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 32px" href="#tienda">Ver la tienda con mis precios</a></p>${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
   else if(isPro()) b=`<p>Hola <b>${esc(PRO.nombre)}</b>${PRO.estudio?` · ${esc(PRO.estudio)}`:''}. Tenés acceso al catálogo profesional.</p><p><a class="buy" style="display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 32px" href="#pro-catalogo">Entrar al catálogo profesional</a></p>${MIS.length?`<p>Tenés <b>${MIS.length}</b> reserva${MIS.length>1?'s':''} en el contenedor. <a href="#pro-catalogo">Verlas</a></p>`:''}${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
   else if(PRO&&PRO.estado==='pendiente') b=`<p>Recibimos tu solicitud, <b>${esc(PRO.nombre)}</b>. La estamos revisando y te avisamos por mail.</p>${adm}<p><button class="lnk" id="proOut">Salir</button></p>`;
@@ -1343,7 +1346,11 @@ document.addEventListener('click',e=>{
   if(a.id==='proQuote'){const t=cart.reduce((s,l)=>s+(byId(l.id).price||0)*l.q,0);
     const txt=`Hola, soy ${PRO.nombre}${PRO.estudio?' ('+PRO.estudio+')':''}. Quiero cotizar:\n`+cart.map(l=>{const p=byId(l.id);return `• ${l.q} × ${title(p)} · ${p.colors[l.c][0]} — ${p.price?ars(p.price*l.q):'a consultar'}`}).join('\n')+`\nTotal profesional: ${ars(t)}`;
     window.open('https://wa.me/541139443055?text='+encodeURIComponent(txt),'_blank','noopener');return}
-  if(a.id==='proLogin'){const e=$('#pl_e').value.trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){toast('Escribí tu email.');return}
+  if(a.id==='proLogin'){const e=$('#pl_e').value.trim(),pw=$('#pl_p').value;if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){toast('Escribí tu mail.');return}
+    if(!pw){toast('Escribí tu contraseña, o tocá "mandame un link al mail".');return}
+    a.disabled=true;a.textContent='Entrando…';sbInit().auth.signInWithPassword({email:e,password:pw}).then(async({error})=>{a.disabled=false;a.textContent='Entrar';
+      if(error){toast('Mail o contraseña incorrectos.');return}await proLoad();render();toast('¡Listo, entraste!')});return}
+  if(a.id==='proLink'){const e=$('#pl_e').value.trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){toast('Escribí tu mail.');return}
     a.disabled=true;sbInit().auth.signInWithOtp({email:e,options:{shouldCreateUser:false,emailRedirectTo:location.origin+'/?pro=1'}}).then(({error})=>{a.disabled=false;
       toast(error?(/signup|not allowed|not found/i.test(error.message)?'Ese mail todavía no tiene acceso. Registrate o esperá la aprobación.':'No pudimos mandar el link. Probá en unos minutos.'):'Te mandamos un link a '+e)});return}
   if(a.id==='proReg'){const v=k=>$('#pr_'+k).value.trim();const d={nombre:v('n'),estudio:v('s'),cuit:v('c'),telefono:v('t'),rubro:v('r'),tipo:v('k')||'profesional',email:v('e').toLowerCase()};
