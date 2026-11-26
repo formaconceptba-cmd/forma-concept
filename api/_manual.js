@@ -46,7 +46,10 @@ MENÚ DEL PANEL (pantalla por pantalla)
   Estados del contenedor: Borrador → Confirmado → En tránsito → Recibido → Cerrado. Al pasar a Recibido se congela la proyección.
 - Importación → Órdenes a proveedores: armar órdenes de compra y ver todas las proformas y órdenes recibidas, por proveedor.
 - Importación → Parámetros de importación: tipo de cambio, fletes y capacidad de cada contenedor, seguro, despachante, impuestos, galpón. Afectan los cálculos de todos los contenedores.
-- Configuración → Precios y medios de pago: reglas de precio de la tienda (preventa, descuento por transferencia, cuotas).
+- Precios y promociones → Reglas de precio y medios de pago: reglas de precio de la tienda (transferencia, profesional, mayorista, cuotas) y cuenta para transferencias.
+- Precios y promociones → Promociones y códigos: preventa prendida/apagada, descuento por transferencia, cuotas sin interés; promociones por tiempo limitado (% entre dos fechas, toda la tienda / categorías / productos, con cuenta regresiva opcional arriba del inicio de la web); códigos de descuento (para influencers o clientes: se escriben en Finalizar compra o se comparte el link formaconceptba.com/?cupon=CODIGO; máximo de usos y vencimiento); "Mandar por mail" a toda la lista (suscriptores + clientes, con link de baja; necesita RESEND_API_KEY). Las promos no se suman: se usa el descuento mayor. Profesionales y mayoristas no tienen promos.
+- Dónde se cambia el precio: al lanzar un contenedor, en Contenedores → Precios (mínimo sin perder y sugerido con todos los costos) y "Pasar a la tienda"; en el día a día, en Productos → Lista de productos (al lado de cada precio se ve el mínimo y el sugerido; en rojo si queda abajo del mínimo). En el contenedor el precio es por unidad; en la lista, si se vende de a 2, es el de la caja.
+- Marketing → Mail a toda la lista: mail de promoción a suscriptores y clientes. Marketing → Mails automáticos: los mails de compra, pago y envío.
 - Configuración → Envíos y retiro: costos y zonas de envío, retiro en Lanús.
 
 CÓMO SE HACE…

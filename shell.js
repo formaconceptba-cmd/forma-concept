@@ -24,9 +24,9 @@ const MENU=[
  ['§cargar','Para cargar, en este orden',[]],
  ['imp','1. Importación',[['maestro','Maestro de productos'],['maestro|nuevo','Nuevo producto'],['maestro|importar','Importar cotización (RFQ)'],['ecopar','Parámetros de importación'],['eco','Contenedores (proforma y precios)'],['compras','Órdenes a proveedores']]],
  ['prods','2. Productos',[['productos','Lista de productos'],['paleta','Colores'],['nacionales','Productos nacionales'],['stock','Inventario (Pailos)']]],
- ['desc','3. Reglas de precio',[['rent','Precios y medios de pago'],['pprecios','Precios profesionales']]],
+ ['desc','3. Precios y promociones',[['promos','Promociones y códigos'],['rent','Reglas de precio y medios de pago'],['pprecios','Precios profesionales']]],
  ['online','4. Tienda online',[['fotos','Fotos de la página'],['frm','FRM Studio']]],
- ['mkt','5. Marketing',[['mails','Mails a clientes']]]];
+ ['mkt','5. Marketing',[['mailpromo','Mail a toda la lista'],['mails','Mails automáticos']]]];
 const PIE=['config','Configuración',[['envios','Envíos y retiro']]];
 /* cualquier pantalla que exista y no esté en el menú, se suma para no perder nada */
 const todas=new Set([...MENU,PIE].flatMap(g=>g[2].map(s=>s[0])));

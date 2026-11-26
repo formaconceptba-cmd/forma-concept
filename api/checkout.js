@@ -39,11 +39,18 @@ export default async function handler(req, res) {
     const tok = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
     if (tok) { const u = await fetch(SB + '/auth/v1/user', { headers: { apikey: PUB, Authorization: 'Bearer ' + tok } }); if (u.ok) { const uj = await u.json(); const [pp] = await (await sb(`profesionales?select=email,nombre,estudio,telefono,tipo,estado&email=eq.${encodeURIComponent(String(uj.email || '').toLowerCase())}`)).json(); if (pp && pp.estado === 'aprobado' && pp.tipo === 'profesional') { prof = pp; const st = await (await sb('settings?select=key,value&key=in.(desc_profesional,min_profesional)')).json(); for (const s of st) { if (s.key === 'desc_profesional') descProf = +s.value; if (s.key === 'min_profesional') minProf = +s.value } } } }
     const ids = [...new Set(lines.map(l => l.id))];
-    const pr = await sb(`products?select=id,tipo,nombre,linea,disponibilidad,precio_lista,min_profesional,unidades,vendidas,activo&id=in.(${ids.map(encodeURIComponent).join(',')})`);
+    const pr = await sb(`products?select=id,tipo,nombre,linea,categoria,disponibilidad,precio_lista,min_profesional,unidades,vendidas,activo&id=in.(${ids.map(encodeURIComponent).join(',')})`);
     const prods = Object.fromEntries((await pr.json()).map(p => [p.id, p]));
     // Todos los precios salen de una sola función de la base (reglas de precio), nunca del navegador.
     const PC = Object.fromEntries((await (await sb('rpc/precios_calc', { method: 'POST', body: '{}' })).json()).map(x => [x.id, x]));
     const transf = body.medio === 'transferencia';
+    // Promociones por tiempo (automáticas) y código de descuento: se valida acá, nunca se confía en el navegador. No se suman: se usa la mayor.
+    let PROMOS = [], cup = null;
+    try { const pj = await (await sb('rpc/promo_vigente', { method: 'POST', body: '{}' })).json(); if (Array.isArray(pj)) PROMOS = pj; } catch (e) {}
+    const cupTxt = clean(body.cupon, 40);
+    if (cupTxt && !prof) { try { const cj = await (await sb('rpc/cupon_validar', { method: 'POST', body: JSON.stringify({ p_codigo: cupTxt }) })).json(); if (Array.isArray(cj) && cj[0]) cup = cj[0]; } catch (e) {} if (!cup) return res.status(400).json({ error: 'El código de descuento no es válido o ya venció.' }); }
+    const enAlc = (x, p) => x.alcance === 'todo' || (x.alcance === 'categoria' && (x.alcance_valor || []).includes(p.categoria)) || (x.alcance === 'producto' && (x.alcance_valor || []).includes(p.id));
+    let descuento = 0;
     // Stock: sale de los contenedores (y descuenta lo reservado por pedidos sin pagar y reservas mayoristas).
     const STK = Object.fromEntries((await (await sb('rpc/stock_calc', { method: 'POST', body: '{}' })).json()).map(x => [x.id, x]));
     // SKU de venta (producto + color): tiene que ser de ese producto y no estar discontinuado; si ya hay stock por caja, se controla por color.
@@ -63,8 +70,12 @@ export default async function handler(req, res) {
       const v = l.sku ? VAR[l.sku] : null;
       if (l.sku && (!v || v.codigo_master !== l.id || v.estado === 'discontinuado')) return res.status(400).json({ error: `El color elegido de ${p.tipo} ${p.nombre} ya no está disponible.` });
       if (v && SV[l.sku] && SV[l.sku].con_datos && l.q > SV[l.sku].disponible - lines.filter(x => x.sku === l.sku && x !== l).reduce((a, x) => a + x.q, 0)) return res.status(409).json({ error: `No queda stock de ${p.tipo} ${p.nombre} en ${l.color || 'ese color'}.` });
-      const precio = prof ? (transf ? c.prof_transf : c.prof) : (transf ? c.transf : c.publico);
-      items.push({ p, q: l.q, color: l.color, sku: v ? l.sku : null, precio, lista: c.lista, regla: [prof ? 'profesional' : c.regla, transf ? 'transferencia' : ''].filter(Boolean).join(' + ') });
+      const base = prof ? (transf ? c.prof_transf : c.prof) : (transf ? c.transf : c.publico);
+      let pct = 0, promo = null;
+      if (!prof) { for (const x of PROMOS) if (enAlc(x, p) && +x.pct > pct) { pct = +x.pct; promo = x.nombre; } if (cup && enAlc(cup, p) && +cup.pct > pct) { pct = +cup.pct; promo = 'Código ' + cup.codigo; } }
+      const precio = pct ? Math.round(base * (1 - pct)) : base;
+      descuento += (base - precio) * l.q;
+      items.push({ p, q: l.q, color: l.color, sku: v ? l.sku : null, precio, lista: c.lista, promo, regla: [prof ? 'profesional' : c.regla, transf ? 'transferencia' : '', promo ? promo + ' −' + Math.round(pct * 100) + '%' : ''].filter(Boolean).join(' + ') });
     }
     const ENVIOS = { gratis: 'Envío gratis (día a coordinar)', express: 'Envío express 24 h', retiro: 'Retiro en depósito (Lanús)', interior: 'Envío al interior (a cotizar)', domicilio: 'Envío a domicilio' };
     const cpN = parseInt(body.cp, 10), zona = cpN >= 1000 && cpN <= 9999 ? (cpN < 1500 ? 'caba' : cpN < 1900 ? 'gba' : 'int') : null;
@@ -99,11 +110,12 @@ export default async function handler(req, res) {
     const tk = body.tracking || {}, cl = (s, n) => String(s ?? '').slice(0, n);
     const tracking = { fbp: cl(tk.fbp, 120) || null, fbc: cl(tk.fbc, 300) || null, ga_client_id: cl(tk.ga_client_id, 80) || null, gclid: cl(tk.gclid, 200) || null, ttclid: cl(tk.ttclid, 200) || null, landing_url: cl(tk.landing_url, 1000) || null, referrer: cl(tk.referrer, 500) || null, utm: tk.utm && typeof tk.utm === 'object' ? Object.fromEntries(Object.entries(tk.utm).slice(0, 6).map(([k, v]) => [cl(k, 20), cl(v, 200)])) : null, clic_ts: +tk.clic_ts || null, checkout_url: cl(tk.checkout_url, 500) || null, ip: cl((req.headers['x-forwarded-for'] || '').split(',')[0].trim(), 60), user_agent: cl(req.headers['user-agent'], 400) };
 
-    const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, ...(prof ? { email: buyer.email || prof.email, nombre: buyer.nombre || (prof.nombre + (prof.estudio ? ' (' + prof.estudio + ')' : '')), telefono: buyer.telefono || prof.telefono || '' } : {}), canal: prof ? 'profesional' : 'publico', tracking, ...(transf ? { medio_pago: 'transferencia', cuotas: 1, comision_real: 0 } : {}), envio: ENVIOS[envio], costo_envio: costoEnvio, total, bultos, visitante: clean(body.visitante, 64) || null }) });
+    const or = await sb('orders', { method: 'POST', body: JSON.stringify({ ...buyer, ...(prof ? { email: buyer.email || prof.email, nombre: buyer.nombre || (prof.nombre + (prof.estudio ? ' (' + prof.estudio + ')' : '')), telefono: buyer.telefono || prof.telefono || '' } : {}), canal: prof ? 'profesional' : 'publico', tracking, ...(transf ? { medio_pago: 'transferencia', cuotas: 1, comision_real: 0 } : {}), envio: ENVIOS[envio], costo_envio: costoEnvio, total, bultos, cupon: cup ? cup.codigo : null, descuento: descuento || null, visitante: clean(body.visitante, 64) || null }) });
     if (!or.ok) throw new Error('orders ' + (await or.text()));
     const [order] = await or.json();
-    const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio, precio_lista_momento: i.lista, regla: i.regla, sku: i.sku }))) });
+    const ir = await sb('order_items', { method: 'POST', body: JSON.stringify(items.map(i => ({ order_id: order.id, product_id: i.p.id, color: i.color, cantidad: i.q, precio: i.precio, precio_lista_momento: i.lista, regla: i.regla, sku: i.sku, promo: i.promo || null }))) });
     if (!ir.ok) throw new Error('items ' + (await ir.text()));
+    if (cup) { try { await sb('rpc/cupon_usar', { method: 'POST', body: JSON.stringify({ p_codigo: cup.codigo }) }); } catch (e) {} }
     // La reserva arranca acá (pedido pendiente). Si otro cliente reservó lo mismo en el mismo instante, el stock queda negativo: el último se cae.
     const STK2 = Object.fromEntries((await (await sb('rpc/stock_calc', { method: 'POST', body: '{}' })).json()).map(x => [x.id, x]));
     const SV2 = skus.length ? Object.fromEntries((await (await sb('rpc/stock_variantes', { method: 'POST', body: '{}' })).json()).map(x => [x.sku, x])) : {};
