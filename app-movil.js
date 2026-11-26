@@ -38,7 +38,7 @@ async function drawInicioMovil(silencioso){
     sb.rpc('productos_bloqueados'),
     sb.from('eco_pedidos').select('nombre,estado'),
     sb.from('profesionales').select('id,estado').eq('estado','pendiente')]);
-  if(tab!=='inicio'||!MOV()||AP.full)return;
+  if(tab!=='inicio'||AP.full)return;
   const O=os||[],E=ev||[],vend=o=>VEND.includes(o.estado);
   const cur=O.filter(o=>vend(o)&&+new Date(o.created_at)>=from),old=O.filter(o=>vend(o)&&+new Date(o.created_at)>=prev&&+new Date(o.created_at)<from);
   const S=a=>a.reduce((s,o)=>s+(+o.total||0),0),tot=S(cur),totP=S(old);
@@ -85,13 +85,13 @@ async function drawInicioMovil(silencioso){
   m.querySelectorAll('[data-ago]').forEach(b=>b.onclick=()=>{tab=b.dataset.ago;draw()});
   m.querySelector('[data-afull]').onclick=()=>{AP.full=true;draw()};
   m.querySelector('[data-aask]').onclick=()=>{if(typeof chatAbrir==='function')chatAbrir()};
-  AP.t=setTimeout(()=>{if(tab==='inicio'&&MOV()&&!AP.full&&!document.hidden)drawInicioMovil(true)},60000);
+  AP.t=setTimeout(()=>{if(tab==='inicio'&&!AP.full&&!document.hidden)drawInicioMovil(true)},60000);
 }
 const appInstalada=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 
 /* el Inicio y los suscriptores: en el celular va el Inicio nuevo (con "Ver informe" se ve el completo) */
-if(typeof drawInicio==='function'){const _di=drawInicio;drawInicio=async function(){if(MOV()&&!AP.full){try{return await drawInicioMovil.apply(this,arguments)}catch(e){console.error(e);AP.full=true}}return _di.apply(this,arguments)}}
-if(typeof drawSubs==='function'){const _ds=drawSubs;drawSubs=async function(){if(MOV()&&!AP.full)return;return _ds.apply(this,arguments)}}
+if(typeof drawInicio==='function'){const _di=drawInicio;drawInicio=async function(){if(!AP.full){try{return await drawInicioMovil.apply(this,arguments)}catch(e){console.error(e);AP.full=true}}return _di.apply(this,arguments)}}
+if(typeof drawSubs==='function'){const _ds=drawSubs;drawSubs=async function(){if(!AP.full)return;return _ds.apply(this,arguments)}}
 
 /* barra de abajo (sólo celular) */
 const TABS=[['inicio','Inicio','M3 10.5 12 4l9 6.5V20h-6v-6H9v6H3z'],['pedidos','Pedidos','M6 7h12l-1 13H7zM9 7a3 3 0 0 1 6 0'],['productos','Productos','M3 12V4h8l10 10-8 8zM7.5 8.5h.01'],['alertas','Alertas','M12 4 2.5 20h19zM12 10v4M12 17v.5'],['menu','Menú','M4 7h16M4 12h16M4 17h16']];
@@ -105,7 +105,7 @@ if(typeof window.drawNav==='function'){const _dn=window.drawNav;window.drawNav=f
 if(typeof draw==='function'){const _d=draw;draw=async function(){if(tab!=='inicio')AP.full=false;const r=await _d.apply(this,arguments);try{barra()}catch(e){}return r}}
 
 /* si el panel ya se dibujó antes de que cargue este archivo, se vuelve a dibujar con el Inicio del celular */
-let vig=0;const vigT=setInterval(()=>{vig++;if(vig>60)return clearInterval(vigT);try{if(typeof user!=='undefined'&&user&&document.querySelector('.tn')){if(!document.getElementById('apbar'))barra();if(tab==='inicio'&&MOV()&&!AP.full&&!document.querySelector('.ap')&&!/Cargando/.test(($m()||{}).textContent||'')){clearInterval(vigT);drawInicioMovil()}}}catch(e){}},500);
+let vig=0;const vigT=setInterval(()=>{vig++;if(vig>60)return clearInterval(vigT);try{if(typeof user!=='undefined'&&user&&document.querySelector('.tn')){if(!document.getElementById('apbar'))barra();if(tab==='inicio'&&!AP.full&&!document.querySelector('.ap')&&!/Cargando/.test(($m()||{}).textContent||'')){clearInterval(vigT);drawInicioMovil()}}}catch(e){}},500);
 /* app instalable */
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw-admin.js',{scope:'/admin'}).catch(()=>{}));
 
@@ -118,7 +118,13 @@ document.head.insertAdjacentHTML('beforeend',`<style>
  body:has(.ap) .tn-ph{display:none}
  body:has(.ap) .tn-main main{padding:0 0 24px}
 }
-@media (min-width:721px){.apbar{display:none}}
+@media (min-width:721px){.apbar{display:none}
+ /* compu: el mismo Inicio, más ancho */
+ .ap{max-width:1180px}.ap-top{border-radius:18px;padding:20px 24px 16px}.ap-kp{gap:34px}.ap-kp b{font-size:24px}.ap-ch{height:220px}
+ .ap-act{padding:22px 0 0}.ap-act h2{font-size:19px}.ap-cards{grid-template-columns:repeat(3,1fr);gap:12px}.ap-card{padding:16px}
+ .ap-list{display:grid;grid-template-columns:1fr 1fr}.ap-row{border-right:1px solid var(--line)}
+ .ap-ask{max-width:420px}
+}
 .ap-top{background:#141414;color:#fff;padding:14px 16px 12px;border-radius:0 0 18px 18px}
 .ap-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px}.ap-hd b{font-size:15px}
 .ap-av{width:30px;height:30px;border-radius:50%;background:#7c3aed;display:grid;place-items:center;font-size:12px;font-weight:600}
