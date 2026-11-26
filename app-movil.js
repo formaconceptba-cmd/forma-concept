@@ -20,11 +20,11 @@ function grafico(D){const W=340,H=120,mx=Math.max(1,...D.map(d=>d.v)),n=D.length
   const x=i=>n<2?W/2:i/(n-1)*W,y=v=>H-6-(v/mx)*(H-16);
   const pts=D.map((d,i)=>`${x(i).toFixed(1)},${y(d.v).toFixed(1)}`).join(' ');
   const ticks=[0,Math.floor((n-1)/2),n-1].filter((v,i,a)=>a.indexOf(v)===i);
-  return `<svg viewBox="0 0 ${W} ${H+18}" class="ap-ch" preserveAspectRatio="none" aria-label="Ventas por día">
+  return `<svg viewBox="0 0 ${W} ${H}" class="ap-ch" preserveAspectRatio="none" aria-label="Ventas por día">
    <line x1="0" y1="${H-6}" x2="${W}" y2="${H-6}" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 4"/>
    <polyline points="${x(0)},${H-6} ${pts} ${x(n-1)},${H-6}" fill="rgba(110,160,255,.14)" stroke="none"/>
    <polyline points="${pts}" fill="none" stroke="#8ab4ff" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
-   ${ticks.map(i=>`<text x="${Math.min(W-30,Math.max(0,x(i)-14))}" y="${H+14}" fill="rgba(255,255,255,.55)" font-size="10">${D[i].l}</text>`).join('')}</svg>`}
+</svg><div class="ap-tk">${ticks.map(i=>`<span>${D[i].l}</span>`).join('')}</div>`}
 
 async function drawInicioMovil(silencioso){
   clearTimeout(AP.t);
@@ -119,11 +119,6 @@ document.head.insertAdjacentHTML('beforeend',`<style>
  body:has(.ap) .tn-main main{padding:0 0 24px}
 }
 @media (min-width:721px){.apbar{display:none}
- /* compu: el mismo Inicio, más ancho */
- .ap{max-width:1180px}.ap-top{border-radius:18px;padding:20px 24px 16px}.ap-kp{gap:34px}.ap-kp b{font-size:24px}.ap-ch{height:220px}
- .ap-act{padding:22px 0 0}.ap-act h2{font-size:19px}.ap-cards{grid-template-columns:repeat(3,1fr);gap:12px}.ap-card{padding:16px}
- .ap-list{display:grid;grid-template-columns:1fr 1fr}.ap-row{border-right:1px solid var(--line)}
- .ap-ask{max-width:420px}
 }
 .ap-top{background:#141414;color:#fff;padding:14px 16px 12px;border-radius:0 0 18px 18px}
 .ap-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px}.ap-hd b{font-size:15px}
@@ -148,6 +143,13 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .ap-row small{display:block;font-size:11px;color:#6d7175;margin-top:2px}.ap-row .n{text-align:right}
 .ap-e{display:inline-block!important;padding:1px 7px;border-radius:9px;background:#eef0f2}.ap-pagado{background:#e3f5ea!important;color:#1b7a45!important}.ap-pendiente{background:#fff1d6!important;color:#8a5a00!important}.ap-cancelado{background:#fde8e8!important;color:#b42318!important}.ap-en_camino{background:#e6effc!important;color:#1f5fbf!important}
 .ap-ask{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:16px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font-size:14px}
+.ap-tk{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.55);margin-top:2px}
+/* compu: el mismo Inicio, más ancho */
+@media (min-width:721px){
+ .ap{max-width:1180px}.ap .ap-top{border-radius:18px;padding:20px 24px 16px}.ap .ap-kp{gap:34px}.ap .ap-kp b{font-size:24px}.ap .ap-ch{height:200px}.ap .ap-tk{font-size:11px}
+ .ap .ap-act{padding:22px 0 0}.ap .ap-act h2{font-size:19px}.ap .ap-cards{grid-template-columns:repeat(3,1fr);gap:12px}.ap .ap-card{padding:16px}
+ .ap .ap-list{display:grid;grid-template-columns:1fr 1fr}.ap .ap-row{border-right:1px solid var(--line)}.ap .ap-ask{max-width:420px}
+}
 .ap-inst{margin-top:14px;padding:12px 14px;border-radius:12px;background:#f1f2f4;font-size:13px;line-height:1.45}.ap-inst p{margin:4px 0 0}
 </style>`);
 })();
