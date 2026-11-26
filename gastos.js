@@ -58,15 +58,30 @@ function html(){const hoy=hoyISO(),ym=hoy.slice(0,7),dm=depMes(ym),fij=fijosMes(
    ${U.length?`<div class="wrap"><table><thead><tr><th>Fecha</th><th>Qué</th><th>Categoría</th><th class="n">Monto</th><th></th></tr></thead><tbody>${U.sort((a,b)=>String(b.fecha).localeCompare(a.fecha)).map(g=>`<tr><td class="hint">${g.fecha?new Date(g.fecha+'T12:00').toLocaleDateString('es-AR'):'—'}</td><td><b>${esc(g.descripcion||g.categoria)}</b>${g.nota?`<div class="hint">${esc(g.nota)}</div>`:''}</td><td class="hint">${esc(g.categoria)}</td><td class="n"><b>${ars(g.monto)}</b></td><td style="white-space:nowrap"><button class="lnk" data-ged="${g.id}">Editar</button> · <button class="lnk" data-gdel="${g.id}">Borrar</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">Ej.: una sesión de fotos, un flete especial, la implementación de la API de Pailos.</p>'}</div>
   <div class="card pad" id="gmerc"><h4 style="margin:0 0 8px">Costo de la mercadería</h4><p class="hint">Calculando…</p></div>`}
 
-/* punto de equilibrio: cuánto hay que vender por mes para cubrir los gastos fijos + depósito */
+/* punto de equilibrio: cuánto hay que vender por mes para cubrir los gastos fijos + depósito. Con desglose de cada $100 y simulador. */
+let SIMV=null;
 async function equilibrio(){const w=$('#m').querySelector('#gpe');if(!w)return;await MG.cargar();if(!w.isConnected)return;
-  const L=(typeof prods!=='undefined'?prods:[]).filter(p=>p.activo&&+p.precio_lista>0).map(p=>MG.cuentas(p.id,+p.precio_lista,{medio:'mix'})).filter(Boolean);
-  const venta=L.reduce((a,c)=>a+c.venta,0),antes=L.reduce((a,c)=>a+c.antes,0),cm=venta>0?antes/venta:0,fij=fijosMes(hoyISO())+depMes(hoyISO().slice(0,7)).total;
-  const vpu=L.length?venta/L.length:0,need=cm>0?fij/cm:null;
-  w.innerHTML=`<h4 style="margin:0 0 6px">Punto de equilibrio</h4>
-   <p style="margin:0 0 6px">De cada $100 que vendés (sin IVA), después de pagar el producto y los gastos de cada venta (cobro, IIBB, marketing, envío, garantía, galpón) te quedan <b>$${eN(cm*100,1)}</b> para cubrir los gastos fijos.</p>
-   ${fij>0&&need?`<p style="margin:0">Para cubrir <b>${ars(fij)}</b> por mes (fijos + depósito) tenés que vender <b>${ars(need)}</b> por mes sin IVA (${ars(need*1.21)} con IVA), ${Math.ceil(need/vpu)>1?`unas <b>${Math.ceil(need/vpu)}</b> unidades`:"<b>1</b> unidad"} al precio promedio. Arriba de eso, es ganancia.</p>`:'<p class="hint" style="margin:0">Cargá los gastos fijos para ver cuánto hay que vender por mes.</p>'}
-   <p class="hint" style="margin:6px 0 0">Los gastos fijos no se meten en el "mínimo sin perder" de cada producto: no dependen de cuánto vendas de cada uno. Se cubren con el volumen; por eso acá ves cuánto hay que vender por mes.</p>`}
+  const C=(typeof prods!=='undefined'?prods:[]).filter(p=>p.activo&&+p.precio_lista>0).map(p=>MG.cuentas(p.id,+p.precio_lista,{medio:'mix'})).filter(Boolean);
+  if(!C.length){w.innerHTML='<h4 style="margin:0 0 6px">Punto de equilibrio</h4><p class="hint">No hay productos publicados con costo para calcular.</p>';return}
+  const venta=C.reduce((a,c)=>a+c.venta,0),k=v=>venta>0?v/venta*100:0;
+  const partes=[['El producto (fábrica, flete, aduana e impuestos de importación)',C.reduce((a,c)=>a+c.costo,0)]];
+  const g={};C.forEach(c=>c.gs.forEach(([t,v])=>{g[t]=(g[t]||0)+v}));Object.entries(g).forEach(e=>partes.push(e));
+  partes.push(['Depósito mientras se vende',C.reduce((a,c)=>a+c.galpon,0)]);
+  const cm=C.reduce((a,c)=>a+c.antes,0)/venta,fij=fijosMes(hoyISO())+depMes(hoyISO().slice(0,7)).total,need=cm>0?fij/cm:null,vpu=venta/C.length;
+  const sim=v=>{const r=v*cm-fij;return `Si vendés <b>${ars(v)}</b> por mes (sin IVA): te quedan ${ars(v*cm)} para los fijos − ${ars(fij)} de fijos = <b class="${r<0?'neg':'pos'}">${r<0?'perdés '+ars(-r):'ganás '+ars(r)}</b> por mes${r>0?' (antes del impuesto a las Ganancias)':''}.`};
+  w.innerHTML=`<h4 style="margin:0 0 6px">Punto de equilibrio: cuánto hay que vender por mes para no perder</h4>
+   <p style="margin:0 0 8px">De cada <b>$100</b> que vendés (sin IVA, que no es tuyo), después de pagar el producto y lo que cuesta cada venta, te quedan <b>$${eN(cm*100,1)}</b>. Eso <b>todavía no es ganancia</b>: con eso se pagan los gastos fijos (sueldos, alquiler, depósito…), que se pagan vendas o no.</p>
+   <details style="margin:0 0 10px"><summary style="cursor:pointer"><b>Ver en qué se va cada $100</b></summary>
+    <div class="card pad" style="max-width:620px;margin:8px 0 0">${partes.map(([t,v])=>`<div class="rw"><span>${esc(t)}</span><span>$${eN(k(v),1)}</span></div>`).join('')}
+     <div class="rw" style="border-top:1px solid var(--line);padding-top:4px"><span><b>Te quedan para pagar los gastos fijos</b></span><b>$${eN(cm*100,1)}</b></div>
+     <p class="hint" style="margin:8px 0 0">Promedio de todos los productos publicados, a precio de lista y con la mezcla de pagos de siempre. Los % de cada gasto se cambian en Configuración → Costos y parámetros. El producto por producto está en Precios y promociones → Reglas de precio ("Ver cuentas").</p></div></details>
+   ${fij>0&&need?`<p style="margin:0 0 4px">Tus gastos fijos son <b>${ars(fij)}</b> por mes (fijos cargados abajo + depósito Pailos). Para pagarlos con los $${eN(cm*100,1)} de cada $100, tenés que vender <b>${ars(need)}</b> por mes sin IVA (${ars(need*1.21)} con IVA), unas <b>${Math.ceil(need/vpu)}</b> ${Math.ceil(need/vpu)>1?'unidades':'unidad'} al precio promedio.</p>
+     <p style="margin:0 0 10px">· Si vendés <b>menos</b> que eso, ese mes <b class="neg">perdés plata</b>. · Si vendés <b>más</b>, de cada $100 extra te quedan $${eN(cm*100,1)} de <b class="pos">ganancia</b> (antes de Ganancias).</p>`
+     :'<p class="hint" style="margin:0 0 10px">Cargá los gastos fijos (abajo) para ver cuánto hay que vender por mes.</p>'}
+   <div class="bar" style="margin:0;gap:8px;flex-wrap:wrap"><label style="margin:0">Probá: si vendo por mes $ <input class="num" id="gsim" style="width:130px" value="${SIMV?Math.round(SIMV).toLocaleString('es-AR'):need?Math.round(need*1.2).toLocaleString('es-AR'):''}" placeholder="ej. 10.000.000" inputmode="numeric"> <span class="hint">sin IVA</span></label></div>
+   <p id="gsimr" style="margin:6px 0 0"></p>
+   <p class="hint" style="margin:8px 0 0">Los gastos fijos no se meten en el "mínimo sin perder" de cada producto: no dependen de cuánto vendas de cada uno, se cubren con el volumen.</p>`;
+  const inp=w.querySelector('#gsim'),out=w.querySelector('#gsimr'),go=()=>{const v=+String(inp.value).replace(/\D/g,'')||0;SIMV=v||null;out.innerHTML=v?sim(v):''};inp.oninput=go;go()}
 
 async function mercaderia(){const w=$('#m').querySelector('#gmerc');if(!w)return;
   const PE=(ECO.ped||[]).filter(p=>p.estado!=='cerrado'),tc=+P.tc||1;
