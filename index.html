@@ -1482,7 +1482,7 @@ function edMark(){if(!EDIT)return;document.querySelectorAll('.ed-b').forEach(b=>
   document.querySelectorAll('#app img').forEach(im=>{const k=FXU[im.getAttribute('src')];if(!k)return;const r=im.getBoundingClientRect(),cs=getComputedStyle(im);
     if(r.width<70||r.height<60||+cs.opacity<.5||cs.visibility==='hidden'||r.bottom<0&&r.top<0)return;
     im.classList.add('ed-on');const b=document.createElement('button');b.className='ed-b';b.type='button';b.textContent='Cambiar foto · '+edLbl(k);
-    b.style.left=(r.left+scrollX+12)+'px';b.style.top=(r.top+scrollY+12)+'px';b.onclick=e=>{e.preventDefault();e.stopPropagation();edPick(k)};document.body.appendChild(b)})}
+    b.style.left=(r.left+scrollX+12)+'px';b.style.top=(Math.max(r.top+12,66)+scrollY)+'px';b.onclick=e=>{e.preventDefault();e.stopPropagation();edPick(k)};document.body.appendChild(b)})}
 function edPick(k){const P=window.parent;if(!P||typeof P.subirFoto!=='function'){toast('Abrí el editor desde el panel');return}
   const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=async()=>{const f=i.files[0];if(!f)return;toast('Subiendo la foto…');
     try{const url=await P.subirFoto(f,'sitio');const {error}=await sbInit().from('sitio_fotos').upsert({clave:k,url});if(error)throw new Error(error.message);SF[k]=url;render();toast('✓ Listo: ya se ve en la tienda');try{P.postMessage({edFoto:k},location.origin)}catch(e){}}
