@@ -15,17 +15,19 @@ const IC={
  config:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>'};
 /* menú: [clave, etiqueta, [[pantalla, etiqueta], ...]] — mismas pantallas de siempre, ordenadas como Tiendanube */
 const MENU=[
+ ['§ver','Para ver (no se edita)',[]],
  ['inicio','Inicio',[['inicio','Inicio'],['resumen','Resumen'],['guia','Cómo funciona todo']]],
  ['alertas','Alertas / pendientes',[['alertas','Alertas / pendientes']]],
  ['stats','Estadísticas',[['campanias','Anuncios por campaña']]],
  ['ventas','Ventas',[['pedidos','Lista de ventas'],['facturas','Facturas'],['ppedidos','Ventas a profesionales']]],
- ['prods','Productos',[['productos','Lista de productos'],['nacionales','Productos nacionales'],['stock','Inventario (Pailos)'],['paleta','Colores']]],
  ['clientes','Clientes',[['clientes','Lista de clientes'],['pcuentas','Profesionales'],['pro','Mayoristas']]],
- ['desc','Descuentos',[['pprecios','Precios profesionales']]],
- ['mkt','Marketing',[['mails','Mails a clientes']]],
- ['online','Tienda online',[['frm','FRM Studio'],['fotos','Fotos de la página']]],
- ['imp','Importación',[['maestro','Maestro de productos'],['maestro|nuevo','Nuevo producto'],['maestro|importar','Importar cotización (RFQ)'],['eco','Contenedores'],['compras','Órdenes a proveedores'],['ecopar','Parámetros de importación']]]];
-const PIE=['config','Configuración',[['rent','Precios y medios de pago'],['envios','Envíos y retiro']]];
+ ['§cargar','Para cargar, en este orden',[]],
+ ['imp','1. Importación',[['maestro','Maestro de productos'],['maestro|nuevo','Nuevo producto'],['maestro|importar','Importar cotización (RFQ)'],['ecopar','Parámetros de importación'],['eco','Contenedores (proforma y precios)'],['compras','Órdenes a proveedores']]],
+ ['prods','2. Productos',[['productos','Lista de productos'],['paleta','Colores'],['nacionales','Productos nacionales'],['stock','Inventario (Pailos)']]],
+ ['desc','3. Reglas de precio',[['rent','Precios y medios de pago'],['pprecios','Precios profesionales']]],
+ ['online','4. Tienda online',[['fotos','Fotos de la página'],['frm','FRM Studio']]],
+ ['mkt','5. Marketing',[['mails','Mails a clientes']]]];
+const PIE=['config','Configuración',[['envios','Envíos y retiro']]];
 /* cualquier pantalla que exista y no esté en el menú, se suma para no perder nada */
 const todas=new Set([...MENU,PIE].flatMap(g=>g[2].map(s=>s[0])));
 const extra=GRUPOS.flatMap(g=>g[2]).filter(s=>!todas.has(s[0]));
@@ -41,7 +43,7 @@ const ico=k=>`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke
 /* sub-pantallas del Maestro (nuevo producto / importar) */
 const mv=()=>typeof MVIEW!=='undefined'?MVIEW:'lista';
 const subOn=k=>k.includes('|')?tab==='maestro'&&mv()===k.split('|')[1]:k===tab&&!(k==='maestro'&&mv()!=='lista');
-const item=g=>{const act=g[2].some(s=>s[0]===tab),uno=g[2].length===1,ab=estaAbierto(g);
+const item=g=>{if(g[0][0]==='§')return `<div class="tn-sec">${g[1]}</div>`;const act=g[2].some(s=>s[0]===tab),uno=g[2].length===1,ab=estaAbierto(g);
   return `<div class="tn-g${act?' act':''}"><button class="tn-i${act&&uno?' on':''}" data-gk="${g[0]}">${ico(g[0])}<span>${g[1]}</span>${uno?'':`<i class="tn-ch${ab?' up':''}"></i>`}</button>
    ${uno||!ab?'':`<div class="tn-sub">${g[2].map(s=>`<button class="${subOn(s[0])?'on':''}" data-t="${s[0]}">${s[1]}</button>`).join('')}</div>`}</div>`};
 window.drawNav=function(){const n=document.getElementById('gnav'),f=document.getElementById('gfoot');if(!n)return;
@@ -65,3 +67,5 @@ window.shell=function(){
 /* si el panel ya se dibujó con la estructura vieja, se rearma */
 if(typeof user!=='undefined'&&user&&document.querySelector('header')&&!document.querySelector('.tn')){window.shell()}
 })();
+
+(function(){const st=document.createElement('style');st.textContent='.tn-sec{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#8a8f94;padding:14px 10px 4px;font-weight:600}.tn-menu .tn-sec:first-child{padding-top:4px}';document.head.appendChild(st)})();
