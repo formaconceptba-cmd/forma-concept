@@ -886,6 +886,7 @@ const isPro=()=>!!(PRO&&PRO.estado==='aprobado'&&(PRO.tipo||'mayorista')==='mayo
 const isProf=()=>!!(PRO&&PRO.estado==='aprobado'&&PRO.tipo==='profesional');
 function sbInit(){if(!sbc&&window.supabase)sbc=supabase.createClient(SB_URL,SB_KEY);return sbc}
 async function proLoad(){
+  if(EDIT)return; /* en el editor de fotos del panel se ve la tienda pública */
   for(let i=0;i<40&&!window.supabase;i++)await new Promise(r=>setTimeout(r,100));
   const c=sbInit(); if(!c)return;
   const {data:{session}}=await c.auth.getSession(); ME=session?session.user:null; PRO=null; ISADM=false;
