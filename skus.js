@@ -84,10 +84,13 @@ async function abrirVariantes(cod){
 }
 
 /* ===== Administración → Stock Pailos: por SKU de caja, en piezas ===== */
-let STKQ='';
+let STKQ='',STKQUIT=false;
+/* color quitado: oculto en la tienda, sin stock y sin nada en camino → no se muestra en el inventario (se puede ver con un clic) */
+const quitado=v=>{if(v.publicado!==false)return false;const K=CAJAS.filter(k=>k.sku===v.sku);return K.every(k=>{const s=STKC[k.sku_caja]||{};return !(s.fisico)&&!(s.en_camino)})};
 async function drawStock(){
   $('#m').innerHTML='<p class="hint">Cargando…</p>';await Promise.all([loadSkus(),master.length?0:loadMaster(),typeof prods!=='undefined'&&prods.length?0:loadProds()]);
-  const vs=VARS.filter(v=>v.estado!=='discontinuado'&&(!STKQ||(v.sku+' '+v.descripcion+' '+colNom(v.color)).toLowerCase().includes(STKQ.toLowerCase())));
+  const nQ=VARS.filter(v=>v.estado!=='discontinuado'&&quitado(v)).length;
+  const vs=VARS.filter(v=>v.estado!=='discontinuado'&&(STKQUIT||!quitado(v))&&(!STKQ||(v.sku+' '+v.descripcion+' '+colNom(v.color)).toLowerCase().includes(STKQ.toLowerCase())));
   const tot=CAJAS.reduce((a,k)=>a+((STKC[k.sku_caja]||{}).fisico||0),0);
   $('#m').innerHTML=`<div class="bar"><b style="font:500 20px Outfit,sans-serif">Stock en Pailos</b><span class="sp"></span><input id="sq" placeholder="Buscar SKU, producto o color" value="${esc(STKQ)}"><button class="btn" id="simp">Importar stock de Pailos (.xlsx / .csv)</button></div>
   <p class="hint" style="max-width:820px">Pailos cuenta por <b>caja</b>, en piezas. Lo que se vende es la variante: su disponible es el <b>mínimo entre sus cajas</b> (si falta una, no se puede vender). El stock es la suma de movimientos (ingresos, ventas, ajustes): nada se pisa, todo queda registrado.</p>
@@ -98,11 +101,12 @@ async function drawStock(){
    return `<tr><td>${fo?`<img src="${esc(src(fo))}" alt="" style="width:52px;height:52px;object-fit:cover;background:#eee">`:''}</td><td><b>${esc(v.sku)}</b></td><td>${esc(v.descripcion||'')}</td><td>${dot(v.color)}${esc(colNom(v.color))}</td><td class="n"><b class="${(s.disponible||0)<=0?'neg':''}">${s.disponible??0}</b>${falta?'<div class="hint neg">falta una caja</div>':''}</td>
     <td>${K.map(k=>{const st=STKC[k.sku_caja]||{};return `<div style="white-space:nowrap"><span class="hint">${esc(k.sku_caja)}</span> <b>${st.fisico??0}</b>${st.en_camino?` · <span class="hint">${st.en_camino} en camino</span>`:''}</div>`}).join('')||'<span class="hint neg">sin cajas</span>'}</td>
     <td>${K.map(k=>`<div class="bar" style="gap:4px;margin:2px 0"><input class="num" style="width:60px" data-aj="${esc(k.sku_caja)}" placeholder="±" inputmode="numeric"><span class="hint">${esc(k.parte)}</span></div>`).join('')}</td></tr>`}).join('')}</tbody></table></div>
+  ${nQ?`<p class="hint" style="margin-top:8px">${nQ} color${nQ>1?'es quitados':' quitado'} (sin stock, sin nada en camino y oculto en la tienda) ${STKQUIT?'se muestra'+(nQ>1?'n':''):'no se muestra'+(nQ>1?'n':'')}. <button class="lnk" id="squit">${STKQUIT?'Ocultar':'Ver'}</button></p>`:''}
   <p class="hint">Ajuste: escribí cuántas piezas sumar (ej. 5) o restar (ej. −2) y te pide el motivo. Queda registrado con fecha y quién lo hizo.</p><div id="simpw"></div>`;
   $('#sq').oninput=e=>{STKQ=e.target.value;const p=e.target.selectionStart;drawStock().then(()=>{const i=$('#sq');i.focus();i.setSelectionRange(p,p)})};
   $('#m').querySelectorAll('[data-aj]').forEach(i=>i.onchange=async()=>{const n=Math.round(pnum(i.value.replace('−','-'))||0);if(!n)return;const nota=prompt(`¿Por qué ajustás ${n>0?'+':''}${n} piezas de ${i.dataset.aj}? (ej. conteo de Pailos, rotura)`);if(nota===null){i.value='';return}
     const {error}=await sb.from('stock_mov').insert({sku_caja:i.dataset.aj,piezas:n,motivo:'ajuste',nota:nota||null});toast(error?'No se pudo':'Ajuste registrado');drawStock()});
-  $('#simp').onclick=importarStock;
+  $('#simp').onclick=importarStock;const sq=$('#squit');if(sq)sq.onclick=()=>{STKQUIT=!STKQUIT;drawStock()};
 }
 /* import del stock de Pailos: SKU de caja + piezas. Muestra la diferencia contra el panel antes de aplicar. */
 async function importarStock(){
