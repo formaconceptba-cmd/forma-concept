@@ -2,7 +2,7 @@
    Entra (pedido, catálogo, parámetros, aranceles por subcategoría) y sale todo. Sin efectos. */
 const ARANCEL_DEF=0.235;
 const SUBCATS=['Sillas madera','Sillas metal','Sillas plástico','Mesas madera','Mesas metal','Mesas plástico','Muebles madera','Muebles metal','Muebles plástico','Sillones y sofás','Camas'];
-const PAR_DEF={tc:1540,flete20:4500,cbm20:28,flete40:4500,cbm40:60,fleteHQ:4500,cbmHQ:68,contHQ:0,origenUSD:0,
+const PAR_DEF={tc:1540,flete20:4500,cbm20:28,flete40:4500,cbm40:60,fleteHQ:4500,cbmHQ:68,contHQ:0,origenUSD:0,fleteInterno:0,consolidacion:0,comisionCompra:0,
   seguroPct:0.02,honorariosPct:0.015,despachoFijo:400,terminal:500,transporte:600,verificacion:1000,descarga:0,
   diasFiscal:0,almacenajeDia:1.2,resguardo:500,
   galponMes:14.61,factorStock:0.5,recepcionARS:500000,movimientoARS:6500,vecesMov:1,prepPedidos:0,seguroDeposito:0,
@@ -58,13 +58,15 @@ function calcular(pedido,cat,parBase,aranceles){
 
   const c=contenedores(cbm,p), nCont=c.n20+c.n40+c.nHQ;
   const capacidad=c.n20*p.cbm20+c.n40*p.cbm40+c.nHQ*p.cbmHQ;
-  const flete=c.n20*p.flete20+c.n40*p.flete40+c.nHQ*p.fleteHQ+(+p.origenUSD||0);
+  const flete=c.n20*p.flete20+c.n40*p.flete40+c.nHQ*p.fleteHQ+(+p.origenUSD||0)+(+p.fleteInterno||0)+(+p.consolidacion||0);
   const sobra=capacidad>0&&cbm>capacidad?cbm-capacidad:0;
   const ocupacion=capacidad>0?cbm/capacidad:0;
 
   const despachoFijo=p.despachoFijo+p.verificacion+(p.terminal+p.transporte+p.descarga)*nCont;
   const fiscal=p.diasFiscal>0?(cbm*p.almacenajeDia*p.diasFiscal+p.resguardo):0;
   const seguro=fob*p.seguroPct, honorarios=fob*p.honorariosPct, cif=fob+flete+seguro;
+  /* comisión del agente de compra (ej. Lester): % sobre el FOB, se reparte por valor */
+  const comCompra=fob*(+p.comisionCompra||0);
 
   let arancel=0;
   items.forEach(it=>{
@@ -75,7 +77,7 @@ function calcular(pedido,cat,parBase,aranceles){
     arancel+=it.arancelT;
   });
 
-  const subtotal=fob+flete+seguro+despachoFijo+honorarios+fiscal+arancel;
+  const subtotal=fob+flete+seguro+despachoFijo+honorarios+fiscal+arancel+comCompra;
   const imprevistos=subtotal*p.imprevistos;
   const costoFinal=subtotal+imprevistos;
 
@@ -91,7 +93,7 @@ function calcular(pedido,cat,parBase,aranceles){
 
   items.forEach(it=>{
     const sc=cbm>0?it.cbmT/cbm:0, sf=fob>0?it.fobT/fob:0;
-    const sub=it.fobT+flete*sc+seguro*sf+despachoFijo*sc+honorarios*sf+fiscal*sc+it.arancelT;
+    const sub=it.fobT+flete*sc+seguro*sf+despachoFijo*sc+honorarios*sf+fiscal*sc+it.arancelT+comCompra*sf;
     it.costoT=sub*(1+p.imprevistos);
     it.costoU=it.cant>0?it.costoT/it.cant:0;
     it.desembolsoU=it.cant>0?(it.costoT+creditoTotal*sc)/it.cant:0;
@@ -158,7 +160,7 @@ function calcular(pedido,cat,parBase,aranceles){
   const diaCobro=diaVenta+diasAcred;
   const flujo=[
     {dia:0,c:"Anticipo al proveedor",m:-fob*p.anticipo},
-    {dia:p.produccion,c:"Saldo al proveedor",m:-fob*(1-p.anticipo)},
+    {dia:p.produccion,c:comCompra?"Saldo al proveedor + comisión del agente":"Saldo al proveedor",m:-fob*(1-p.anticipo)-comCompra},
     {dia:p.produccion,c:"Flete + seguro",m:-(flete+seguro)},
     {dia:diaNac,c:"Despacho, terminal, honorarios",m:-(despachoFijo+honorarios)},
     {dia:diaNac,c:"Aranceles",m:-arancel},
