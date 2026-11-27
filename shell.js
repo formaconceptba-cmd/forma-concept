@@ -69,3 +69,6 @@ if(typeof user!=='undefined'&&user&&document.querySelector('header')&&!document.
 })();
 
 (function(){const st=document.createElement('style');st.textContent='.tn-sec{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#8a8f94;padding:14px 10px 4px;font-weight:600}.tn-menu .tn-sec:first-child{padding-top:4px}';document.head.appendChild(st)})();
+/* si la sesión se vence (o se cierra en otra pestaña), no mostrar el panel vacío: volver a la pantalla de entrar */
+(function(){let vist=false;const chk=async()=>{try{const {data}=await sb.auth.getSession();if(!data.session&&document.getElementById('gnav')&&!vist){vist=true;alert('Tu sesión se cerró. Volvé a entrar.');location.reload()}}catch(e){}};
+  sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT')chk()});window.addEventListener('focus',chk);setInterval(chk,60000)})();
