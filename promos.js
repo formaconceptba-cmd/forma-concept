@@ -136,9 +136,15 @@ async function cartel(){$('#m').innerHTML='<p class="hint">Cargando…</p>';cons
     <label style="display:flex;gap:8px;align-items:center;margin:0 0 10px"><input type="checkbox" id="ca_on" ${+C.cartel_on===1?'checked':''} style="width:auto"> <b>Mostrar el cartel</b></label>
     <label>Texto</label><input id="ca_t" value="${esc(C.cartel_txt||'')}" placeholder="ej. ENVÍO GRATIS EN CABA Y GBA">
     <div class="g2d" style="gap:10px;margin-top:10px"><div><label>Botón (opcional)</label><input id="ca_b" value="${esc(C.cartel_btn||'')}" placeholder="ej. Ver productos"></div><div><label>Link del botón</label><input id="ca_l" value="${esc(C.cartel_link||'')}" placeholder="ej. #tienda o https://…"></div></div>
-    <p style="margin:14px 0 6px" class="hint">Así se ve:</p><div id="ca_pv" style="background:#141414;color:#fff;padding:11px 16px;font-size:13px;text-align:center;text-transform:uppercase;letter-spacing:.02em"></div>
-    <div class="bar" style="margin-top:14px"><span class="sp"></span><button class="btn dk" id="ca_ok">Guardar</button></div></div>`;
-  const g=s=>$('#m').querySelector(s),prev=()=>{g('#ca_pv').innerHTML=`<b>${esc(g('#ca_t').value||'Tu texto')}</b>${g('#ca_b').value?` &nbsp; <u>${esc(g('#ca_b').value)}</u>`:''}`};prev();['#ca_t','#ca_b'].forEach(s=>g(s).oninput=prev);
+    <div class="bar" style="margin-top:14px"><span class="hint">Los cambios se ven a la derecha; se publican al guardar.</span><span class="sp"></span><button class="btn dk" id="ca_ok">Guardar</button></div></div>
+   <div style="margin-top:14px"><div class="bar" style="margin:0 0 8px;gap:6px"><b>Vista previa</b><button class="btn dk" data-cav="compu">Compu</button><button class="btn" data-cav="cel">Celular</button></div>
+    <div id="caw" style="position:relative;overflow:hidden;border:1px solid var(--line);border-radius:8px;background:#111"><iframe id="caif" src="/?editar=1&notrack=1&prev=1" style="border:0;transform-origin:0 0;position:absolute;top:0;left:0"></iframe></div></div>`;
+  const g=s=>$('#m').querySelector(s);let VW='compu';
+  const esc2=()=>{const w=g('#caw'),f=g('#caif');if(!w||!f)return;const W=VW==='compu'?1280:390,H=560,s=Math.min(1,w.clientWidth/W);f.style.width=W+'px';f.style.height=H+'px';f.style.transform=`scale(${s})`;w.style.height=(H*s)+'px';w.style.maxWidth=VW==='cel'?'390px':''};
+  const cfg=()=>({cartel_on:g('#ca_on').checked?'1':'0',cartel_txt:g('#ca_t').value.trim(),cartel_btn:g('#ca_b').value.trim(),cartel_link:g('#ca_l').value.trim()});
+  const prev=()=>{const f=g('#caif');if(f&&f.contentWindow)f.contentWindow.postMessage({cdcfg:cfg()},location.origin)};
+  esc2();g('#caif').onload=()=>{prev();setTimeout(prev,800)};['#ca_t','#ca_b','#ca_l'].forEach(s=>g(s).oninput=prev);g('#ca_on').onchange=prev;
+  $('#m').querySelectorAll('[data-cav]').forEach(b=>b.onclick=()=>{VW=b.dataset.cav;$('#m').querySelectorAll('[data-cav]').forEach(x=>x.classList.toggle('dk',x===b));esc2()});
   g('#ca_ok').onclick=async()=>{for(const [k,v] of [['cartel_on',g('#ca_on').checked?1:0],['cartel_txt',g('#ca_t').value.trim()],['cartel_btn',g('#ca_b').value.trim()],['cartel_link',g('#ca_l').value.trim()]])await ctS(k,v);toast('Guardado: ya se ve en la tienda')}}
 if(typeof draw==='function'){const _c=draw;draw=async function(){if(tab==='cartel'){if(typeof drawNav==='function')drawNav();return cartel()}return _c.apply(this,arguments)}}
 if(window.AYUDA)AYUDA.cartel='La franja de arriba de la página de inicio: un aviso con texto y botón. Si hay una promo con cuenta regresiva, se muestra esa.';
