@@ -818,7 +818,7 @@ function promoBar(){if(esProfT())return '';const x=PROMOS.find(y=>y.cuenta_regre
 const cdCfg=()=>typeof CFGT!=='undefined'?CFGT:{};
 const cdFin=()=>new Date((cdCfg().cd_fecha||'2027-03-20')+'T00:00:00-03:00');
 const cdTit=()=>cdCfg().cd_titulo||cdFin().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric',timeZone:'America/Argentina/Buenos_Aires'}).replace(/ de (\d{4})$/,' $1');
-const CD_EDIT=typeof EDIT!=='undefined'&&EDIT&&/[?&]cd=1/.test(location.search),CD_PREV=CD_EDIT||(typeof EDIT!=='undefined'&&EDIT&&/[?&]prev=1/.test(location.search));
+const CD_EDIT=typeof EDIT!=='undefined'&&EDIT&&/[?&]cd=1/.test(location.search),CD_PREV=CD_EDIT||(typeof EDIT!=='undefined'&&EDIT&&/[?&](prev|tx)=1/.test(location.search));
 function cdBox(){const c=cdCfg();if(c.cd_on==='0')return '';const m=matchMedia('(max-width:720px)').matches,x=+(m?c.cd_xm:c.cd_x)||50,y=+(m?c.cd_ym:c.cd_y)||(m?58:62),t=m?(+c.cd_tamm||0.38):(+c.cd_tam||0.55),P=cdPartes(),sub=c.cd_sub==null?'Diseño en madera, acero y laca':c.cd_sub;
   return `<div class="cd-box${CD_EDIT?' cd-drag':''}" style="left:${x}%;top:${y}%;--s:${t}"><div class="cd-f">${esc(cdTit())}</div><div class="cd-r">${[['d','Días'],['h','Horas'],['m','Minutos']].map(([k,tt])=>`<div class="cd-b"><b data-cdv="${k}">${P[k]}</b><small>${tt}</small></div>`).join('')}</div>${sub?`<div class="cd-s">${esc(sub)}</div>`:''}</div>`}
 if(CD_PREV&&!CD_EDIT)addEventListener('message',e=>{if(e.origin===location.origin&&e.data&&e.data.cdcfg){Object.assign(CFGT,e.data.cdcfg);if(!animating)render()}});
@@ -828,6 +828,23 @@ if(CD_EDIT){document.addEventListener('click',e=>{if(e.target.closest('.hero-cd'
     const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);if(b.dataset.x)parent.postMessage({cdpos:{x:+(+b.dataset.x).toFixed(1),y:+(+b.dataset.y).toFixed(1),m:matchMedia('(max-width:720px)').matches}},location.origin)};
     addEventListener('pointermove',mv);addEventListener('pointerup',up)});
   addEventListener('message',e=>{if(e.origin===location.origin&&e.data&&e.data.cdcfg){Object.assign(CFGT,e.data.cdcfg);if(!animating)render()}})}
+/* ---- textos editables de la página (Tienda online → Textos de la página): texto, tipografía, tamaño, color y posición, compu y celular ---- */
+const TXF={sg:"'Space Grotesk',sans-serif",it:"'Inter Tight',sans-serif",ou:'Outfit,sans-serif',ar:'Archivo,sans-serif',bb:"'Bebas Neue',Impact,sans-serif",se:"Georgia,'Times New Roman',serif"};
+const TX_EDIT=typeof EDIT!=='undefined'&&EDIT&&/[?&]tx=1/.test(location.search);
+const txAll=()=>{try{return JSON.parse(cdCfg().textos||'{}')}catch(e){return {}}};
+function tx(k,def,tag='span',cls=''){const o=txAll()[k]||{},m=matchMedia('(max-width:720px)').matches,st=[];
+  if(o.f&&TXF[o.f])st.push(`font-family:${TXF[o.f]}!important`);const sz=m?(o.sm||''):(o.s||'');if(sz)st.push(`font-size:${sz}px!important`);
+  if(o.c)st.push(`color:${o.c}!important`);if(o.b)st.push('font-weight:600!important');const dx=+(m?o.xm:o.x)||0,dy=+(m?o.ym:o.y)||0;if(dx||dy)st.push(`translate:${dx}px ${dy}px`);
+  if(o.u==='n')st.push('text-transform:none!important');if(o.u==='u')st.push('text-transform:uppercase!important');
+  return `<${tag} data-tx="${k}"${cls?` class="${cls}"`:''}${st.length?` style="${st.join(';')}"`:''}>${esc(o.t!=null&&o.t!==''?o.t:def)}</${tag}>`}
+if(TX_EDIT){const css=document.createElement('style');css.textContent='[data-tx]{outline:1px dashed rgba(42,120,214,.8);outline-offset:3px;cursor:move!important;touch-action:none}[data-tx].tx-on{outline:2px solid #2a78d6;background:rgba(42,120,214,.12)}';document.head.appendChild(css);
+  addEventListener('click',e=>{if(e.target.closest('a,button'))e.preventDefault()},true);
+  addEventListener('pointerdown',e=>{const el=e.target.closest('[data-tx]');if(!el)return;e.preventDefault();e.stopPropagation();const k=el.dataset.tx,m=matchMedia('(max-width:720px)').matches,o=txAll()[k]||{};
+    const bx=+(m?o.xm:o.x)||0,by=+(m?o.ym:o.y)||0,sx=e.clientX,sy=e.clientY;let mov=false;
+    document.querySelectorAll('.tx-on').forEach(x=>x.classList.remove('tx-on'));el.classList.add('tx-on');
+    const mv=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>3)mov=true;if(mov)el.style.translate=`${bx+dx}px ${by+dy}px`};
+    const up=ev=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);parent.postMessage({txsel:{k,texto:el.textContent,m,x:mov?Math.round(bx+ev.clientX-sx):bx,y:mov?Math.round(by+ev.clientY-sy):by,movido:mov}},location.origin)};
+    addEventListener('pointermove',mv);addEventListener('pointerup',up)},true)}
 function cdPartes(){let t=Math.max(0,Math.floor((cdFin()-Date.now())/1000));const z=n=>String(n).padStart(2,'0');return {d:z(Math.floor(t/86400)),h:z(Math.floor(t%86400/3600)),m:z(Math.floor(t%3600/60))}}
 setInterval(()=>{const P=cdPartes();document.querySelectorAll('[data-cdv]').forEach(e=>{const v=P[e.dataset.cdv];if(e.textContent!==v){e.textContent=v;e.parentElement.classList.remove('flip');void e.offsetWidth;e.parentElement.classList.add('flip')}})},1000);
 function cdTxt(h){let t=Math.max(0,Math.floor((new Date(h)-Date.now())/1000));const d=Math.floor(t/86400);t%=86400;const z=n=>String(n).padStart(2,'0');return (d?d+'d ':'')+z(Math.floor(t/3600))+':'+z(Math.floor(t%3600/60))+':'+z(t%60)}
@@ -851,7 +868,8 @@ function card(p,ci){
 function proTile(){const S=P.filter(p=>p.cat==='Butacas'&&p.img);const L=S.length?S:P.filter(p=>p.img).slice(0,4);
   return `<a class="full w pslide" href="#proyectos"><div class="psl">${L.map((p,i)=>`<img class="${i?'':'on'}" src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">`).join('')}</div><div class="t"><h2>¿Sos profesional o querés comercializar nuestros productos?</h2><div><span class="ob">Panel para profesionales</span></div></div></a>`}
 setInterval(()=>{if(document.hidden)return;document.querySelectorAll('.psl').forEach(w=>{if(!w.offsetParent)return;const im=[...w.querySelectorAll('img')];if(im.length<2)return;const i=im.findIndex(x=>x.classList.contains('on'));im[i].classList.remove('on');im[(i+1)%im.length].classList.add('on')})},2800);
-function full(img,h,txt,btn,href,cls=''){
+function full(img,h,txt,btn,href,cls='',k=''){
+  if(k)return `<a class="full ${cls}" href="${href}"><img src="${src(img)}" alt="" loading="lazy"><div class="t">${tx(k+'_t',h,'h2')}<div>${txt?tx(k+'_p',txt,'p'):''}${tx(k+'_b',btn,'span','ob')}</div></div></a>`;
   return `<a class="full ${cls}" href="${href}"><img src="${src(img)}" alt="" loading="lazy"><div class="t"><h2>${h}</h2><div>${txt?`<p>${txt}</p>`:''}<span class="ob">${btn}</span></div></div></a>`;
 }
 const STD=[['std_06','Comedor con techo de bovedilla'],['std_02','Cocina en madera'],['std_11','Living con ventanal'],['std_05','Cocina con isla'],['prj_cocina-acero','Cocina con revestimiento de acero'],['std_hero','Cocina con isla y techo de bovedilla']];
@@ -871,18 +889,18 @@ function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,12);
   const PS=(()=>{const S=P.filter(p=>p.cat==='Butacas'&&p.img);return S.length?S:P.filter(p=>p.img).slice(0,4)})();
   return `${promoBar()}<${CD_PREV?'div':'a'} class="full vid hero-cd"${CD_PREV?'':' href="#tienda"'}><video src="img/teaser-ambientes.mp4" poster="${esc(src(FX('inicio_portada','ctx_pause')))}" muted loop playsinline autoplay preload="auto" aria-label="Ambientes con muebles FORMA"></video>
-       <div class="vshade"></div>${cdBox()}<span class="ob hero-btn">Ver toda la colección</span></${CD_PREV?'div':'a'}>
+       <div class="vshade"></div>${cdBox()}${tx('hero_b','Ver toda la colección','span','ob hero-btn')}</${CD_PREV?'div':'a'}>
   ${cats()}
   <section class="sil on" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
-  <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3>${(()=>{const pg=[];for(let i=0;i<feat.length;i+=4)pg.push(feat.slice(i,i+4));return `<div class="fpg"><div class="fpg-t" data-pg>${pg.map(c=>`<div class="fpg-p"><div class="grid">${c.map(x=>card(x)).join('')}</div></div>`).join('')}</div>${pg.length>1?`<div class="fpg-d">${pg.map((c,i)=>`<button data-fpg="${i}" class="${i?'':'on'}" aria-label="Ver destacados ${i+1}"></button>`).join('')}</div>`:''}</div>`})()}</section>
-  ${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','','Ver Fresno','#tienda/Fresno','foto-p')}
-  ${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero','acero solo-m')}
-  <div class="two solo-d">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${full(FX('inicio_fresno','fresno-comedor'),'Colección Fresno','','Ver Fresno','#tienda/Fresno')}</div>
+  <section class="sec ctr"><h3>${tx('dest_t','Destacados')}<a href="#tienda">Ver todo</a></h3>${(()=>{const pg=[];for(let i=0;i<feat.length;i+=4)pg.push(feat.slice(i,i+4));return `<div class="fpg"><div class="fpg-t" data-pg>${pg.map(c=>`<div class="fpg-p"><div class="grid">${c.map(x=>card(x)).join('')}</div></div>`).join('')}</div>${pg.length>1?`<div class="fpg-d">${pg.map((c,i)=>`<button data-fpg="${i}" class="${i?'':'on'}" aria-label="Ver destacados ${i+1}"></button>`).join('')}</div>`:''}</div>`})()}</section>
+  ${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','','Ver Fresno','#tienda/Fresno','foto-p','fotop')}
+  ${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero','acero solo-m','acero')}
+  <div class="two solo-d">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero','','acero')}${full(FX('inicio_fresno','fresno-comedor'),'Colección Fresno','','Ver Fresno','#tienda/Fresno','','fresno')}</div>
   ${(window.PROV||[]).length?`<section class="sil sil-prov on" aria-hidden="true"><div class="sil-t" data-dur="45000"><div class="sil-s">${PROV.map(p=>{const R=p[3].split(/(?=M)/),mal=p[0]==='Tierra del Fuego'?R.filter(r=>+r.slice(1).split(' ')[0]>=60):[],resto=R.filter(r=>!mal.includes(r));return `<svg viewBox="-2 -2 ${p[1]+4} ${p[2]+4}"><path d="${resto.join('')}"/>${mal.length?`<defs><linearGradient id="arg" x1="0" y1="0" x2="0" y2="1"><stop offset=".33" stop-color="#74ACDF"/><stop offset=".33" stop-color="#fff"/><stop offset=".67" stop-color="#fff"/><stop offset=".67" stop-color="#74ACDF"/></linearGradient></defs><path class="malv" d="${mal.join('')}"/>`:''}</svg>`}).join('')}</div></div></section>`:''}
-  ${(()=>{const N=P.filter(p=>p.fam==='Nacional'&&p.img);return N.length?`<section class="sec ctr"><h3><span>Productos nacionales</span><a href="#nacional">Ver todos</a></h3><div class="grid">${N.slice(0,8).map(x=>card(x)).join('')}</div></section>`:''})()}
-  <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span><h2>El estudio detrás de FORMA Concept</h2><p>Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.</p><a class="ob" href="#frm" style="margin-top:28px">Conocé el estudio</a></div>
+  ${(()=>{const N=P.filter(p=>p.fam==='Nacional'&&p.img);return N.length?`<section class="sec ctr"><h3>${tx('nac_t','Productos nacionales')}<a href="#nacional">Ver todos</a></h3><div class="grid">${N.slice(0,8).map(x=>card(x)).join('')}</div></section>`:''})()}
+  <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span>${tx('frm_t','El estudio detrás de FORMA Concept','h2')}${tx('frm_p','Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.','p')}<a class="ob" href="#frm" style="margin-top:28px">${tx('frm_b','Conocé el estudio')}</a></div>
    <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="${src(FX('estudio_'+(i+1),s[0]))}" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>
-  <section class="std pro-std"><div><span class="k">¿Sos profesional o querés comercializar nuestros productos?</span><p>Precios especiales para estudios de arquitectura, interiorismo, desarrolladores y comercios. Mismo catálogo, condiciones para profesionales.</p><a class="ob" href="#proyectos" style="margin-top:28px">Panel para profesionales</a></div>
+  <section class="std pro-std"><div>${tx('pro_k','¿Sos profesional o querés comercializar nuestros productos?','span','k')}${tx('pro_p','Precios especiales para estudios de arquitectura, interiorismo, desarrolladores y comercios. Mismo catálogo, condiciones para profesionales.','p')}<a class="ob" href="#proyectos" style="margin-top:28px">${tx('pro_b','Panel para profesionales')}</a></div>
    <a class="car car-pro psl" href="#proyectos">${PS.map((p,i)=>`<img class="${i?'':'on'}" src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">`).join('')}</a></section>
   <div class="one pro-m">${proTile()}</div>`;
 }
