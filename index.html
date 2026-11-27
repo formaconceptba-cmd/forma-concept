@@ -30,7 +30,11 @@ img{display:block;max-width:100%}
 
 /* encabezado: transparente sobre la foto de inicio, sólido al bajar */
 body.home .pbar{margin-top:52px}
-.hero-cd{height:100svh!important;border-top:0!important;display:block}.hero-cd .cd{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(12px,2.2vw,26px);background:linear-gradient(rgba(0,0,0,.42),rgba(0,0,0,.55));color:#fff;text-align:center;padding:60px 16px 30px}
+.hero-cd{height:100svh!important;border-top:0!important;display:block}.hero-cd .vshade{position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.15),rgba(0,0,0,.35))}
+.cd-box{position:absolute;z-index:2;transform:translate(-50%,-50%) scale(var(--s,.55));display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2.2vw,26px);color:#fff;text-align:center;white-space:nowrap}
+.cd-drag{cursor:move;outline:2px dashed rgba(255,255,255,.8);outline-offset:14px;touch-action:none}
+.hero-btn{position:absolute;z-index:2;left:50%;bottom:8%;transform:translateX(-50%);color:#fff;white-space:nowrap}
+.foto-p{height:92svh!important;border-top:14px solid var(--bg)}
 .cd-f{font:500 clamp(16px,2.1vw,28px) "Inter Tight",sans-serif;color:#d8d8d8;letter-spacing:.01em}
 .cd-r{display:flex;gap:clamp(8px,1.5vw,20px);justify-content:center}
 .cd-b{position:relative;overflow:hidden;background:#1a1a1a;border-radius:clamp(10px,1.4vw,20px);padding:clamp(4px,.8vw,10px) clamp(12px,1.8vw,26px) clamp(8px,1vw,14px);min-width:clamp(86px,14vw,210px);box-shadow:0 10px 30px rgba(0,0,0,.35)}
@@ -39,7 +43,7 @@ body.home .pbar{margin-top:52px}
 .cd-b small{display:block;font:500 clamp(10px,.9vw,12px) "Inter Tight",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#9b9b9b;margin-top:2px}
 .cd-b.flip b{animation:cdflip .45s ease}@keyframes cdflip{0%{transform:rotateX(70deg);opacity:.3}100%{transform:none;opacity:1}}
 .cd-s{font:500 clamp(12px,1.1vw,15px) "Inter Tight",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#cfcfcf}
-.hero-cd .ob{margin-top:4px}
+
 body .hero-cd .cd-f{font-family:"Inter Tight",sans-serif!important;font-size:clamp(16px,2.1vw,28px)!important;font-weight:500!important;text-transform:none!important;letter-spacing:.01em!important}
 body .hero-cd .cd-b b{font-family:"Bebas Neue",Impact,sans-serif!important;font-size:clamp(66px,11.5vw,178px)!important;line-height:1.02!important;letter-spacing:.01em!important;font-weight:400!important}
 body .hero-cd .cd-b small{font-size:clamp(10px,.9vw,12px)!important;letter-spacing:.16em!important;font-weight:500!important}
@@ -811,8 +815,19 @@ function promoBar(){if(esProfT())return '';const x=PROMOS.find(y=>y.cuenta_regre
   if(!x){const c=typeof CFGT!=='undefined'?CFGT:{};const cp=cuPromo();if(+c.cartel_on===1&&c.cartel_txt)return `<div class="pbar"><b>${esc(c.cartel_txt)}</b>${c.cartel_link?`<a href="${esc(c.cartel_link)}">${esc(c.cartel_btn||'Ver más')}</a>`:''}</div>`;
     if(cp)return `<div class="pbar"><b>Hasta ${cp.n} cuotas sin interés</b><span>en compras desde ${ars(cp.desde)}</span><a href="#tienda">Ver productos</a></div>`;return ''}return `<div class="pbar"><b>${esc(x.banner||(x.nombre+' · '+Math.round(x.pct*100)+'% OFF'))}</b><span>Termina en <em data-cd="${esc(x.hasta)}">${cdTxt(x.hasta)}</em></span><a href="#tienda">Ver productos</a></div>`}
 /* cuenta regresiva de la portada: hasta el 20/03/2027 (hora de Buenos Aires) */
-const CD_FIN=new Date('2027-03-20T00:00:00-03:00');
-function cdPartes(){let t=Math.max(0,Math.floor((CD_FIN-Date.now())/1000));const z=n=>String(n).padStart(2,'0');return {d:z(Math.floor(t/86400)),h:z(Math.floor(t%86400/3600)),m:z(Math.floor(t%3600/60))}}
+const cdCfg=()=>typeof CFGT!=='undefined'?CFGT:{};
+const cdFin=()=>new Date((cdCfg().cd_fecha||'2027-03-20')+'T00:00:00-03:00');
+const cdTit=()=>cdCfg().cd_titulo||cdFin().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric',timeZone:'America/Argentina/Buenos_Aires'}).replace(/ de (\d{4})$/,' $1');
+const CD_EDIT=typeof EDIT!=='undefined'&&EDIT&&/[?&]cd=1/.test(location.search);
+function cdBox(){const c=cdCfg();if(c.cd_on==='0')return '';const m=matchMedia('(max-width:720px)').matches,x=+(m?c.cd_xm:c.cd_x)||50,y=+(m?c.cd_ym:c.cd_y)||(m?58:62),t=+c.cd_tam||0.55,P=cdPartes(),sub=c.cd_sub==null?'Diseño en madera, acero y laca':c.cd_sub;
+  return `<div class="cd-box${CD_EDIT?' cd-drag':''}" style="left:${x}%;top:${y}%;--s:${t}"><div class="cd-f">${esc(cdTit())}</div><div class="cd-r">${[['d','Días'],['h','Horas'],['m','Minutos']].map(([k,tt])=>`<div class="cd-b"><b data-cdv="${k}">${P[k]}</b><small>${tt}</small></div>`).join('')}</div>${sub?`<div class="cd-s">${esc(sub)}</div>`:''}</div>`}
+if(CD_EDIT){document.addEventListener('click',e=>{if(e.target.closest('.hero-cd'))e.preventDefault()},true);
+  document.addEventListener('pointerdown',e=>{const b=e.target.closest('.cd-box');if(!b)return;e.preventDefault();const h=b.closest('.hero-cd').getBoundingClientRect();
+    const mv=ev=>{const x=Math.max(5,Math.min(95,(ev.clientX-h.left)/h.width*100)),y=Math.max(8,Math.min(95,(ev.clientY-h.top)/h.height*100));b.style.left=x+'%';b.style.top=y+'%';b.dataset.x=x;b.dataset.y=y};
+    const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);if(b.dataset.x)parent.postMessage({cdpos:{x:+(+b.dataset.x).toFixed(1),y:+(+b.dataset.y).toFixed(1),m:matchMedia('(max-width:720px)').matches}},location.origin)};
+    addEventListener('pointermove',mv);addEventListener('pointerup',up)});
+  addEventListener('message',e=>{if(e.origin===location.origin&&e.data&&e.data.cdcfg){Object.assign(CFGT,e.data.cdcfg);if(!animating)render()}})}
+function cdPartes(){let t=Math.max(0,Math.floor((cdFin()-Date.now())/1000));const z=n=>String(n).padStart(2,'0');return {d:z(Math.floor(t/86400)),h:z(Math.floor(t%86400/3600)),m:z(Math.floor(t%3600/60))}}
 setInterval(()=>{const P=cdPartes();document.querySelectorAll('[data-cdv]').forEach(e=>{const v=P[e.dataset.cdv];if(e.textContent!==v){e.textContent=v;e.parentElement.classList.remove('flip');void e.offsetWidth;e.parentElement.classList.add('flip')}})},1000);
 function cdTxt(h){let t=Math.max(0,Math.floor((new Date(h)-Date.now())/1000));const d=Math.floor(t/86400);t%=86400;const z=n=>String(n).padStart(2,'0');return (d?d+'d ':'')+z(Math.floor(t/3600))+':'+z(Math.floor(t%3600/60))+':'+z(t%60)}
 setInterval(()=>document.querySelectorAll('[data-cd]').forEach(e=>{e.textContent=cdTxt(e.dataset.cd);if(new Date(e.dataset.cd)<=Date.now())e.closest('.pbar')?.remove()}),1000);
@@ -855,11 +870,11 @@ function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,12);
   const PS=(()=>{const S=P.filter(p=>p.cat==='Butacas'&&p.img);return S.length?S:P.filter(p=>p.img).slice(0,4)})();
   return `${promoBar()}<a class="full vid hero-cd" href="#tienda"><video src="img/teaser-ambientes.mp4" poster="${esc(src(FX('inicio_portada','ctx_pause')))}" muted loop playsinline autoplay preload="auto" aria-label="Ambientes con muebles FORMA"></video>
-   <div class="cd"><div class="cd-f">20 de marzo 2027</div><div class="cd-r">${[['d','Días'],['h','Horas'],['m','Minutos']].map(([k,t])=>`<div class="cd-b"><b data-cdv="${k}">${cdPartes()[k]}</b><small>${t}</small></div>`).join('')}</div><div class="cd-s">Diseño en madera, acero y laca</div><span class="ob">Ver toda la colección</span></div></a>
+       <div class="vshade"></div>${cdBox()}<span class="ob hero-btn">Ver toda la colección</span></a>
   ${cats()}
   <section class="sil on" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
   <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3>${(()=>{const pg=[];for(let i=0;i<feat.length;i+=4)pg.push(feat.slice(i,i+4));return `<div class="fpg"><div class="fpg-t" data-pg>${pg.map(c=>`<div class="fpg-p"><div class="grid">${c.map(x=>card(x)).join('')}</div></div>`).join('')}</div>${pg.length>1?`<div class="fpg-d">${pg.map((c,i)=>`<button data-fpg="${i}" class="${i?'':'on'}" aria-label="Ver destacados ${i+1}"></button>`).join('')}</div>`:''}</div>`})()}</section>
-
+  ${full(FX('inicio_portada','ctx_pause'),'','Diseño en madera, acero y laca.','Ver toda la colección','#tienda','portada foto-p')}
   ${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero','acero solo-m')}
   <div class="two solo-d">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${full(FX('inicio_fresno','fresno-comedor'),'Colección Fresno','','Ver Fresno','#tienda/Fresno')}</div>
   ${(window.PROV||[]).length?`<section class="sil sil-prov on" aria-hidden="true"><div class="sil-t" data-dur="45000"><div class="sil-s">${PROV.map(p=>{const R=p[3].split(/(?=M)/),mal=p[0]==='Tierra del Fuego'?R.filter(r=>+r.slice(1).split(' ')[0]>=60):[],resto=R.filter(r=>!mal.includes(r));return `<svg viewBox="-2 -2 ${p[1]+4} ${p[2]+4}"><path d="${resto.join('')}"/>${mal.length?`<defs><linearGradient id="arg" x1="0" y1="0" x2="0" y2="1"><stop offset=".33" stop-color="#74ACDF"/><stop offset=".33" stop-color="#fff"/><stop offset=".67" stop-color="#fff"/><stop offset=".67" stop-color="#74ACDF"/></linearGradient></defs><path class="malv" d="${mal.join('')}"/>`:''}</svg>`}).join('')}</div></div></section>`:''}
