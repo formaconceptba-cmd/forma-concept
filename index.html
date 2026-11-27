@@ -15,7 +15,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500&family=Outfit:wght@500&family=Archivo:wght@400&family=Space+Grotesk:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter+Tight:wght@300;400;500&family=Outfit:wght@500&family=Archivo:wght@400&family=Space+Grotesk:wght@400;500&display=swap">
 <style>
 :root{--bg:#F7F7F5;--box:#ECECEA;--ink:#141414;--soft:#77756F;--line:#DDDBD6;--f:"Helvetica Neue",Helvetica,"Inter Tight",Arial,sans-serif;--g:20px;--ease:cubic-bezier(.7,0,.2,1)}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -29,7 +29,21 @@ img{display:block;max-width:100%}
 
 
 /* encabezado: transparente sobre la foto de inicio, sólido al bajar */
-body.home .pbar{margin-top:52px}.pbar{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;background:#141414;color:#fff;padding:11px var(--g);font-size:13px;letter-spacing:.02em;text-align:center}.pbar b{font-weight:600;text-transform:uppercase}.pbar em{font-style:normal;font-variant-numeric:tabular-nums;font-weight:600}.pbar a{color:#fff;text-decoration:underline}
+body.home .pbar{margin-top:52px}
+.hero-cd{height:100svh!important;border-top:0!important;display:block}.hero-cd .cd{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(12px,2.2vw,26px);background:linear-gradient(rgba(0,0,0,.42),rgba(0,0,0,.55));color:#fff;text-align:center;padding:60px 16px 30px}
+.cd-f{font:500 clamp(16px,2.1vw,28px) "Inter Tight",sans-serif;color:#d8d8d8;letter-spacing:.01em}
+.cd-r{display:flex;gap:clamp(8px,1.5vw,20px);justify-content:center}
+.cd-b{position:relative;overflow:hidden;background:#1a1a1a;border-radius:clamp(10px,1.4vw,20px);padding:clamp(4px,.8vw,10px) clamp(12px,1.8vw,26px) clamp(8px,1vw,14px);min-width:clamp(86px,14vw,210px);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.cd-b b{position:relative;display:block;font:400 clamp(66px,11.5vw,178px)/1.02 "Bebas Neue",Impact,sans-serif;color:#e6e6e6;letter-spacing:.01em}
+.cd-b b::after{content:"";position:absolute;left:-40px;right:-40px;top:50%;height:2px;background:#0b0b0b}
+.cd-b small{display:block;font:500 clamp(10px,.9vw,12px) "Inter Tight",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#9b9b9b;margin-top:2px}
+.cd-b.flip b{animation:cdflip .45s ease}@keyframes cdflip{0%{transform:rotateX(70deg);opacity:.3}100%{transform:none;opacity:1}}
+.cd-s{font:500 clamp(12px,1.1vw,15px) "Inter Tight",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#cfcfcf}
+.hero-cd .ob{margin-top:4px}
+body .hero-cd .cd-f{font-family:"Inter Tight",sans-serif!important;font-size:clamp(16px,2.1vw,28px)!important;font-weight:500!important;text-transform:none!important;letter-spacing:.01em!important}
+body .hero-cd .cd-b b{font-family:"Bebas Neue",Impact,sans-serif!important;font-size:clamp(66px,11.5vw,178px)!important;line-height:1.02!important;letter-spacing:.01em!important;font-weight:400!important}
+body .hero-cd .cd-b small{font-size:clamp(10px,.9vw,12px)!important;letter-spacing:.16em!important;font-weight:500!important}
+body .hero-cd .cd-s{font-size:clamp(12px,1.1vw,15px)!important;letter-spacing:.2em!important;font-weight:500!important}.pbar{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;background:#141414;color:#fff;padding:11px var(--g);font-size:13px;letter-spacing:.02em;text-align:center}.pbar b{font-weight:600;text-transform:uppercase}.pbar em{font-style:normal;font-variant-numeric:tabular-nums;font-weight:600}.pbar a{color:#fff;text-decoration:underline}
 .ck2-cup{margin:12px 0}.ck2-cup form{display:flex;gap:6px}.ck2-cup input{flex:1;min-width:0;height:40px;border:1px solid var(--line);padding:0 10px;font:inherit;background:#fff}.ck2-cup button[type=submit]{height:40px;padding:0 14px;border:1px solid #141414;background:#fff;font:inherit;cursor:pointer}.ck2-cup>div{font-size:13px;padding:10px;background:#eef6ee}
 header{position:sticky;top:0;z-index:30;height:52px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 var(--g);background:var(--bg);border-bottom:1px solid var(--line);transition:background .35s,color .35s,border-color .35s}
 body.home:not(.scrolled) header{background:transparent;color:#fff;border-color:transparent}
@@ -796,6 +810,10 @@ document.addEventListener('click',e=>{if(e.target.closest('[data-cupx]')){CUP=nu
 function promoBar(){if(esProfT())return '';const x=PROMOS.find(y=>y.cuenta_regresiva&&y.hasta);
   if(!x){const c=typeof CFGT!=='undefined'?CFGT:{};const cp=cuPromo();if(+c.cartel_on===1&&c.cartel_txt)return `<div class="pbar"><b>${esc(c.cartel_txt)}</b>${c.cartel_link?`<a href="${esc(c.cartel_link)}">${esc(c.cartel_btn||'Ver más')}</a>`:''}</div>`;
     if(cp)return `<div class="pbar"><b>Hasta ${cp.n} cuotas sin interés</b><span>en compras desde ${ars(cp.desde)}</span><a href="#tienda">Ver productos</a></div>`;return ''}return `<div class="pbar"><b>${esc(x.banner||(x.nombre+' · '+Math.round(x.pct*100)+'% OFF'))}</b><span>Termina en <em data-cd="${esc(x.hasta)}">${cdTxt(x.hasta)}</em></span><a href="#tienda">Ver productos</a></div>`}
+/* cuenta regresiva de la portada: hasta el 20/03/2027 (hora de Buenos Aires) */
+const CD_FIN=new Date('2027-03-20T00:00:00-03:00');
+function cdPartes(){let t=Math.max(0,Math.floor((CD_FIN-Date.now())/1000));const z=n=>String(n).padStart(2,'0');return {d:z(Math.floor(t/86400)),h:z(Math.floor(t%86400/3600)),m:z(Math.floor(t%3600/60))}}
+setInterval(()=>{const P=cdPartes();document.querySelectorAll('[data-cdv]').forEach(e=>{const v=P[e.dataset.cdv];if(e.textContent!==v){e.textContent=v;e.parentElement.classList.remove('flip');void e.offsetWidth;e.parentElement.classList.add('flip')}})},1000);
 function cdTxt(h){let t=Math.max(0,Math.floor((new Date(h)-Date.now())/1000));const d=Math.floor(t/86400);t%=86400;const z=n=>String(n).padStart(2,'0');return (d?d+'d ':'')+z(Math.floor(t/3600))+':'+z(Math.floor(t%3600/60))+':'+z(t%60)}
 setInterval(()=>document.querySelectorAll('[data-cd]').forEach(e=>{e.textContent=cdTxt(e.dataset.cd);if(new Date(e.dataset.cd)<=Date.now())e.closest('.pbar')?.remove()}),1000);
 const dims=p=>p.round?`Ø ${p.d[0]} × ${p.d[2]} cm`:`${p.d[0]} × ${p.d[1]} × ${p.d[2]} cm`;
@@ -836,11 +854,12 @@ document.addEventListener('submit',e=>{if(e.target.id==='ckForm'){e.preventDefau
 function viewHome(){
   const pr=P.filter(p=>p.price), feat=[...pr.filter(p=>p.feat),...pr.filter(p=>!p.feat)].slice(0,12);
   const PS=(()=>{const S=P.filter(p=>p.cat==='Butacas'&&p.img);return S.length?S:P.filter(p=>p.img).slice(0,4)})();
-  return `${promoBar()}${full(FX('inicio_portada','ctx_pause'),'','Diseño en madera, acero y laca.','Ver toda la colección','#tienda','portada').replace('loading="lazy"','loading="eager" fetchpriority="high"')}
+  return `${promoBar()}<a class="full vid hero-cd" href="#tienda"><video src="img/teaser-ambientes.mp4" poster="${esc(src(FX('inicio_portada','ctx_pause')))}" muted loop playsinline autoplay preload="auto" aria-label="Ambientes con muebles FORMA"></video>
+   <div class="cd"><div class="cd-f">20 de marzo 2027</div><div class="cd-r">${[['d','Días'],['h','Horas'],['m','Minutos']].map(([k,t])=>`<div class="cd-b"><b data-cdv="${k}">${cdPartes()[k]}</b><small>${t}</small></div>`).join('')}</div><div class="cd-s">Diseño en madera, acero y laca</div><span class="ob">Ver toda la colección</span></div></a>
   ${cats()}
   <section class="sil on" aria-hidden="true"><div class="sil-t" id="silT"><div class="sil-s">${[1,2,4,5,6,7].map((n,i)=>`<img src="img/sil/s${n}.png" alt="" style="--d:${i*.3}s" draggable="false">`).join("")}</div></div></section>
   <section class="sec ctr"><h3><span>Destacados</span><a href="#tienda">Ver todo</a></h3>${(()=>{const pg=[];for(let i=0;i<feat.length;i+=4)pg.push(feat.slice(i,i+4));return `<div class="fpg"><div class="fpg-t" data-pg>${pg.map(c=>`<div class="fpg-p"><div class="grid">${c.map(x=>card(x)).join('')}</div></div>`).join('')}</div>${pg.length>1?`<div class="fpg-d">${pg.map((c,i)=>`<button data-fpg="${i}" class="${i?'':'on'}" aria-label="Ver destacados ${i+1}"></button>`).join('')}</div>`:''}</div>`})()}</section>
-  <a class="full vid" href="#tienda/Fresno"><video data-src="img/teaser-ambientes.mp4" muted loop playsinline preload="none" aria-label="Ambientes con muebles FORMA"></video><div class="t"><h2>Colección Fresno</h2><div><span class="ob">Ver Fresno</span></div></div></a>
+
   ${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero','acero solo-m')}
   <div class="two solo-d">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero')}${full(FX('inicio_fresno','fresno-comedor'),'Colección Fresno','','Ver Fresno','#tienda/Fresno')}</div>
   ${(window.PROV||[]).length?`<section class="sil sil-prov on" aria-hidden="true"><div class="sil-t" data-dur="45000"><div class="sil-s">${PROV.map(p=>{const R=p[3].split(/(?=M)/),mal=p[0]==='Tierra del Fuego'?R.filter(r=>+r.slice(1).split(' ')[0]>=60):[],resto=R.filter(r=>!mal.includes(r));return `<svg viewBox="-2 -2 ${p[1]+4} ${p[2]+4}"><path d="${resto.join('')}"/>${mal.length?`<defs><linearGradient id="arg" x1="0" y1="0" x2="0" y2="1"><stop offset=".33" stop-color="#74ACDF"/><stop offset=".33" stop-color="#fff"/><stop offset=".67" stop-color="#fff"/><stop offset=".67" stop-color="#74ACDF"/></linearGradient></defs><path class="malv" d="${mal.join('')}"/>`:''}</svg>`}).join('')}</div></div></section>`:''}
