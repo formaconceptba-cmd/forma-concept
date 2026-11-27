@@ -11,7 +11,7 @@ function rango(k){const n=new Date(),y=n.getFullYear(),m=n.getMonth(),fin=new Da
   if(k==='todo')return [new Date(2020,0,1),fin];return [new Date(+n-(+k)*864e5),fin]}
 function calc(V,AC,d0,d1){const T=TX(),x=V.filter(v=>{const t=new Date(v.f);return t>=d0&&t<d1}),S=k=>x.reduce((a,v)=>a+(v[k]||0),0);
   const dias=Math.max(1,(Math.min(+d1,Date.now())-Math.max(+d0,x.length?Math.min(...x.map(v=>+new Date(v.f))):+d0))/864e5);
-  const ads=(AC||[]).length?(AC||[]).filter(a=>{const t=new Date(a.fecha+'T12:00');return t>=d0&&t<d1}).reduce((s,a)=>s+(+a.gasto),0):T.ADS*dias/30;
+  const ads=(AC||[]).length?(AC||[]).filter(a=>{const t=new Date(a.fecha+'T12:00');return t>=d0&&t<d1}).reduce((s,a)=>s+(+a.gasto),0):T.ADS*Math.max(0,(Math.min(+d1,Date.now())-Math.max(+d0,Date.now()-30*864e5))/864e5)/30;
   const g=window.GST?GST.rango(d0,d1):{fijos:T.FIJ*dias/30,cats:{},dep:0,unicos:0,unicosL:[]};
   const total=S('total'),venta=S('venta'),cprod=S('cprod'),com=S('com'),env=S('env'),iibb=S('iibb'),chq=S('chq');
   const bruta=venta-cprod,contrib=bruta-com-env-iibb-chq,neg=g.fijos+g.dep+g.unicos,antes=contrib-ads-neg,gan=Math.max(0,antes)*T.GAN,neto=antes-gan;
@@ -51,7 +51,7 @@ async function pintar(){if(tab!=='resultados')return;const m=$('#m');m.innerHTML
   const [V,{data:AC}]=await Promise.all([ventasRent(),sb.from('ads_campania').select('fecha,gasto')]);try{if(window.GST)await GST.cargar()}catch(e){console.warn(e)}if(tab!=='resultados')return;RV=V;
   const [d0,d1]=rango(RPER),r=calc(V,AC,d0,d1),mg=r.venta?r.neto/r.venta:null;
   const K=(t,v,s,c)=>`<div class="card ik" style="border-top:3px solid ${c}"><span>${t}</span><b class="${v<0?'neg':''}">${v<0?'− ':''}${ars(Math.abs(v))}</b><small>${s||'&nbsp;'}</small></div>`;
-  m.innerHTML=`<div class="bar" style="flex-wrap:wrap;gap:6px"><b style="font:500 22px Outfit,sans-serif;margin-right:8px">Estado de resultados</b><span class="hint">en vivo</span><span class="sp"></span>${PERS.map(([k,l])=>`<button class="btn ${RPER===k?'dk':''}" data-rper="${k}">${l}</button>`).join('')}</div>
+  m.innerHTML=`<div class="bar" style="flex-wrap:wrap;gap:6px"><span class="live"><i></i>En vivo</span><span class="sp"></span>${PERS.map(([k,l])=>`<button class="btn ${RPER===k?'dk':''}" data-rper="${k}">${l}</button>`).join('')}</div>
    <p class="hint" style="margin:0 0 12px;max-width:900px">Cuánto ganaste de verdad en el período: todas las ventas cobradas (tienda, profesionales y mayoristas) menos todo lo que costó. Los gastos del negocio salen de <b>6. Gastos</b>; los anuncios de <b>Anuncios y ROAS</b>; los % (comisión, IIBB, Ganancias) de <b>Configuración → Costos y parámetros</b>.</p>
    <div class="iks">${K('Ventas (con IVA)',r.total,`${r.n} venta${r.n===1?'':'s'}`,COL.ing)}${K('Ganancia bruta',r.bruta,'ventas netas − costo de los productos',COL.merc)}${K('Gastos (vender + anuncios + negocio)',-(r.com+r.env+r.iibb+r.chq+r.ads+r.neg),'',COL.neg)}${K('Te queda limpio',r.neto,mg==null?'':`margen neto ${pct(mg)}`,r.neto<0?'#c0392b':COL.ing)}</div>
    ${barra(r)}
