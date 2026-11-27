@@ -16,9 +16,8 @@ const IC={
 /* menú: [clave, etiqueta, [[pantalla, etiqueta], ...]] — mismas pantallas de siempre, ordenadas como Tiendanube */
 const MENU=[
  ['§ver','Para ver (no se edita)',[]],
- ['inicio','Inicio',[['inicio','Inicio'],['resumen','Resumen'],['guia','Cómo funciona todo']]],
+ ['inicio','Inicio',[['inicio','Panel general'],['resumen','Resumen rápido'],['resultados','Estado de resultados'],['campanias','Anuncios y ROAS'],['guia','Cómo funciona todo']]],
  ['alertas','Alertas / pendientes',[['alertas','Alertas / pendientes']]],
- ['stats','Estadísticas',[['campanias','Anuncios por campaña']]],
  ['ventas','Ventas',[['pedidos','Lista de ventas'],['facturas','Facturas'],['ppedidos','Ventas a profesionales']]],
  ['clientes','Clientes',[['clientes','Lista de clientes'],['pcuentas','Profesionales'],['pro','Mayoristas']]],
  ['§cargar','Para cargar, en este orden',[]],

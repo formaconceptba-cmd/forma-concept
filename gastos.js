@@ -116,6 +116,14 @@ async function pintar(){if(tab!=='gastos')return;$('#m').innerHTML='<p class="hi
     ECO.par[i.dataset.par]=v;const {error}=await sb.from('eco_param').upsert({id:1,par:ECO.par,aranceles:ECO.ar,updated_at:new Date().toISOString()});if(window.MG)MG.ok=false;
     toast(error?'No se pudo guardar':'Guardado: el depósito real y los precios ya lo usan');pintar()})}
 
+/* para el Estado de resultados: gastos de cualquier período (fijos y depósito prorrateados por día, puntuales por fecha) */
+window.GST={cargar:async()=>{await cargar()},
+  rango(d0,d1){const out={fijos:0,cats:{},dep:0,unicos:0,unicosL:[]},memo={};
+    for(let d=new Date(d0);d<d1&&d<=new Date();d.setDate(d.getDate()+1)){const iso=d.toISOString().slice(0,10),ym=iso.slice(0,7),dm=new Date(+ym.slice(0,4),+ym.slice(5,7),0).getDate();
+      G.filter(g=>activoEn(g,iso)).forEach(g=>{const v=+g.monto/dm;out.fijos+=v;out.cats[g.categoria]=(out.cats[g.categoria]||0)+v});
+      if(DEP){if(memo[ym]==null)memo[ym]=depMes(ym).total;out.dep+=memo[ym]/dm}}
+    G.filter(g=>g.tipo==='unico'&&g.fecha).forEach(g=>{const t=new Date(g.fecha+'T12:00');if(t>=d0&&t<d1){out.unicos+=+g.monto;out.unicosL.push(g)}});
+    return out}};
 if(typeof draw==='function'){const _d=draw;draw=async function(){if(tab==='gastos'){if(typeof drawNav==='function')drawNav();return pintar()}return _d.apply(this,arguments)}}
 if(window.AYUDA)AYUDA.gastos='Todos los gastos reales: fijos de cada mes, puntuales, el depósito Pailos (se calcula solo con el stock real y las tarifas) y el costo de la mercadería. Muestra el punto de equilibrio. Inicio los usa para la ganancia real.';
 })();
