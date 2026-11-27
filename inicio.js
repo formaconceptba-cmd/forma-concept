@@ -46,7 +46,7 @@ async function drawInicio(silencioso){
   const inP=d=>new Date(d)>=from,inPrev=d=>prev&&new Date(d)>=prev&&new Date(d)<from;
   const cur=V.filter(v=>inP(v.f)),old=V.filter(v=>inPrev(v.f));
   const ini0=PER?+from:Math.min(now-DIA,V.reduce((m,v)=>Math.min(m,+new Date(v.f)),now),(ev||[]).reduce((m,x)=>Math.min(m,+new Date(x.created_at)),now)),dias=Math.max(1,(now-ini0)/DIA),S=(a,k)=>a.reduce((s,v)=>s+v[k],0);
-  const adsDe=(d0,d1)=>(AC||[]).length?(AC||[]).filter(x=>{const t=+new Date(x.fecha+'T12:00');return t>=+d0&&t<+d1}).reduce((s,x)=>s+(+x.gasto),0):T.ADS*dias/30;
+  const adsDe=(d0,d1)=>(AC||[]).length?(AC||[]).filter(x=>{const t=+new Date(x.fecha+'T12:00');return t>=+d0&&t<+d1}).reduce((s,x)=>s+(+x.gasto),0):0;
   const res=(a,d0,d1)=>{const venta=S(a,'venta'),g=S(a,'g'),ads=adsDe(d0,d1),fij=T.FIJ*dias/30+gUni(d0,d1),antes=g-ads-fij,gan=Math.max(0,antes)*T.GAN;return {total:S(a,'total'),venta,g,ads,fij,antes,gan,neto:antes-gan,n:a.length}};
   const R=res(cur,PER?from:new Date(ini0),new Date(now+DIA)),RP=res(old,prev||new Date(0),from);
   const E=(ev||[]).filter(x=>inP(x.created_at)),EP=(ev||[]).filter(x=>inPrev(x.created_at));

@@ -11,7 +11,7 @@ function rango(k){const n=new Date(),y=n.getFullYear(),m=n.getMonth(),fin=new Da
   if(k==='todo')return [new Date(2020,0,1),fin];return [new Date(+n-(+k)*864e5),fin]}
 function calc(V,AC,d0,d1){const T=TX(),x=V.filter(v=>{const t=new Date(v.f);return t>=d0&&t<d1}),S=k=>x.reduce((a,v)=>a+(v[k]||0),0);
   const dias=Math.max(1,(Math.min(+d1,Date.now())-Math.max(+d0,x.length?Math.min(...x.map(v=>+new Date(v.f))):+d0))/864e5);
-  const ads=(AC||[]).length?(AC||[]).filter(a=>{const t=new Date(a.fecha+'T12:00');return t>=d0&&t<d1}).reduce((s,a)=>s+(+a.gasto),0):T.ADS*Math.max(0,(Math.min(+d1,Date.now())-Math.max(+d0,Date.now()-30*864e5))/864e5)/30;
+  const ads=(AC||[]).length?(AC||[]).filter(a=>{const t=new Date(a.fecha+'T12:00');return t>=d0&&t<d1}).reduce((s,a)=>s+(+a.gasto),0):0;
   const g=window.GST?GST.rango(d0,d1):{fijos:T.FIJ*dias/30,cats:{},dep:0,unicos:0,unicosL:[]};
   const total=S('total'),venta=S('venta'),cprod=S('cprod'),com=S('com'),env=S('env'),iibb=S('iibb'),chq=S('chq');
   const bruta=venta-cprod,contrib=bruta-com-env-iibb-chq,neg=g.fijos+g.dep+g.unicos,antes=contrib-ads-neg,gan=Math.max(0,antes)*T.GAN,neto=antes-gan;
@@ -47,6 +47,30 @@ function meses(V,AC){const n=new Date(),M=[];for(let i=5;i>=0;i--){const d0=new 
   return `<div class="card wrap" style="margin-bottom:14px"><h4 style="margin:0 0 8px;padding:12px 14px 0">Mes a mes</h4><table><thead><tr><th></th>${M.map(m=>`<th class="n">${m.l}</th>`).join('')}</tr></thead><tbody>
    ${F.map(([t,f,c,b])=>`<tr${b===1?' style="background:#f6f6f3"':''}><td>${c?`<i style="width:8px;height:8px;border-radius:2px;background:${c};display:inline-block;margin-right:6px"></i>`:''}${b?`<b>${t}</b>`:t}</td>${M.map(m=>{const v=f(m.r);return `<td class="n">${v==null?'—':b===2?`<span class="${v<0?'neg':'pos'}">${pct(v)}</span>`:`<span class="${b&&v<0?'neg':''}">${b?'<b>':''}${v<0?'− ':''}${ars(Math.abs(v))}${b?'</b>':''}</span>`}</td>`}).join('')}</tr>`).join('')}</tbody></table></div>`}
 
+/* real contra proyectado: lo que proyectan los contenedores (venta y resultado repartidos en los meses de rotación desde que llegan) */
+function proyMes(){const st=typeof ST!=='undefined'?ST:{},ll=String(st.llegada_contenedor||''),lleg=ll.length===8?new Date(+ll.slice(0,4),+ll.slice(4,6)-1,1):null,M={};
+  (ECO.ped||[]).filter(p=>p.estado!=='borrador'&&p.estado!=='cerrado').forEach(pe=>{let r;try{r=ecoCalc(pe)}catch(e){return}const tc=r.p.tc,n=Math.max(1,Math.round(r.p.meses||10));
+    const l=pe.par&&pe.par.llegada?new Date(pe.par.llegada):lleg;if(!l)return;
+    for(let i=0;i<n;i++){const d=new Date(l.getFullYear(),l.getMonth()+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');const x=M[k]||(M[k]={v:0,r:0});x.v+=r.venta/n*tc;x.r+=r.resultado/n*tc}});
+  return M}
+function lineas(S,W=720,H=210){const L=64,R=10,T=14,B=26,iw=W-L-R,ih=H-T-B,n=S[0].v.length,all=S.flatMap(s=>s.v.filter(v=>v!=null));
+  const mx=Math.max(1,...all),mn=Math.min(0,...all),rg=mx-mn||1,y=v=>T+(mx-v)/rg*ih,x=i=>L+(n>1?i/(n-1)*iw:iw/2);
+  const tk=[mn,0,mx/2,mx].filter((v,i,a)=>a.indexOf(v)===i&&(v===0||Math.abs(v)>rg*0.08));
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">${tk.map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="${v===0?'#bdbab3':'#ebe9e4'}"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#77756F">${typeof kM==='function'?kM(v):Math.round(v)}</text>`).join('')}
+   ${S.map(s=>{let d='',on=false;s.v.forEach((v,i)=>{if(v==null){on=false;return}d+=(on?'L':'M')+x(i)+','+y(v);on=true});return `<path d="${d}" fill="none" stroke="${s.c}" stroke-width="${s.dash?2:2.5}" ${s.dash?'stroke-dasharray="6 5"':''} stroke-linejoin="round"/>${s.v.map((v,i)=>v!=null&&!s.dash?`<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${s.c}" stroke="#fff" stroke-width="1.5"/>`:'').join('')}`}).join('')}
+   ${S[0].l.map((t,i)=>`<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="11" fill="#77756F">${t}</text>`).join('')}</svg>
+   <div class="ileg">${S.map(s=>`<span><i style="background:${s.c};${s.dash?'opacity:.6':''}"></i>${s.n}</span>`).join('')}</div>`}
+function vsProy(V,AC){const P=proyMes(),n=new Date(),MS=[];for(let i=-5;i<=9;i++){const d0=new Date(n.getFullYear(),n.getMonth()+i,1),d1=new Date(n.getFullYear(),n.getMonth()+i+1,1),k=d0.getFullYear()+'-'+String(d0.getMonth()+1).padStart(2,'0'),fut=d0>n;
+    const r=fut?null:calc(V,AC,d0,d1),p=P[k]||{v:0,r:0};MS.push({l:d0.toLocaleDateString('es-AR',{month:'short'}),k,fut,rv:r?r.venta:null,rr:r?r.contrib-r.ads:null,pv:p.v,pr:p.r})}
+  const hay=MS.some(m=>m.pv);const des=(a,b)=>b?((a-b)/Math.abs(b)*100):null,dTxt=v=>v==null?'—':`<span class="${v<0?'neg':'pos'}">${v>0?'+':''}${Math.round(v)}%</span>`;
+  return `<div class="card pad" style="margin-top:14px"><h4 style="margin:0 0 4px">Real contra proyectado</h4>
+   <p class="hint" style="margin:0 0 10px">Línea llena: lo que pasó. Punteada: lo que proyectaron los contenedores (la venta y lo que dejan, repartidos en los meses de rotación desde que llegan${typeof ST!=='undefined'&&ST.llegada_contenedor?', llegada estimada '+String(ST.llegada_contenedor).replace(/(\d{4})(\d\d)(\d\d)/,'$3/$2/$1'):''}). ${hay?'':'<b>Todavía no hay proyección en estos meses.</b>'}</p>
+   <div class="g2d" style="gap:14px"><div><b style="font-size:13px">Ventas netas (sin IVA)</b>${lineas([{n:'Real',c:'#1baf7a',v:MS.map(m=>m.rv),l:MS.map(m=>m.l)},{n:'Proyectado',c:'#1baf7a',dash:1,v:MS.map(m=>m.pv||null),l:MS.map(m=>m.l)}])}</div>
+    <div><b style="font-size:13px">Lo que dejan las ventas (después de producto, cobro, impuestos y anuncios)</b>${lineas([{n:'Real',c:'#141414',v:MS.map(m=>m.rr),l:MS.map(m=>m.l)},{n:'Proyectado',c:'#141414',dash:1,v:MS.map(m=>m.pr||null),l:MS.map(m=>m.l)}])}</div></div>
+   <details style="margin-top:8px"><summary class="hint" style="cursor:pointer">Ver el desvío mes a mes</summary><div class="wrap" style="margin-top:8px"><table><thead><tr><th>Mes</th><th class="n">Ventas real</th><th class="n">Ventas proyectadas</th><th class="n">Desvío</th><th class="n">Dejan real</th><th class="n">Dejan proyectado</th><th class="n">Desvío</th></tr></thead><tbody>
+    ${MS.map(m=>`<tr${m.fut?' class="hint"':''}><td>${m.l}${m.fut?' (futuro)':''}</td><td class="n">${m.rv==null?'—':ars(m.rv)}</td><td class="n">${m.pv?ars(m.pv):'—'}</td><td class="n">${m.fut?'—':dTxt(des(m.rv,m.pv))}</td><td class="n">${m.rr==null?'—':ars(m.rr)}</td><td class="n">${m.pr?ars(m.pr):'—'}</td><td class="n">${m.fut?'—':dTxt(des(m.rr,m.pr))}</td></tr>`).join('')}</tbody></table></div>
+    <p class="hint">Desvío en verde: mejor de lo proyectado; en rojo: peor. Si se repite varios meses, revisá los supuestos del contenedor (rotación, precio, marketing).</p></details></div>`}
+
 async function pintar(){if(tab!=='resultados')return;const m=$('#m');m.innerHTML='<p class="hint">Cargando…</p>';
   const [V,{data:AC}]=await Promise.all([ventasRent(),sb.from('ads_campania').select('fecha,gasto')]);try{if(window.GST)await GST.cargar()}catch(e){console.warn(e)}if(tab!=='resultados')return;RV=V;
   const [d0,d1]=rango(RPER),r=calc(V,AC,d0,d1),mg=r.venta?r.neto/r.venta:null;
@@ -57,6 +81,7 @@ async function pintar(){if(tab!=='resultados')return;const m=$('#m');m.innerHTML
    ${barra(r)}
    <div class="g2d" style="align-items:start;gap:14px"><div>${pl(r)}</div><div>${meses(V,AC)}
     <div class="card pad"><h4 style="margin:0 0 6px">Cómo se lee</h4><p class="hint" style="margin:0;line-height:1.6"><b style="color:${COL.ing}">Ventas netas</b>: lo cobrado sin IVA. <b style="color:${COL.merc}">Ganancia bruta</b>: después de pagar los productos. <b style="color:${COL.vend}">Lo que dejan las ventas</b>: después de comisiones, envíos e impuestos de cada venta. <b style="color:${COL.neg}">Resultado</b>: después de anuncios y gastos del negocio. Si da negativo, ese período perdiste plata.</p></div></div></div>
+   ${vsProy(V,AC)}
    <details class="card pad" style="margin-top:14px"><summary style="cursor:pointer"><b>Venta por venta</b> <span class="hint">(${r.n})</span></summary>
     ${r.n?`<div class="wrap" style="margin-top:10px"><table><thead><tr><th>#</th><th>Fecha</th><th>Quién</th><th class="hide-m">Productos</th><th>Cómo pagó</th><th class="n">Cobraste</th><th class="n hide-m">Costo productos</th><th class="n hide-m">Comisión + impuestos</th><th class="n">Le quedó</th><th class="n">Margen</th></tr></thead><tbody>
     ${r.x.map(v=>`<tr><td>${v.id}</td><td>${new Date(v.f).toLocaleDateString('es-AR')}</td><td>${esc(v.cli||'')}<div class="hint">${esc(v.est||'')}</div></td><td class="hide-m hint">${esc(v.det||'')}</td><td>${esc(v.medio||'')}</td><td class="n">${ars(v.total)}</td><td class="n hide-m">${ars(v.cprod)}</td><td class="n hide-m">${ars(v.com+v.env+v.iibb+v.chq)}</td><td class="n"><b class="${v.g<0?'neg':''}">${ars(v.g)}</b></td><td class="n">${v.m==null?'—':`<span class="${v.m<0.15?'neg':'pos'}">${pct(v.m)}</span>`}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">No hay ventas en este período.</p>'}</details>`;

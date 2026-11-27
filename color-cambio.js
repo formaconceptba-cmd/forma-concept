@@ -7,13 +7,14 @@
 async function cambiar(sku){const v=VARS.find(x=>x.sku===sku);if(!v)return;if(!PAL.length)await loadSkus();
   const KA=CAJAS.filter(k=>k.sku===v.sku),fis=KA.reduce((a,k)=>a+((STKC[k.sku_caja]||{}).fisico||0),0);
   const {data:ING}=KA.length?await sb.from('eco_ingreso').select('*').in('sku_caja',KA.map(k=>k.sku_caja)):{data:[]};
-  const {data:PE}=await sb.from('eco_pedidos').select('id,nombre,par');const peN=id=>((PE||[]).find(p=>p.id===id)||{}).nombre||('#'+id);
+  const {data:PE}=await sb.from('eco_pedidos').select('id,nombre,par,estado');const peN=id=>((PE||[]).find(p=>p.id===id)||{}).nombre||('#'+id);
   const peds=[...new Set((ING||[]).filter(x=>x.cajas>0).map(x=>x.pedido_id))];
   const prod=(typeof prods!=='undefined'?prods:[]).find(p=>p.id===v.codigo_master)||{};
+  const tarde=peds.map(id=>(PE||[]).find(p=>p.id===id)).filter(p=>p&&['en_transito','recibido','cerrado'].includes(p.estado));
   const d=document.createElement('dialog');d.style.maxWidth='560px';document.body.appendChild(d);
   d.innerHTML=`<div class="dh"><h2>Cambiar color · ${esc((prod.tipo||'')+' '+(prod.nombre||v.codigo_master))}</h2><button class="btn" data-x>Cerrar</button></div><div class="db">
    <p style="margin-top:0">Color actual: <b>${esc(colNom(v.color))}</b> <span class="hint">(${esc(v.sku)})</span></p>
-   ${fis>0?`<div class="card pad ibad">Este color ya tiene <b>${fis} piezas en Pailos</b>: es mercadería real y no se cambia acá. Si Pailos recibió otro color, corregilo en Productos → Inventario (Pailos) con un ajuste.</div>`:`
+   ${tarde.length?`<div class="card pad ibad">Ya es tarde para cambiar este color: viene en <b>${tarde.map(p=>esc(p.nombre)).join(', ')}</b>, que ya está ${tarde.some(p=>p.estado==='en_transito')?'en viaje':'recibido'}. Las cajas ya están hechas y etiquetadas. "Cambiar color" sirve sólo antes de que se produzca (contenedor en borrador o confirmado).</div>`:fis>0?`<div class="card pad ibad">Este color ya tiene <b>${fis} piezas en Pailos</b>: es mercadería real y no se cambia acá. Si Pailos recibió otro color, corregilo en Productos → Inventario (Pailos) con un ajuste.</div>`:`
    <p class="hint">Usalo cuando el proveedor cambió el color de lo que viene. Todo lo de <b>${esc(colNom(v.color))}</b> pasa al color nuevo: ${peds.length?`las cajas que llegan en <b>${peds.map(peN).map(esc).join(', ')}</b> (packing list para Pailos y stock "en camino")`:'no viene en ningún contenedor todavía'}, y se publica el nuevo en lugar del viejo. Este cambio manda sobre la proforma: si la volvés a aplicar, se respeta.</p>
    <label>Color nuevo</label><select id="cc_c"><option value="">Elegí…</option>${PAL.filter(c=>c.activo&&c.codigo!==v.color).map(c=>{const ya=VARS.find(x=>x.codigo_master===v.codigo_master&&x.color===c.codigo);return `<option value="${c.codigo}">${esc(c.nombre)}${ya?' (ya existe: se suma)':''}</option>`}).join('')}</select>
    <div class="hint" style="margin-top:4px">¿No está el color? Se agrega en Productos → Colores.</div>
