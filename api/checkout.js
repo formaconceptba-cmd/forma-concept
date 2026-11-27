@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     const items = [];
     for (const l of lines) {
       const p = prods[l.id];
-      if (!p || !p.activo || BLQ.has(l.id) || !p.precio_lista || p.disponibilidad === 'sin_stock') return res.status(400).json({ error: 'Un producto ya no está disponible.' });
+      if (!p || !p.activo || BLQ.has(l.id) || !p.precio_lista || p.disponibilidad === 'sin_stock' || p.disponibilidad === 'proximamente') return res.status(400).json({ error: 'Un producto ya no está disponible.' });
       const libre = (STK[l.id] ? STK[l.id].disponible : (p.unidades || 0) - (p.vendidas || 0)) - lines.filter(x => x.id === l.id && x !== l).reduce((a, x) => a + x.q, 0);
       if (l.q > libre) return res.status(409).json({ error: `No queda stock suficiente de ${p.tipo} ${p.nombre}.` });
       if (prof) { const mn = p.min_profesional || minProf || 1; const tot = lines.filter(x => x.id === l.id).reduce((s, x) => s + x.q, 0); if (tot < mn) return res.status(400).json({ error: `La compra mínima profesional de ${p.tipo} ${p.nombre} es de ${mn} unidades.` }); }

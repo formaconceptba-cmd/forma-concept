@@ -262,7 +262,7 @@ a.fs-p{display:block;color:inherit}a.fs-p .fim img{transition:transform 1.2s var
 .nac-im{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:10px;height:min(72svh,640px)}.nac-im img{width:100%;height:100%;object-fit:cover}.nac-im img:first-child{grid-row:1/3}
 .nac-t{display:grid;gap:14px;align-content:end}.nac-t .k{font-size:12px;color:var(--soft);letter-spacing:.1em}.nac-t h1{font-size:clamp(34px,4vw,60px)!important;font-weight:400!important;line-height:1!important;letter-spacing:-.01em!important;text-transform:none!important}.nac-t p{font-size:15px!important;line-height:1.6!important;text-transform:none!important;letter-spacing:0!important;max-width:440px}
 .nac-empty{padding:20px 0 60px;font-size:15px!important;text-transform:none!important;letter-spacing:0!important}.nac-empty a{text-decoration:underline}
-.disp{position:absolute;top:10px;right:10px;z-index:2;font-size:10px;letter-spacing:.08em;padding:4px 8px;background:#fff}.disp.d-stock{background:#2F6B4F;color:#fff}.disp.d-pedido{background:var(--ink);color:#fff}.disp.d-sin_stock{background:#DDD9D2;color:var(--soft)}
+.disp{position:absolute;top:10px;right:10px;z-index:2;font-size:10px;letter-spacing:.08em;padding:4px 8px;background:#fff}.disp.d-stock{background:#2F6B4F;color:#fff}.disp.d-pedido{background:var(--ink);color:#fff}.disp.d-sin_stock{background:#DDD9D2;color:var(--soft)}.disp.d-proximamente{background:#8a7a5c;color:#fff}
 @media (max-width:720px){.nac-h{grid-template-columns:1fr}.nac-im{height:60svh}.fsx-f,.fsx-f.l,.fsx-f.r{width:auto;margin:0 var(--g) 8vh}}
 .env{display:grid!important;gap:8px}.env-h{font-size:12px;letter-spacing:.08em;font-weight:500}
 .env-o{display:grid!important;grid-template-columns:16px 1fr auto;gap:10px;align-items:start;text-align:left;width:100%;border:1px solid var(--line);background:#fff;padding:12px;cursor:pointer;font:inherit}
@@ -810,7 +810,7 @@ const save=()=>{try{localStorage.setItem('fc_cart_c',JSON.stringify(cart))}catch
 /* ---------- piezas ---------- */
 function card(p,ci){
   const v=ci!=null&&p.colors&&p.colors[ci],G=v?galeria(p,ci):[p.img,p.img2],nm=v?`${title(p)} | ${p.colors[ci][0]}`:title(p);
-  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"${v?` data-ci="${ci}"`:''}><div class="ph">${p.fam==="Nacional"&&p.disp?`<span class="disp d-${p.disp}">${DISP[p.disp]||""}</span>`:p.price&&off(p)>0?`<span class="circ">−${off(p)}%</span>`:""}<img src="${src(G[0])}" alt="${esc(nm)}" loading="lazy">${G[1]?`<img class="alt" src="${src(G[1])}" alt="" loading="lazy">`:''}</div>
+  return `<a class="c" href="#${slug(p.id)}" data-p="${p.id}"${v?` data-ci="${ci}"`:''}><div class="ph">${(p.fam==="Nacional"||p.disp==='proximamente')&&p.disp?`<span class="disp d-${p.disp}">${DISP[p.disp]||""}</span>`:p.price&&off(p)>0?`<span class="circ">−${off(p)}%</span>`:""}<img src="${src(G[0])}" alt="${esc(nm)}" loading="lazy">${G[1]?`<img class="alt" src="${src(G[1])}" alt="" loading="lazy">`:''}</div>
   <div class="n cn"><span class="nm">${esc(nm)}</span>${p.price?`<span class="plp">${p.promo&&!esProfT()?`<s style="font-weight:400;margin-right:4px">${ars(p.price0)}</s><b style="color:#b3261e;margin-right:4px">−${Math.round(p.promo.pct*100)}%</b>`:''}${ars(p.price)}</span><span class="cu">${CU()} cuotas sin interés de <i>${ars(p.price/CU())}</i></span>${p.transf?`<span class="pt"><b>${ars(p.transf)}</b><small>con Transferencia</small></span>`:''}`:'<span class="plp">Consultar precio</span>'}</div></a>`;
 }
 /* toda la foto es un link, no solo el botón */
@@ -1095,7 +1095,7 @@ function arInit(){
   p.onpointerup=p.onpointercancel=()=>{drag=null};
   st.onwheel=e=>{e.preventDefault();AR.s=Math.max(8,Math.min(90,AR.s-(e.deltaY>0?2:-2)));p.style.width=AR.s+'%';const sl=$('#arS');if(sl)sl.value=AR.s};
 }
-const DISP={stock:'En stock',pedido:'A pedido',sin_stock:'Sin stock'};
+const DISP={stock:'En stock',pedido:'A pedido',proximamente:'Próximamente',sin_stock:'Sin stock'};
 function viewNacional(){
   const L=P.filter(p=>p.fam==='Nacional');
   return `<div class="nacl">
@@ -1190,7 +1190,7 @@ function viewProduct(p){
     ${p.noColor?'':`<div class="pcl"><span class="lb">Color</span><span class="swn" id="swn">${esc(p.colors[col][0])}</span></div>
     <div class="chips">${p.colors.map((c,i)=>`<button data-col="${i}" class="${i===col?'on':''}">${esc(c[0])}</button>`).join('')}</div>`}
     ${p.img?`<a class="vcasa" href="#en-tu-casa" data-arp="${p.id}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10.5 12 4l9 6.5V20H3z"/><path d="M9 20v-6h6v6"/></svg>Ver este producto en mi casa</a>`:''}
-    ${p.price?`<div class="pbuy"><div class="qty"><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">${isProf()?(p.min||1):1}</b><button data-qd="1" aria-label="Uno más">+</button></div><button class="buy" data-add="${p.id}" ${p.disp==='sin_stock'?'disabled':''}>${p.disp==='sin_stock'?'Sin stock':'Agregar al carrito'}</button></div>`:`<button class="buy" data-add="${p.id}">Consultanos</button>`}
+    ${p.price?`<div class="pbuy"><div class="qty"><button data-qd="-1" aria-label="Uno menos">−</button><b id="qn">${isProf()?(p.min||1):1}</b><button data-qd="1" aria-label="Uno más">+</button></div><button class="buy" data-add="${p.id}" ${p.disp==='sin_stock'||p.disp==='proximamente'?'disabled':''}>${p.disp==='sin_stock'?'Sin stock':p.disp==='proximamente'?'Próximamente':'Agregar al carrito'}</button></div>`:`<button class="buy" data-add="${p.id}">Consultanos</button>`}
     ${isProf()&&p.min>1?`<p class="psi">Compra mínima profesional: ${p.min} unidades</p>`:''}
     <details class="acc"><summary>${IC_CARD}<span>Medios de pago</span></summary><div>
      ${p.price?`<p>${CU()} cuotas sin interés de <b>${ars(p.price/CU())}</b></p>`:''}
@@ -1365,7 +1365,7 @@ document.addEventListener('click',e=>{
   if(a.hasAttribute('data-back')){e.preventDefault();fadeTo('#tienda');return}
   if(a.dataset.col){col=+a.dataset.col;document.querySelectorAll('.chips button').forEach((b,i)=>b.classList.toggle('on',i===col));const p=P.find(x=>slug(x.id)===location.hash.slice(1));$('#swn').textContent=p.colors[col][0];const g=$('#pgal');if(g)g.innerHTML=pdpPics(p);return}
   if(a.dataset.th!=null){const p=P.find(x=>slug(x.id)===location.hash.slice(1)),m=$('#pmain');if(!p||!m)return;document.querySelectorAll('.pth button').forEach(b=>b.classList.toggle('on',b===a));m.innerHTML=a.dataset.th==='dr'?`<div class="pdr">${drawing(p)}</div>`:`<img src="${src(galeria(p,col)[+a.dataset.th])}" alt="${esc(title(p))}">`;return}
-  if(a.dataset.add){const p=byId(a.dataset.add);
+  if(a.dataset.add){const p=byId(a.dataset.add);if(p&&(p.disp==='proximamente'||p.disp==='sin_stock')){toast(p.disp==='proximamente'?'Próximamente: todavía no se puede comprar':'Sin stock');return}
     if(!p.price){window.open('https://wa.me/541139443055?text='+encodeURIComponent('Hola, quiero consultar por '+title(p)),'_blank','noopener');return}
     track('agregar_carrito',{producto:p.id,valor:p.price});const n=+($('#qn')?.textContent)||1;if(p.vdisp&&p.vdisp[col]!=null&&p.vdisp[col]<n){toast(p.vdisp[col]>0?`Quedan ${p.vdisp[col]} en ${p.colors[col][0]}`:`${p.colors[col][0]}: sin stock por ahora`);return}const l=cart.find(x=>x.id===p.id&&x.c===col); l?l.q+=n:cart.push({id:p.id,c:col,q:n,sku:p.skus?p.skus[col]:null}); save(); openCart(); return}
   if(a.dataset.qd){const e=$('#qn'),pq=P.find(x=>slug(x.id)===location.hash.slice(1));e.textContent=Math.max(isProf()&&pq?(pq.min||1):1,Math.min(20,(+e.textContent||1)+(+a.dataset.qd)));return}
