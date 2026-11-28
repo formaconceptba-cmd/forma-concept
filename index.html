@@ -15,7 +15,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter+Tight:wght@300;400;500&family=Outfit:wght@500&family=Archivo:wght@400&family=Space+Grotesk:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@400&family=Inter+Tight:wght@300;400;500&family=Outfit:wght@500&family=Archivo:wght@400&family=Space+Grotesk:wght@400;500&display=swap">
 <style>
 :root{--bg:#F7F7F5;--box:#ECECEA;--ink:#141414;--soft:#77756F;--line:#DDDBD6;--f:"Helvetica Neue",Helvetica,"Inter Tight",Arial,sans-serif;--g:20px;--ease:cubic-bezier(.7,0,.2,1)}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -648,6 +648,43 @@ body.fopen{overflow:hidden}
 @media (max-width:720px){.ask{padding:28px 12px 24px}.ask .ask-g{grid-template-columns:repeat(2,minmax(0,1fr))}}</style>
 <script src="provincias.js"></script>
 
+<style>
+/* cursor más chico */
+#cur{width:6px!important;height:6px!important;margin:-3px 0 0 -3px!important}#cur.big{width:10px!important;height:10px!important;margin:-5px 0 0 -5px!important}
+/* subrayado a lápiz al pasar por un texto que se puede tocar */
+.pzr{position:relative}
+.pz::after{content:"";position:absolute;left:-3%;bottom:-.38em;width:106%;height:.5em;min-height:6px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'%3E%3Cpath d='M2 7.5C40 5 82 8.6 122 6S176 5.2 198 4' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' opacity='.9'/%3E%3Cpath d='M5 8.8C52 6.8 98 9.2 142 7.2S184 6.4 195 6' fill='none' stroke='%23000' stroke-width='1.1' stroke-linecap='round' opacity='.45'/%3E%3C/svg%3E") no-repeat 0 0/100% 100%;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'%3E%3Cpath d='M2 7.5C40 5 82 8.6 122 6S176 5.2 198 4' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' opacity='.9'/%3E%3Cpath d='M5 8.8C52 6.8 98 9.2 142 7.2S184 6.4 195 6' fill='none' stroke='%23000' stroke-width='1.1' stroke-linecap='round' opacity='.45'/%3E%3C/svg%3E") no-repeat 0 0/100% 100%;clip-path:inset(0 100% 0 0);transition:clip-path .5s cubic-bezier(.65,.05,.36,1);pointer-events:none}
+.pz:hover::after{clip-path:inset(0 0 0 0)}
+/* FRM Studio y Profesionales en negrita */
+header nav.r a[data-r=frm],header nav.r a[data-r=proyectos]{font-weight:700!important}
+/* la primera imagen ocupa toda la pantalla (también en el celular) */
+.hero-cd{height:100vh!important;height:100lvh!important}
+/* categorías: flecha más marcada en la compu */
+@media(min-width:721px){.cs .ar{width:30px;height:86px;background:#fff;color:#8c8a83;box-shadow:0 2px 14px rgba(0,0,0,.12)}.cs .ar svg{stroke-width:2.2}}
+/* puntitos de Destacados más grandes */
+.fpg-d{gap:16px}.fpg-d button{width:14px;height:14px}
+/* bloques imagen + texto (como Vical): sólo compu */
+.vk{background:#fff}.vk-r{display:grid;grid-template-columns:1fr 1fr;align-items:center}
+.vk-m{display:block;aspect-ratio:1/1;overflow:hidden;position:relative;max-height:100vh;width:100%}.vk-m img{width:100%;height:100%;object-fit:cover;animation:vkz 24s ease-in-out infinite alternate;transform-origin:50% 60%}
+@keyframes vkz{from{transform:scale(1)}to{transform:scale(1.15)}}
+.vk-t{padding:0 12%}
+body .vk-t h2{font-family:"Playfair Display",Georgia,serif!important;font-size:42px!important;line-height:1.12!important;font-weight:400!important;letter-spacing:0!important;text-transform:none!important;white-space:pre-line;margin:0 0 30px;color:#000}
+body .vk-t p{font-family:"Inter Tight",sans-serif!important;font-size:15px!important;line-height:27px!important;font-weight:300!important;letter-spacing:.3px!important;text-transform:none!important;max-width:500px;margin:0 0 34px;color:#000}
+body .vk-b,body .vk-b span{font-size:12px!important;letter-spacing:.06em!important;text-transform:uppercase!important;color:#000}body .vk-b{border-bottom:1px solid #000;padding-bottom:3px;display:inline-block}
+@media(prefers-reduced-motion:reduce){.vk-m img{animation:none}}
+/* productos nacionales: título más grande arriba del carrusel, provincias más chicas */
+body .nac-big{display:flex;justify-content:center;align-items:baseline;gap:18px;padding:80px var(--g) 0;margin:0;font-weight:400}
+body .nac-big>span{font-size:30px!important;letter-spacing:.06em!important;text-transform:uppercase}body .nac-big a,body .nac-big a span{font-size:12px!important;color:var(--soft)}
+.sil-prov{padding-top:30px!important}.sil-prov svg{height:58px!important;margin:0 22px!important}
+@media(max-width:700px){body .nac-big>span{font-size:22px!important}body .nac-big{padding-top:56px}.sil-prov svg{height:42px!important;margin:0 14px!important}}
+.sec-nac h3{display:none}
+</style>
+<script>
+if(matchMedia('(hover:hover) and (pointer:fine)').matches)document.addEventListener('mouseover',e=>{const el=e.target.closest&&e.target.closest('a,button,summary');if(!el||el.classList.contains('pz')||el.dataset.nopz)return;
+  if(el.querySelector('img,video')||el.closest('.full,.cs,.c,.fpg-d,.dots,.car,.vk-m,.ico')||!el.textContent.trim()||el.offsetHeight>70)return;
+  const cs=getComputedStyle(el),bg=cs.backgroundColor;if(bg!=='rgba(0, 0, 0, 0)'&&bg!=='transparent')return;if(parseFloat(cs.borderBottomWidth)>0||parseFloat(cs.borderTopWidth)>0||cs.textDecorationLine==='underline')return;
+  el.classList.add('pz');if(cs.position==='static')el.classList.add('pzr')},true);
+</script>
 <header>
   <nav><button class="mbtn" id="menuBtn" aria-expanded="false" aria-controls="mn"><i></i>Menú</button><a class="hide-m" href="#tienda/Sillas" data-r="Sillas">Sillas</a><a class="hide-m" href="#tienda/Butacas" data-r="Butacas">Sillones</a><a class="hide-m" href="#tienda/Mesas" data-r="Mesas">Mesas</a><a class="hide-m" href="#tienda/Mesas bajas" data-r="Mesas bajas">Mesas bajas</a><a class="hide-m" href="#tienda/Bancos" data-r="Bancos">Bancos</a><a class="hide-m" href="#tienda" data-r="tienda">Ver todo</a><a class="hide-m" href="#nacional" data-r="nacional">Nacional</a></nav>
   <a class="mark" href="#inicio" aria-label="FORMA Concept, inicio"><span class="fcl"><b>forma</b></span></a>
@@ -899,14 +936,15 @@ function viewHome(){
   <section class="sec ctr"><h3>${tx('dest_t','Destacados')}<a href="#tienda">${tx('dest_v','Ver todo')}</a></h3>${(()=>{const pg=[];for(let i=0;i<feat.length;i+=4)pg.push(feat.slice(i,i+4));return `<div class="fpg"><div class="fpg-t" data-pg>${pg.map(c=>`<div class="fpg-p"><div class="grid">${c.map(x=>card(x)).join('')}</div></div>`).join('')}</div>${pg.length>1?`<div class="fpg-d">${pg.map((c,i)=>`<button data-fpg="${i}" class="${i?'':'on'}" aria-label="Ver destacados ${i+1}"></button>`).join('')}</div>`:''}</div>`})()}</section>
   ${full(FX('inicio_portada','ctx_pause'),'Colección Fresno','','Ver Fresno','#tienda/Fresno','foto-p','fotop')}
   ${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero','acero solo-m','acero')}
-  <div class="two solo-d">${full(FX('inicio_acero','hv_acanalada60'),'Colección Acero','','Ver Acero','#tienda/Acero','','acero')}${full(FX('inicio_fresno','fresno-comedor'),'Colección Fresno','','Ver Fresno','#tienda/Fresno','','fresno')}</div>
+  <section class="vk solo-d">
+   <div class="vk-r"><a class="vk-m" href="#tienda/Acero"><img src="${src(FX('inicio_acero','hv_acanalada60'))}" alt="Colección Acero" loading="lazy"></a><div class="vk-t">${tx('vac_t','Colección Acero,\nestructura que se nota','h2')}${tx('vac_p','Acero con terminación acanalada y madera maciza. Piezas firmes y livianas a la vista, pensadas para durar y para convivir con espacios contemporáneos.','p')}<a class="vk-b" href="#tienda/Acero">${tx('vac_b','Descubrir')}</a></div></div>
+   <div class="vk-r"><div class="vk-t">${tx('vlq_t','Laqueados,\ncolor con terminación perfecta','h2')}${tx('vlq_p','Superficies laqueadas, lisas al tacto y fáciles de limpiar. Mesas y piezas que suman color y brillo sin perder sobriedad.','p')}<a class="vk-b" href="#tienda/Laca">${tx('vlq_b','Descubrir')}</a></div><a class="vk-m" href="#tienda/Laca"><img src="${src(FX('inicio_laca','ln_laca'))}" alt="Laqueados" loading="lazy"></a></div>
+  </section>
+  ${P.some(p=>p.fam==='Nacional'&&p.img)?`<h3 class="nac-big">${tx('nac_t','Productos nacionales')}<a href="#nacional">${tx('nac_v','Ver todos')}</a></h3>`:''}
   ${(window.PROV||[]).length?`<section class="sil sil-prov on" aria-hidden="true"><div class="sil-t" data-dur="45000"><div class="sil-s">${PROV.map(p=>{const R=p[3].split(/(?=M)/),mal=p[0]==='Tierra del Fuego'?R.filter(r=>+r.slice(1).split(' ')[0]>=60):[],resto=R.filter(r=>!mal.includes(r));return `<svg viewBox="-2 -2 ${p[1]+4} ${p[2]+4}"><path d="${resto.join('')}"/>${mal.length?`<defs><linearGradient id="arg" x1="0" y1="0" x2="0" y2="1"><stop offset=".33" stop-color="#74ACDF"/><stop offset=".33" stop-color="#fff"/><stop offset=".67" stop-color="#fff"/><stop offset=".67" stop-color="#74ACDF"/></linearGradient></defs><path class="malv" d="${mal.join('')}"/>`:''}</svg>`}).join('')}</div></div></section>`:''}
-  ${(()=>{const N=P.filter(p=>p.fam==='Nacional'&&p.img);return N.length?`<section class="sec ctr"><h3>${tx('nac_t','Productos nacionales')}<a href="#nacional">${tx('nac_v','Ver todos')}</a></h3><div class="grid">${N.slice(0,8).map(x=>card(x)).join('')}</div></section>`:''})()}
+  ${(()=>{const N=P.filter(p=>p.fam==='Nacional'&&p.img);return N.length?`<section class="sec ctr sec-nac"><h3>${tx('nac_t','Productos nacionales')}<a href="#nacional">${tx('nac_v','Ver todos')}</a></h3><div class="grid">${N.slice(0,8).map(x=>card(x)).join('')}</div></section>`:''})()}
   <section class="std" id="estudio"><div><span class="k"><b>FRM</b> Studio</span>${tx('frm_t','El estudio detrás de FORMA Concept','h2')}${tx('frm_p','Proyectamos interiores y arquitectura. Elegimos cada pieza de la tienda pensando en cómo convive con los espacios que diseñamos.','p')}<a class="ob" href="#frm" style="margin-top:28px">${tx('frm_b','Conocé el estudio')}</a></div>
-   <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="${src(FX('estudio_'+(i+1),s[0]))}" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>
-  <section class="std pro-std"><div>${tx('pro_k','¿Sos profesional o querés comercializar nuestros productos?','span','k')}${tx('pro_p','Precios especiales para estudios de arquitectura, interiorismo, desarrolladores y comercios. Mismo catálogo, condiciones para profesionales.','p')}<a class="ob" href="#proyectos" style="margin-top:28px">${tx('pro_b','Panel para profesionales')}</a></div>
-   <a class="car car-pro psl" href="#proyectos">${PS.map((p,i)=>`<img class="${i?'':'on'}" src="${src(p.img)}" alt="${esc(title(p))}" loading="lazy">`).join('')}</a></section>
-  <div class="one pro-m">${proTile()}</div>`;
+   <div class="car" id="car">${STD.map((s,i)=>`<img class="${i?'':'on'}" src="${src(FX('estudio_'+(i+1),s[0]))}" alt="${s[1]}, proyecto de FRM Studio" loading="lazy">`).join('')}<div class="dots">${STD.map((s,i)=>`<button class="${i?'':'on'}" data-car="${i}" aria-label="Ver foto ${i+1}"></button>`).join('')}</div></div></section>`;
 }
 const EMPRESA={razon:'DEL GRUPPO S.R.L.',cuit:'30-71294990-9',dom:'Domicilio legal: Av. Belgrano 148, piso 7, Ciudad Autónoma de Buenos Aires',mail:'formaconcept.ba@gmail.com',wa:'+54 11 3944 3055'};
 function viewLegal(k){
