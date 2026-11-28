@@ -98,12 +98,13 @@ window.iniTop=function(o){const {R,RP,D,V,pend,FIJ,dl}=o,n=R.n,tk=n?R.total/n:0,
     <div id="dkc"></div></div></div>
   <div class="dk-oh"><h3>Últimas ventas</h3><button class="btn" data-go2="pedidos">Ver todas →</button></div>
   <div class="dk-ord"><div class="wrap"><table><thead><tr><th>N°</th><th>Cliente</th><th class="hide-m">Canal</th><th>Estado</th><th class="hide-m">Fecha</th><th class="n">Total</th><th class="n hide-m">Te deja</th></tr></thead><tbody>
-   ${L.map(x=>`<tr><td>${esc(x.id)}</td><td><b>${esc(x.cli||'—')}</b></td><td class="hide-m">${CN[x.canal]||x.canal}</td><td><span class="dk-pill ${x.ok?(/entreg|envi|pag/i.test(x.est)?'dk-ok':'dk-ot'):'dk-pe'}">${esc(x.est)}</span></td><td class="hide-m">${fch(x.f)}</td><td class="n">${ars(x.tot)}</td><td class="n hide-m">${x.neto==null?'—':ars(x.neto)}</td></tr>`).join('')||'<tr><td colspan="7" class="hint">Todavía no hay ventas.</td></tr>'}
+   ${L.map(x=>`<tr${/^#\d+$/.test(x.id)?` data-ord="${x.id.slice(1)}" data-oc="${x.canal}" style="cursor:pointer"`:''}><td>${esc(x.id)}</td><td><b>${esc(x.cli||'—')}</b></td><td class="hide-m">${CN[x.canal]||x.canal}</td><td><span class="dk-pill ${x.ok?(/entreg|envi|pag/i.test(x.est)?'dk-ok':'dk-ot'):'dk-pe'}">${esc(x.est)}</span></td><td class="hide-m">${fch(x.f)}</td><td class="n">${ars(x.tot)}</td><td class="n hide-m">${x.neto==null?'—':ars(x.neto)}</td></tr>`).join('')||'<tr><td colspan="7" class="hint">Todavía no hay ventas.</td></tr>'}
   </tbody></table></div></div>`};
 
 window.iniTopBind=function(){const box=document.getElementById('dkc');if(!box||!window.DK_SER)return;
   const pinta=k=>{const s=DK_SER.SER[k];box.innerHTML=`<div class="dk-cv"><span>${s.t}</span><b>${s.v}</b></div>${curva(s.s,DK_SER.lab,s.f)}`;
     const w=box.querySelector('.dk-svg'),tip=w.querySelector('.dk-tip');
     w.onmousemove=e=>{const t=e.target.closest('[data-dt]');if(!t){tip.hidden=true;return}tip.textContent=t.dataset.dt;tip.hidden=false;const b=w.getBoundingClientRect();tip.style.left=Math.min(b.width-tip.offsetWidth-4,Math.max(4,e.clientX-b.left+10))+'px';tip.style.top=Math.max(0,e.clientY-b.top-34)+'px'};w.onmouseleave=()=>tip.hidden=true};
+  document.querySelectorAll('[data-ord]').forEach(r=>r.onclick=()=>{ORD_SEL=+r.dataset.ord;tab=r.dataset.oc==='pro'?'ppedidos':'pedidos';draw()});
   document.querySelectorAll('[data-dk]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-dk]').forEach(x=>x.classList.toggle('on',x===b));pinta(b.dataset.dk)});pinta('gan')};
 })();

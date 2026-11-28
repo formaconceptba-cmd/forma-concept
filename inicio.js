@@ -32,8 +32,8 @@ function chartDias(D){
 async function drawInicio(silencioso){
   clearTimeout(INI_T);
   if(!silencioso)$('#m').innerHTML='<p class="hint">Cargando…</p>';
-  const now=Date.now(),hoy0=new Date();hoy0.setHours(0,0,0,0);
-  const from=PER===1?hoy0:PER?new Date(now-PER*DIA):new Date(0),largo=now-from,prev=PER?new Date(+from-largo):null;
+  const RG=window.INI_RANGO||null,now=RG?Math.min(Date.now(),+RG.d1+DIA-1):Date.now(),hoy0=new Date(now);hoy0.setHours(0,0,0,0);
+  const from=RG?new Date(+RG.d0):PER===1?hoy0:PER?new Date(now-PER*DIA):new Date(0),largo=now-from,prev=PER?new Date(+from-largo):null;
   const [V,{data:ev},{data:pend},{data:hi},{data:pca},{data:st},{data:stk}]=await Promise.all([ventasRent(),
     sb.from('eventos').select('created_at,visitante,sesion,tipo,producto,ref,utm,dispositivo,valor').gte('created_at',(prev||from).toISOString()).order('created_at',{ascending:false}).limit(20000),
     sb.from('orders').select('*,order_items(*,products(tipo,nombre))').eq('estado','pendiente').order('created_at',{ascending:false}).limit(60),
@@ -43,7 +43,7 @@ async function drawInicio(silencioso){
   if(tab!=='inicio')return;
   ST=Object.fromEntries((st||[]).map(x=>[x.key,+x.value]));
   const T=TX(),PB=Object.fromEntries(prods.map(p=>[p.id,p])),PCA=Object.fromEntries((pca||[]).map(x=>[x.id,x])),nom=id=>PB[id]?PB[id].tipo+' '+PB[id].nombre:id;
-  const inP=d=>new Date(d)>=from,inPrev=d=>prev&&new Date(d)>=prev&&new Date(d)<from;
+  const inP=d=>new Date(d)>=from&&new Date(d)<=now,inPrev=d=>prev&&new Date(d)>=prev&&new Date(d)<from;
   const cur=V.filter(v=>inP(v.f)),old=V.filter(v=>inPrev(v.f));
   const ini0=PER?+from:Math.min(now-DIA,V.reduce((m,v)=>Math.min(m,+new Date(v.f)),now),(ev||[]).reduce((m,x)=>Math.min(m,+new Date(x.created_at)),now)),dias=Math.max(1,(now-ini0)/DIA),S=(a,k)=>a.reduce((s,v)=>s+v[k],0);
   const adsDe=(d0,d1)=>(AC||[]).length?(AC||[]).filter(x=>{const t=+new Date(x.fecha+'T12:00');return t>=+d0&&t<+d1}).reduce((s,x)=>s+(+x.gasto),0):0;
@@ -83,10 +83,10 @@ async function drawInicio(silencioso){
   const dl=(a,b,inv)=>PER&&b?(()=>{const up=a>=b,good=inv?!up:up;return `<em class="${good?'pos':'neg'}">${up?'▲':'▼'} ${Math.abs(Math.round((a-b)/Math.abs(b)*100))}%</em>`})():'';
   const mrg=R.venta?R.neto/R.venta:null,roas=R.ads?R.total/R.ads:null,cac=R.ads&&R.n?R.ads/R.n:null;
   const K=(t,v,s,sp)=>`<div class="card ik"><span>${t}</span><b>${v}</b><small>${s||'&nbsp;'}</small>${sp||''}</div>`;
-  const per=PER===1?'hoy':PER?`últimos ${PER} días`:'desde el inicio';
+  const per=RG?rangoTxt():PER===1?'hoy':PER?`últimos ${PER} días`:'desde el inicio';
   INI_AT=now;
   $('#m').innerHTML=`<div class="bar ihd"><b style="font:500 22px Outfit,sans-serif">Así va el negocio</b><span class="live"><i></i>En vivo · ${live} ${live===1?'persona':'personas'} en la tienda</span><span class="hint" id="iupd">actualizado recién</span><span class="sp"></span>
-   ${[[1,'Hoy'],[7,'7 días'],[30,'30 días'],[0,'Todo']].map(([d,l])=>`<button class="btn ${PER===d?'dk':''}" data-per="${d}">${l}</button>`).join('')}</div>
+   ${[[1,'Hoy'],[7,'7 días'],[30,'30 días'],[0,'Todo']].map(([d,l])=>`<button class="btn ${!RG&&PER===d?'dk':''}" data-per="${d}">${l}</button>`).join('')}${typeof rangoBtn==='function'?rangoBtn():''}</div>
   ${(()=>{const A=[];(stk||[]).forEach(s=>{const p=PB[s.id];if(!p||!p.activo)return;if(p.linea!=='Nacional'&&!s.contenedores)A.push(`<b>${esc(nom(s.id))}</b> está publicado pero no está en ningún contenedor`);else if(s.disponible<=0)A.push(`<b>${esc(nom(s.id))}</b> sin stock disponible (${s.disponible})`);else if(s.fuente==='manual'&&s.contenedores){const c=s.contenedores.reduce((a,x)=>a+x.cant,0);if(c!==s.total)A.push(`<b>${esc(nom(s.id))}</b>: la tienda ofrece ${s.total} y el contenedor trae ${c}`)}});return A.length?`<div class="card pad iwarn"><b>Stock para revisar</b> <span class="hint">(${A.length})</span><div style="margin-top:6px;font-size:13.5px;line-height:1.7">${A.join('<br>')}</div><p class="hint">Cuando confirmes el contenedor, el cupo de la tienda pasa a salir solo de lo que trae.</p></div>`:''})()}
   ${transfPend.length?`<div class="card pad iwarn"><b>${transfPend.length} pedido${transfPend.length>1?'s':''} esperando transferencia</b> · ${transfPend.map(o=>`#${o.id} ${esc(o.nombre||'')} ${ars(o.total)} (${hace(o.created_at)})`).join(' · ')}. Cuando veas la plata, marcalo <b>Pagado</b> en <a href="#pedidos">Pedidos</a>.</div>`:''}
   ${iniTop({R,RP,D,V,pend,FIJ:T.FIJ,dl})}
@@ -116,7 +116,7 @@ async function drawInicio(silencioso){
   <div id="itrk"></div>
   <button class="card pad ilk-i" data-go2="resultados" style="width:100%;border-left:3px solid #1baf7a;margin-top:14px"><b>Ver el estado de resultados completo →</b><span>Ventas, costo de lo vendido, comisiones, impuestos, anuncios, gastos fijos y depósito: cuánto te queda limpio, mes a mes y venta por venta.</span></button>
   <div id="subsw"></div>`;
-  iniTopBind();
+  iniTopBind();if(typeof rangoBind==='function')rangoBind(()=>drawInicio());
   $('#m').querySelectorAll('[data-per]').forEach(b=>b.onclick=()=>{PER=+b.dataset.per;drawInicio()});
   $('#m').querySelectorAll('[data-go2]').forEach(b=>b.onclick=()=>{tab=b.dataset.go2;draw()});
   $('#m').querySelectorAll('[data-rem]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {data:{session}}=await sb.auth.getSession();

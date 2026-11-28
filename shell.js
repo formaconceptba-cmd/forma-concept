@@ -18,7 +18,7 @@ const MENU=[
  ['§ver','Para ver (no se edita)',[]],
  ['inicio','Inicio',[['inicio','Panel general'],['resumen','Resumen rápido'],['resultados','Estado de resultados'],['campanias','Anuncios y ROAS'],['guia','Cómo funciona todo']]],
  ['alertas','Alertas / pendientes',[['alertas','Alertas / pendientes']]],
- ['ventas','Ventas',[['pedidos','Lista de ventas'],['facturas','Facturas'],['ppedidos','Ventas a profesionales']]],
+ ['ventas','Ventas',[['pedidos','Lista de ventas'],['canales','Comparar canales'],['facturas','Facturas'],['ppedidos','Ventas a profesionales']]],
  ['clientes','Clientes',[['clientes','Lista de clientes'],['pcuentas','Profesionales'],['pro','Mayoristas']]],
  ['§cargar','Para cargar, en este orden',[]],
  ['imp','1. Importación',[['maestro','Maestro de productos'],['maestro|nuevo','Nuevo producto'],['maestro|importar','Importar cotización (RFQ)'],['eco','Contenedores (proforma y precios)'],['compras','Órdenes a proveedores']]],
