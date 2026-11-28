@@ -56,7 +56,7 @@ async function drawInicio(silencioso){
   const nd=PER===1?14:PER||Math.min(90,Math.max(14,Math.ceil((now-Math.min(now,...V.map(v=>+new Date(v.f))))/DIA)+1));
   const key=d=>new Date(d).toDateString();
   const D=[...Array(nd)].map((_,i)=>{const d=new Date(hoy0-(nd-1-i)*DIA),k=d.toDateString(),x=V.filter(v=>key(v.f)===k);
-    return {l:fmtD(d),hoy:i===nd-1,v:S(x,'venta'),g:S(x,'g'),n:x.length,t:S(x,'total'),u:new Set((ev||[]).filter(e=>key(e.created_at)===k).map(e=>e.visitante)).size,pc:(hi||[]).filter(h=>key(h.fecha)===k).length}});
+    return {l:fmtD(d),hoy:i===nd-1,ad:adsDe(d,new Date(+d+DIA)),v:S(x,'venta'),g:S(x,'g'),n:x.length,t:S(x,'total'),u:new Set((ev||[]).filter(e=>key(e.created_at)===k).map(e=>e.visitante)).size,pc:(hi||[]).filter(h=>key(h.fecha)===k).length}});
   /* de cada $100 que cobrás */
   const cob=R.total,P100=[['IVA (va a ARCA)',cob-R.venta],['Costo de los productos',S(cur,'cprod')],['Comisión de Mercado Pago',S(cur,'com')],['Envíos que pagás vos',S(cur,'env')],['Ingresos Brutos e impuesto al cheque',S(cur,'iibb')+S(cur,'chq')],['Anuncios',R.ads],['Gastos (fijos, depósito y puntuales)',R.fij],['Impuesto a las Ganancias (estimado)',R.gan]];
   /* canales, medios de pago, productos */
@@ -89,14 +89,7 @@ async function drawInicio(silencioso){
    ${[[1,'Hoy'],[7,'7 días'],[30,'30 días'],[0,'Todo']].map(([d,l])=>`<button class="btn ${PER===d?'dk':''}" data-per="${d}">${l}</button>`).join('')}</div>
   ${(()=>{const A=[];(stk||[]).forEach(s=>{const p=PB[s.id];if(!p||!p.activo)return;if(p.linea!=='Nacional'&&!s.contenedores)A.push(`<b>${esc(nom(s.id))}</b> está publicado pero no está en ningún contenedor`);else if(s.disponible<=0)A.push(`<b>${esc(nom(s.id))}</b> sin stock disponible (${s.disponible})`);else if(s.fuente==='manual'&&s.contenedores){const c=s.contenedores.reduce((a,x)=>a+x.cant,0);if(c!==s.total)A.push(`<b>${esc(nom(s.id))}</b>: la tienda ofrece ${s.total} y el contenedor trae ${c}`)}});return A.length?`<div class="card pad iwarn"><b>Stock para revisar</b> <span class="hint">(${A.length})</span><div style="margin-top:6px;font-size:13.5px;line-height:1.7">${A.join('<br>')}</div><p class="hint">Cuando confirmes el contenedor, el cupo de la tienda pasa a salir solo de lo que trae.</p></div>`:''})()}
   ${transfPend.length?`<div class="card pad iwarn"><b>${transfPend.length} pedido${transfPend.length>1?'s':''} esperando transferencia</b> · ${transfPend.map(o=>`#${o.id} ${esc(o.nombre||'')} ${ars(o.total)} (${hace(o.created_at)})`).join(' · ')}. Cuando veas la plata, marcalo <b>Pagado</b> en <a href="#pedidos">Pedidos</a>.</div>`:''}
-  <div class="iks">
-   ${K('Ventas',ars(R.total),`${dl(R.total,RP.total)} ${per}`,spark(D.map(d=>d.t),C_V))}
-   ${K('Te queda limpio',`<span class="${R.neto<0?'neg':''}">${R.neto<0?'− '+ars(-R.neto):ars(R.neto)}</span>`,`${dl(R.neto,RP.neto)} después de todo`,spark(D.map(d=>d.g),C_G))}
-   ${K('Margen neto',mrg==null?'—':`<span class="${mrg<0.1?'neg':'pos'}">${pct(mrg)}</span>`,'de cada $100 sin IVA')}
-   ${K('Pedidos',R.n,`${dl(R.n,RP.n)} ticket ${ars(R.n?R.total/R.n:0)}`,spark(D.map(d=>d.n),C_V))}
-   ${K('Anuncios',ars(R.ads),roas&&R.n?`ROAS ${roas.toFixed(1).replace('.',',')}× · ${ars(cac)} por venta`:R.ads?'sin ventas todavía para medir el ROAS':'cargá el gasto abajo, en "Tus números"')}
-   ${K('Visitantes',vis,`${dl(vis,visP)} conversión ${vis?(R.n/vis*100).toFixed(1).replace('.',','):'0'}%`,spark(D.map(d=>d.u),'#77756F'))}
-  </div>
+  ${iniTop({R,RP,D,V,pend,FIJ:T.FIJ,dl})}
   <div class="ilk">${[['resultados','Estado de resultados','Cuánto ganaste de verdad, con todos los gastos','#1baf7a'],['campanias','Anuncios y ROAS','Cuánto rinde cada peso en anuncios','#8e5bd6'],['gastos','Gastos','Fijos, depósito Pailos y punto de equilibrio','#2a78d6'],['alertas','Alertas / pendientes','Lo que hay que resolver','#e07b39']].map(([t,a,b,c])=>`<button class="card ilk-i" data-go2="${t}" style="border-left:3px solid ${c}"><b>${a} →</b><span>${b}</span></button>`).join('')}</div>
   <h3 class="isec">Ventas</h3>
   <div class="g2d" style="align-items:start"><div class="card pad"><h4>Ventas y ganancia por día</h4>${chartDias(D)}</div>
@@ -123,6 +116,7 @@ async function drawInicio(silencioso){
   <div id="itrk"></div>
   <button class="card pad ilk-i" data-go2="resultados" style="width:100%;border-left:3px solid #1baf7a;margin-top:14px"><b>Ver el estado de resultados completo →</b><span>Ventas, costo de lo vendido, comisiones, impuestos, anuncios, gastos fijos y depósito: cuánto te queda limpio, mes a mes y venta por venta.</span></button>
   <div id="subsw"></div>`;
+  iniTopBind();
   $('#m').querySelectorAll('[data-per]').forEach(b=>b.onclick=()=>{PER=+b.dataset.per;drawInicio()});
   $('#m').querySelectorAll('[data-go2]').forEach(b=>b.onclick=()=>{tab=b.dataset.go2;draw()});
   $('#m').querySelectorAll('[data-rem]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {data:{session}}=await sb.auth.getSession();

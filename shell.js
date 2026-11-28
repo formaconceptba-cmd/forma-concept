@@ -58,12 +58,12 @@ window.drawNav=function(){const n=document.getElementById('gnav'),f=document.get
 const cerrarMenu=()=>document.body.classList.remove('tn-open');
 const _shell=window.shell;
 window.shell=function(){
-  app.innerHTML=`<div class="tn"><aside class="tn-side"><div class="tn-logo">forma<small>Admin</small></div><nav id="gnav" class="tn-menu"></nav><div id="gfoot" class="tn-foot"></div><div class="tn-foot"><button class="tn-i tn-ask" id="tnask"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M9.5 9.2a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.6-.8 1.1M12 14.6v.1"/></svg><span>Preguntar</span></button></div></aside>
+  app.innerHTML=`<div class="tn"><aside class="tn-side"><div class="tn-logo">forma<small>Admin</small></div><nav id="gnav" class="tn-menu"></nav><div id="gfoot" class="tn-foot"></div><div class="tn-foot"><form class="tn-sk" id="tnsk" onsubmit="skEnviar(event)"><div class="tn-skh"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>Preguntá lo que necesites</div><textarea id="tnskq" rows="2" placeholder="Si tenés alguna duda, escribila acá" onkeydown="if(event.key==='Enter'&&!event.shiftKey)skEnviar(event)"></textarea><button aria-label="Enviar">↑</button></form></div></aside>
    <div class="tn-back" id="tnbk"></div>
    <div class="tn-main"><header class="tn-top"><button class="tn-hb" id="tnhb" aria-label="Menú">☰</button><span class="sp"></span><a class="tn-a hide-m" href="/" target="_blank">Ver la tienda ↗</a><span class="who hide-m">${esc(user.email)}</span><button class="btn hide-m" id="chp">Cambiar contraseña</button><button class="btn" id="out">Salir</button></header>
    <div class="tn-ph"><h1 id="tnt"></h1><p id="tnh" class="tn-help"></p></div><main id="m"></main></div></div>`;
   document.getElementById('tnhb').onclick=()=>document.body.classList.toggle('tn-open');document.getElementById('tnbk').onclick=cerrarMenu;
-  $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};document.getElementById('tnask').onclick=()=>{cerrarMenu();chatAbrir()};$('#chp').onclick=()=>viewNewPass();draw()};
+  $('#out').onclick=async()=>{await sb.auth.signOut();user=null;viewLogin()};$('#chp').onclick=()=>viewNewPass();draw()};
 /* si el panel ya se dibujó con la estructura vieja, se rearma */
 if(typeof user!=='undefined'&&user&&document.querySelector('header')&&!document.querySelector('.tn')){window.shell()}
 })();
