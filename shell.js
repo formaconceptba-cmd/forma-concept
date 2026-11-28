@@ -12,22 +12,25 @@ const IC={
  mkt:'<path d="M3 10v4l13 5V5z"/><path d="M16 9h3a2 2 0 0 1 0 4h-3"/>',
  online:'<rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M8 21h8M12 18v3"/>',
  imp:'<path d="M2 16h20l-2 4H4z"/><path d="M5 16V9h14v7M9 9V5h6v4"/>',
+ mails:'<path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/>',
  config:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>'};
 /* menú: [clave, etiqueta, [[pantalla, etiqueta], ...]] — mismas pantallas de siempre, ordenadas como Tiendanube */
 const MENU=[
- ['§ver','Para ver (no se edita)',[]],
- ['inicio','Inicio',[['inicio','Panel general'],['resumen','Resumen rápido'],['resultados','Estado de resultados'],['campanias','Anuncios y ROAS'],['guia','Cómo funciona todo']]],
+ ['§ver','Para ver',[]],
+ ['inicio','Inicio',[['inicio','Inicio']]],
  ['alertas','Alertas / pendientes',[['alertas','Alertas / pendientes']]],
- ['ventas','Ventas',[['pedidos','Lista de ventas'],['canales','Comparar canales'],['facturas','Facturas'],['ppedidos','Ventas a profesionales']]],
+ ['ventas','Ventas',[['pedidos','Lista de ventas'],['carritos','Carritos abandonados'],['ppedidos','Ventas a profesionales'],['facturas','Facturas'],['canales','Comparar canales']]],
  ['clientes','Clientes',[['clientes','Lista de clientes'],['pcuentas','Profesionales'],['pro','Mayoristas']]],
+ ['stats','Estado de resultados',[['resultados','Estado de resultados']]],
  ['§cargar','Para cargar, en este orden',[]],
  ['imp','1. Importación',[['maestro','Maestro de productos'],['maestro|nuevo','Nuevo producto'],['maestro|importar','Importar cotización (RFQ)'],['eco','Contenedores (proforma y precios)'],['compras','Órdenes a proveedores']]],
  ['prods','2. Productos',[['productos','Lista de productos'],['paleta','Colores'],['nacionales','Productos nacionales'],['stock','Inventario (Pailos)']]],
  ['desc','3. Precios y promociones',[['promos','Promociones y códigos'],['rent','Reglas de precio y medios de pago'],['pprecios','Precios profesionales']]],
- ['online','4. Tienda online',[['fotos','Fotos de la página'],['cartel','Cartel de arriba'],['portada','Cuenta regresiva (portada)'],['textos','Textos de la página'],['frm','FRM Studio'],['envios','Envíos y retiro']]],
- ['mkt','5. Marketing',[['mailpromo','Mail a toda la lista'],['mails','Mails automáticos']]],
- ['gastos','6. Gastos',[['gastos','Gastos y depósito']]]];
-const PIE=['config','Configuración',[['ecopar','Costos y parámetros']]];
+ ['online','4. Editar tienda',[['fotos','Fotos de la página'],['textos','Textos de la página'],['cartel','Cartel de arriba'],['portada','Cuenta regresiva (portada)'],['frm','FRM Studio'],['envios','Envíos y retiro']]],
+ ['mkt','5. Anuncios',[['campanias','Campañas y gasto']]],
+ ['mails','6. Mails',[['mailpromo','Mail a toda la lista'],['mails','Mails automáticos'],['subs','Suscriptores']]],
+ ['gastos','7. Gastos',[['gastos','Gastos y depósito']]]];
+const PIE=['config','Configuración',[['ecopar','Costos y parámetros'],['backup','Copia de seguridad'],['guia','Cómo funciona todo']]];
 /* cualquier pantalla que exista y no esté en el menú, se suma para no perder nada */
 const todas=new Set([...MENU,PIE].flatMap(g=>g[2].map(s=>s[0])));
 const extra=GRUPOS.flatMap(g=>g[2]).filter(s=>!todas.has(s[0]));
